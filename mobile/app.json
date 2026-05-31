@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Siddham Wellness",
+    "slug": "siddham-wellness",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "siddham",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a3d2b"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.siddhamwellness.app"
+    },
+    "android": {
+      "package": "com.siddhamwellness.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1a3d2b",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

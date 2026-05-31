@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL Database ──────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: siddham_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: siddham_db
+      POSTGRES_USER: siddham_user
+      POSTGRES_PASSWORD: siddham_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siddham_user -d siddham_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Next.js Application ──────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siddham_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://siddham_user:siddham_pass@db:5432/siddham_db
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production-please}
+      NEXT_PUBLIC_RAZORPAY_KEY_ID: ${NEXT_PUBLIC_RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@siddhamwellness.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@123}
+      ADMIN_NAME: ${ADMIN_NAME:-Siddham Admin}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── DB Migration + Seed Runner ───────────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: siddham_migrate
+    environment:
+      DATABASE_URL: postgresql://siddham_user:siddham_pass@db:5432/siddham_db
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  postgres_data:
+    name: siddham_postgres_data

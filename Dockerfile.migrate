@@ -1,0 +1,13 @@
+# Lightweight migration image using node:20-alpine
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY prisma ./prisma/
+COPY .env.example ./.env
+
+# Run migration then seed
+CMD ["sh", "-c", "npx prisma migrate deploy && echo 'Migrations complete'"]

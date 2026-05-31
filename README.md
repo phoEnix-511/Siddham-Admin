@@ -1,40 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Siddham Wellness – E-Commerce Platform
+## 🌿 Complete Ayurvedic ecommerce store with Admin Dashboard
 
-## Getting Started
+A production-ready, full-stack web application built with:
+- **Frontend + Backend**: Next.js 16 (Pages Router) + TypeScript  
+- **Database**: PostgreSQL via Prisma ORM  
+- **Payments**: Razorpay integration  
+- **Auth**: JWT-based admin authentication  
+- **Deployment**: Docker + Docker Compose  
 
-First, run the development server:
+---
+
+## 🚀 Quick Start (Docker)
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+
+### 1. Clone and Configure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Copy environment file and edit your credentials
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Edit `.env` with your values:
+| Variable | Description |
+|----------|-------------|
+| `JWT_SECRET` | Any random string (used for admin auth) |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Your Razorpay Key ID (from dashboard) |
+| `RAZORPAY_KEY_SECRET` | Your Razorpay Secret Key |
+| `ADMIN_EMAIL` | Admin login email |
+| `ADMIN_PASSWORD` | Admin login password |
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+### 2. Start Everything
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```bash
+docker compose up -d
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+This starts:
+1. **PostgreSQL** database on port `5432`
+2. **Next.js** application on port `3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Seed the Database
 
-## Learn More
+After containers are running, seed the database with products and admin user:
 
-To learn more about Next.js, take a look at the following resources:
+```
+Visit: http://localhost:3000/api/admin/seed
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+Or via CLI (if running locally without Docker):
+```bash
+npm run db:seed
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Access the App
 
-## Deploy on Vercel
+| URL | Description |
+|-----|-------------|
+| `http://localhost:3000` | 🛍️ Customer Storefront |
+| `http://localhost:3000/admin/login` | 🔐 Admin Dashboard |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Default Admin Credentials:**
+- Email: `admin@siddhamwellness.com`
+- Password: `Admin@123`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── pages/
+│   ├── index.tsx          # Home page
+│   ├── shop.tsx           # Product listing
+│   ├── checkout.tsx       # Checkout with Razorpay
+│   ├── about.tsx          # Brand story
+│   ├── products/[id].tsx  # Product detail
+│   ├── admin/
+│   │   ├── login.tsx      # Admin login
+│   │   ├── index.tsx      # Dashboard
+│   │   ├── products/      # Product management
+│   │   ├── orders/        # Order management
+│   │   ├── reports.tsx    # Sales & stock reports
+│   │   └── settings.tsx   # Store configuration
+│   └── api/               # Backend API routes
+├── components/            # Reusable UI components
+├── context/               # React context (Cart, Toast)
+├── lib/                   # Utilities (auth, prisma, utils)
+└── styles/                # Global CSS design system
+```
+
+---
+
+## ⚙️ Admin Features
+
+| Feature | Description |
+|---------|-------------|
+| **Dashboard** | Revenue, orders, customers, low-stock alerts |
+| **Products** | Add, edit, delete, toggle active/featured status |
+| **Orders** | View all orders, update status (Pending → Delivered) |
+| **Reports** | Sales by date range (CSV download), stock report (CSV) |
+| **Settings** | Razorpay keys, store info, shipping config |
+
+---
+
+## 💳 Razorpay Setup
+
+1. Sign up at [razorpay.com](https://razorpay.com)
+2. Go to Settings → API Keys → Generate Test Key
+3. Copy Key ID and Secret to your `.env` file
+4. Test with Razorpay test card: `4111 1111 1111 1111`
+
+You can also update Razorpay keys live via:  
+**Admin Dashboard → Settings → Razorpay Configuration**
+
+---
+
+## 🗄️ Database Management
+
+```bash
+# Stop containers and remove volumes (WARNING: deletes all data)
+docker compose down -v
+
+# View database logs
+docker compose logs db
+
+# Connect to database directly
+docker exec -it siddham_db psql -U siddham_user -d siddham_db
+```
+
+---
+
+## 🛠️ Local Development (without Docker)
+
+```bash
+# Install dependencies
+npm install
+
+# Set up local PostgreSQL and update DATABASE_URL in .env
+
+# Generate Prisma client
+npm run db:generate
+
+# Run migrations (requires running database)
+npx prisma migrate deploy
+
+# Seed database
+npm run db:seed
+
+# Start development server
+npm run dev
+```
+
+---
+
+## 🌿 Brand Design
+
+The design follows the **Siddham Wellness brand identity**:
+- **Primary Color**: Deep Forest Green (`#1a3d2b`)
+- **Accent**: Saffron Gold (`#c4852a`)
+- **Background**: Warm Parchment (`#f8f4ee`)
+- **Typography**: Playfair Display (headings) + Inter (body)

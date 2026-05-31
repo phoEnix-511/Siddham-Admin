@@ -1,0 +1,180 @@
+import React, { useEffect, useState } from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import AdminLayout from '@/components/AdminLayout';
+import { formatCurrency, formatDate } from '@/lib/utils';
+
+interface Stats {
+  totalProducts: number;
+  totalOrders: number;
+  totalCustomers: number;
+  totalRevenue: number;
+  pendingOrders: number;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  createdAt: string;
+  totalAmount: number;
+  status: string;
+  customer: { name: string; email: string };
+}
+
+interface Product {
+  id: string;
+  name: string;
+  stock: number;
+  category: { name: string };
+}
+
+export default function AdminDashboard() {
+  const router = useRouter();
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch('/api/admin/stats');
+      if (res.status === 401) { router.push('/admin/login'); return; }
+      const data = await res.json();
+      setStats(data.stats);
+      setRecentOrders(data.recentOrders);
+      setLowStockProducts(data.lowStockProducts);
+      setLoading(false);
+    };
+    load();
+  }, [router]);
+
+  const statusColors: Record<string, string> = {
+    PENDING: 'badge-yellow', CONFIRMED: 'badge-blue', PROCESSING: 'badge-blue',
+    SHIPPED: 'badge-blue', DELIVERED: 'badge-green', CANCELLED: 'badge-red',
+  };
+
+  return (
+    <>
+      <Head><title>Dashboard – Siddham Wellness Admin</title></Head>
+      <AdminLayout title="Dashboard">
+        {loading ? (
+          <div className="loading-page"><div className="spinner" /></div>
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="stat-grid">
+              <div className="stat-card stat-card-green">
+                <div className="stat-icon stat-icon-green">💰</div>
+                <div className="stat-value">{formatCurrency(stats?.totalRevenue || 0)}</div>
+                <div className="stat-label">Total Revenue</div>
+              </div>
+              <div className="stat-card stat-card-gold">
+                <div className="stat-icon stat-icon-gold">🛒</div>
+                <div className="stat-value">{stats?.totalOrders || 0}</div>
+                <div className="stat-label">Total Orders</div>
+              </div>
+              <div className="stat-card stat-card-blue">
+                <div className="stat-icon stat-icon-blue">👥</div>
+                <div className="stat-value">{stats?.totalCustomers || 0}</div>
+                <div className="stat-label">Customers</div>
+              </div>
+              <div className="stat-card stat-card-red">
+                <div className="stat-icon stat-icon-red">⏳</div>
+                <div className="stat-value">{stats?.pendingOrders || 0}</div>
+                <div className="stat-label">Pending Orders</div>
+              </div>
+            </div>
+
+            {/* Two Column */}
+            <div className="grid-2" style={{ alignItems: 'start' }}>
+              {/* Recent Orders */}
+              <div className="card">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--color-forest-dark)' }}>Recent Orders</h3>
+                  <Link href="/admin/orders" className="btn btn-ghost btn-sm">View All →</Link>
+                </div>
+                <div className="table-wrapper" style={{ borderRadius: 0, border: 'none', boxShadow: 'none' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Order</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentOrders.map(o => (
+                        <tr key={o.id}>
+                          <td>
+                            <Link href={`/admin/orders/${o.id}`} style={{ fontWeight: 600, color: 'var(--color-forest)' }}>
+                              {o.orderNumber}
+                            </Link>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-400)' }}>{formatDate(o.createdAt)}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 500 }}>{o.customer.name}</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-400)' }}>{o.customer.email}</div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: 'var(--color-forest)' }}>₹{o.totalAmount}</td>
+                          <td><span className={`badge ${statusColors[o.status] || 'badge-gray'}`}>{o.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Low Stock */}
+              <div className="card">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1rem', color: 'var(--color-forest-dark)' }}>⚠️ Low Stock Alert</h3>
+                  <Link href="/admin/products" className="btn btn-ghost btn-sm">Manage →</Link>
+                </div>
+                {lowStockProducts.length === 0 ? (
+                  <div style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--color-gray-400)' }}>
+                    ✅ All products are well-stocked
+                  </div>
+                ) : (
+                  <div className="table-wrapper" style={{ borderRadius: 0, border: 'none', boxShadow: 'none' }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>Category</th>
+                          <th>Stock</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lowStockProducts.map(p => (
+                          <tr key={p.id}>
+                            <td style={{ fontWeight: 500 }}>{p.name}</td>
+                            <td style={{ color: 'var(--color-gray-500)', fontSize: '0.8rem' }}>{p.category.name}</td>
+                            <td>
+                              <span className={`badge ${p.stock === 0 ? 'badge-red' : 'badge-yellow'}`}>
+                                {p.stock === 0 ? 'OUT' : p.stock}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ marginTop: 'var(--space-6)', display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+              <Link href="/admin/products/new" className="btn btn-primary">+ Add Product</Link>
+              <Link href="/admin/orders" className="btn btn-outline">View All Orders</Link>
+              <Link href="/admin/reports" className="btn btn-outline">📈 Reports</Link>
+              <Link href="/admin/settings" className="btn btn-outline">⚙️ Settings</Link>
+            </div>
+          </>
+        )}
+      </AdminLayout>
+    </>
+  );
+}

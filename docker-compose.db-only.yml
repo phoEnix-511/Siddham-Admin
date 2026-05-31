@@ -1,0 +1,31 @@
+# Run ONLY the PostgreSQL database locally
+# Use this for local development: app runs with `npm run dev`, DB in Docker
+#
+# Usage:
+#   docker compose -f docker-compose.db-only.yml up -d
+#   docker compose -f docker-compose.db-only.yml down
+
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: siddham_db_local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: siddham_db
+      POSTGRES_USER: siddham_user
+      POSTGRES_PASSWORD: siddham_pass
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siddham_user -d siddham_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_local_data:
+    name: siddham_postgres_local
