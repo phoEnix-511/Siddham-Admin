@@ -105,6 +105,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
+      // Send order confirmation email (non-blocking)
+      import('@/lib/email').then(({ sendOrderConfirmationEmail }) => {
+        sendOrderConfirmationEmail({
+          orderNumber: order.orderNumber,
+          customerName: customerName,
+          customerEmail: customerEmail,
+          items: order.items.map(i => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.price,
+          })),
+          totalAmount: order.totalAmount,
+          shippingAmount: order.shippingAmount,
+          shippingAddress: shippingAddress,
+        });
+      }).catch(console.error);
+
       return res.status(201).json({ order });
     } catch (error: unknown) {
       console.error(error);
