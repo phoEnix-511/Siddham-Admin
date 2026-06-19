@@ -31,7 +31,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
     <div className="admin-layout">
       <aside className="admin-sidebar" role="complementary" aria-label="Admin navigation">
         <div className="admin-sidebar-logo">
-          <span className="admin-sidebar-brand">Siddham Wellness</span>
+          <span className="admin-sidebar-brand">Siddham Wellness 🌿</span>
           <span className="admin-sidebar-sub">Admin Portal</span>
         </div>
 
@@ -74,7 +74,21 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
         </nav>
 
         <div className="admin-sidebar-footer">
-          <button className="admin-nav-item" onClick={handleLogout} style={{ width: '100%', color: '#ef4444' }}>
+          <button 
+            className="admin-nav-item" 
+            onClick={handleLogout} 
+            style={{ 
+              width: '100%', 
+              color: '#f87171', 
+              background: 'transparent', 
+              border: 'none', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-3)',
+              padding: 'var(--space-3) var(--space-4)'
+            }}
+          >
             <span>🚪</span>
             <span>Logout</span>
           </button>
@@ -94,6 +108,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
               background: 'linear-gradient(135deg, var(--color-forest), var(--color-saffron))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: 'white', fontWeight: 700, fontSize: '0.9rem',
+              boxShadow: '0 2px 8px rgba(26, 61, 43, 0.15)'
             }}>
               SW
             </div>

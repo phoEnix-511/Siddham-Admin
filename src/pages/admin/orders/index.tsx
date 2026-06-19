@@ -87,70 +87,94 @@ export default function AdminOrdersPage() {
         {loading ? (
           <div className="loading-page"><div className="spinner" /></div>
         ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Order #</th>
-                  <th>Customer</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Payment</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-gray-400)' }}>No orders found</td></tr>
-                ) : orders.map(o => (
-                  <tr key={o.id}>
-                    <td>
-                      <Link href={`/admin/orders/${o.id}`} style={{ fontWeight: 700, color: 'var(--color-forest)' }}>
-                        {o.orderNumber}
-                      </Link>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 500 }}>{o.customer.name}</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-400)' }}>{o.customer.email}</div>
-                    </td>
-                    <td style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)' }}>{formatDate(o.createdAt)}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--color-forest)' }}>₹{o.totalAmount}</td>
-                    <td><span className={`badge ${PAY_COLORS[o.paymentStatus] || 'badge-gray'}`}>{o.paymentStatus}</span></td>
-                    <td><span className={`badge ${STATUS_COLORS[o.status] || 'badge-gray'}`}>{o.status}</span></td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-                        <Link href={`/admin/orders/${o.id}`} className="btn btn-ghost btn-sm">View</Link>
-                        <select
-                          className="form-select"
-                          style={{ fontSize: '0.75rem', padding: '4px 8px', height: 'auto' }}
-                          value={o.status}
-                          onChange={e => updateOrderStatus(o.id, e.target.value)}
-                        >
-                          {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(s => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </td>
+          <div className="card" style={{ overflow: 'hidden' }}>
+            <div className="table-wrapper" style={{ borderRadius: 0, border: 'none', boxShadow: 'none' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-gray-400)' }}>No orders found</td></tr>
+                  ) : orders.map(o => (
+                    <tr key={o.id}>
+                      <td>
+                        <Link href={`/admin/orders/${o.id}`} style={{ fontWeight: 700, color: 'var(--color-forest)' }}>
+                          {o.orderNumber}
+                        </Link>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 500 }}>{o.customer.name}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-400)' }}>{o.customer.email}</div>
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)' }}>{formatDate(o.createdAt)}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--color-forest)' }}>₹{o.totalAmount}</td>
+                      <td><span className={`badge ${PAY_COLORS[o.paymentStatus] || 'badge-gray'}`}>{o.paymentStatus}</span></td>
+                      <td><span className={`badge ${STATUS_COLORS[o.status] || 'badge-gray'}`}>{o.status}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                          <Link href={`/admin/orders/${o.id}`} className="btn btn-ghost btn-sm">View</Link>
+                          <select
+                            className="form-select"
+                            style={{ fontSize: '0.75rem', padding: '4px 8px', height: 'auto' }}
+                            value={o.status}
+                            onChange={e => updateOrderStatus(o.id, e.target.value)}
+                          >
+                            {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {pagination.pages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-6)' }}>
-            {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
-              <button
-                key={p}
-                className={`btn btn-sm ${p === pagination.page ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => fetchOrders(statusFilter, p)}
-              >
-                {p}
-              </button>
-            ))}
+            {/* Pagination integrated into Card footer */}
+            {pagination.pages > 0 && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: 'var(--space-4) var(--space-6)', 
+                borderTop: '1px solid var(--color-gray-100)',
+                background: '#fafbfa',
+                flexWrap: 'wrap',
+                gap: 'var(--space-3)'
+              }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-500)', fontWeight: 500 }}>
+                  Showing page <strong>{pagination.page}</strong> of <strong>{pagination.pages}</strong> ({pagination.total} total orders)
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={pagination.page === 1}
+                    onClick={() => fetchOrders(statusFilter, Math.max(1, pagination.page - 1))}
+                    style={{ padding: '6px 12px', minWidth: 80 }}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={pagination.page === pagination.pages || pagination.pages === 0}
+                    onClick={() => fetchOrders(statusFilter, Math.min(pagination.pages, pagination.page + 1))}
+                    style={{ padding: '6px 12px', minWidth: 80 }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </AdminLayout>

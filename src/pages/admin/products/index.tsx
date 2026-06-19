@@ -122,85 +122,101 @@ export default function AdminProductsPage() {
           <div className="loading-page"><div className="spinner" /></div>
         ) : (
           <>
-            <div className="table-wrapper">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>SKU</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.length === 0 ? (
-                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-gray-400)' }}>No products found</td></tr>
-                  ) : products.map(p => (
-                    <tr key={p.id}>
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--color-forest-dark)' }}>{p.name}</div>
-                        {p.isFeatured && <span className="badge badge-gold" style={{ marginTop: 2 }}>Featured</span>}
-                      </td>
-                      <td style={{ color: 'var(--color-gray-500)' }}>{p.category.name}</td>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.sku || '—'}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--color-forest)' }}>₹{p.price}</td>
-                      <td>
-                        <span className={`badge ${p.stock === 0 ? 'badge-red' : p.stock <= 10 ? 'badge-yellow' : 'badge-green'}`}>
-                          {p.stock === 0 ? 'Out of Stock' : p.stock <= 10 ? `Low: ${p.stock}` : p.stock}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => handleToggleActive(p.id, p.isActive)}
-                          className={`badge ${p.isActive ? 'badge-green' : 'badge-gray'}`}
-                          style={{ cursor: 'pointer' }}
-                          title="Toggle active status"
-                        >
-                          {p.isActive ? '● Active' : '○ Inactive'}
-                        </button>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                          <Link href={`/admin/products/${p.id}`} className="btn btn-ghost btn-sm">Edit</Link>
-                          <button
-                            className="btn btn-sm"
-                            style={{ color: 'var(--color-error)', background: 'var(--color-error-bg)' }}
-                            onClick={() => setDeleteId(p.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+            <div className="card" style={{ overflow: 'hidden' }}>
+              <div className="table-wrapper" style={{ borderRadius: 0, border: 'none', boxShadow: 'none' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Category</th>
+                      <th>SKU</th>
+                      <th>Price</th>
+                      <th>Stock</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-6)' }}>
-                <button
-                  className="btn btn-outline btn-sm"
-                  disabled={page === 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                >
-                  Previous
-                </button>
-                <span style={{ fontSize: '0.9rem', color: 'var(--color-gray-600)', fontWeight: 500 }}>
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  className="btn btn-outline btn-sm"
-                  disabled={page === totalPages}
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                >
-                  Next
-                </button>
+                  </thead>
+                  <tbody>
+                    {products.length === 0 ? (
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-gray-400)' }}>No products found</td></tr>
+                    ) : products.map(p => (
+                      <tr key={p.id}>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--color-forest-dark)' }}>{p.name}</div>
+                          {p.isFeatured && <span className="badge badge-gold" style={{ marginTop: 4 }}>Featured</span>}
+                        </td>
+                        <td style={{ color: 'var(--color-gray-500)' }}>{p.category.name}</td>
+                        <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.sku || '—'}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--color-forest)' }}>₹{p.price}</td>
+                        <td>
+                          <span className={`badge ${p.stock === 0 ? 'badge-red' : p.stock <= 10 ? 'badge-yellow' : 'badge-green'}`}>
+                            {p.stock === 0 ? 'Out of Stock' : p.stock <= 10 ? `Low: ${p.stock}` : p.stock}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleToggleActive(p.id, p.isActive)}
+                            className={`badge ${p.isActive ? 'badge-green' : 'badge-gray'}`}
+                            style={{ cursor: 'pointer', border: 'none', padding: '3px 10px' }}
+                            title="Toggle active status"
+                          >
+                            {p.isActive ? '● Active' : '○ Inactive'}
+                          </button>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                            <Link href={`/admin/products/${p.id}`} className="btn btn-ghost btn-sm">Edit</Link>
+                            <button
+                              className="btn btn-sm"
+                              style={{ color: 'var(--color-error)', background: 'var(--color-error-bg)' }}
+                              onClick={() => setDeleteId(p.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+
+              {/* Pagination block integrated into Card footer */}
+              {totalPages > 0 && (
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  padding: 'var(--space-4) var(--space-6)', 
+                  borderTop: '1px solid var(--color-gray-100)',
+                  background: '#fafbfa',
+                  flexWrap: 'wrap',
+                  gap: 'var(--space-3)'
+                }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-500)', fontWeight: 500 }}>
+                    Showing page <strong>{page}</strong> of <strong>{totalPages}</strong>
+                  </div>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      disabled={page === 1}
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      style={{ padding: '6px 12px', minWidth: 80 }}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      disabled={page === totalPages || totalPages === 0}
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      style={{ padding: '6px 12px', minWidth: 80 }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </>
         )}
 
