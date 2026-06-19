@@ -69,6 +69,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
+      const orderItemCount = await prisma.orderItem.count({
+        where: { productId },
+      });
+
+      if (orderItemCount > 0) {
+        // Soft delete by marking it inactive
+        await prisma.product.update({
+          where: { id: productId },
+          data: { isActive: false },
+        });
+        return res.status(200).json({ success: true, message: 'Product soft-deleted (marked inactive) since it is referenced in orders.' });
+      }
+
       await prisma.product.delete({ where: { id: productId } });
       return res.status(200).json({ success: true });
     } catch (error) {

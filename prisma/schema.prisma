@@ -141,6 +141,9 @@ model Order {
   taxAmount         Float         @default(0)
   shippingAddress   Json
   notes             String?
+  carrier           String?
+  trackingNumber    String?
+  cancellationReason String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 }

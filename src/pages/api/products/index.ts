@@ -6,12 +6,23 @@ import { generateSlug } from '@/lib/utils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      const { category, featured, search, page = '1', limit = '12' } = req.query;
+      let isAdmin = false;
+      try {
+        requireAdmin(req);
+        isAdmin = true;
+      } catch {
+        // Not admin
+      }
+
+      const { category, featured, search, page = '1', limit = '12', showInactive } = req.query;
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      const where: Record<string, unknown> = { isActive: true };
+      const where: Record<string, unknown> = {};
+      if (!isAdmin || showInactive !== 'true') {
+        where.isActive = true;
+      }
       if (category) where.category = { slug: category };
       if (featured === 'true') where.isFeatured = true;
       if (search) {

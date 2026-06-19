@@ -255,7 +255,7 @@ export default function ProductFormPage() {
                             }}
                           />
                           <div style={{ flex: 1, fontSize: '0.8rem', color: 'var(--color-gray-600)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {img}
+                            {img.startsWith('data:') ? `Uploaded Photo #${idx + 1}` : img.split('/').pop() || img}
                           </div>
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} disabled={idx === 0} onClick={() => handleMoveImage(idx, 'up')}>
