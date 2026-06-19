@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const [products, total] = await Promise.all([
         prisma.product.findMany({
           where,
-          include: { category: true },
+          include: { category: true, variants: true },
           orderBy: { createdAt: 'desc' },
           skip,
           take: limitNum,
@@ -68,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const {
       name, description, price, comparePrice, images, stock, sku,
       isActive, isFeatured, ingredients, benefits, usage, weight, videoUrl, categoryId,
+      variants,
     } = req.body;
 
     if (!name || !description || !price || !categoryId) {
@@ -86,8 +87,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ingredients: ingredients || null, benefits: benefits || null,
           usage: usage || null, weight: weight || null,
           videoUrl: videoUrl || null, categoryId,
+          variants: variants && variants.length > 0 ? {
+            create: variants.map((v: any) => ({
+              name: v.name,
+              price: parseFloat(v.price),
+              comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+              stock: parseInt(v.stock) || 0,
+              sku: v.sku || null,
+            }))
+          } : undefined,
         },
-        include: { category: true },
+        include: { category: true, variants: true },
       });
       return res.status(201).json({ product });
     } catch (error) {

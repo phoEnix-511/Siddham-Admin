@@ -17,6 +17,12 @@ interface Product {
   isFeatured: boolean;
   category: { name: string; slug: string };
   description: string;
+  variants?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    stock: number;
+  }>;
 }
 
 interface Category {
@@ -187,19 +193,33 @@ export default function ShopPage() {
                           </span>
                         )}
                         <div className="product-card-actions">
-                          <button
-                            className="btn btn-gold"
-                            style={{ width: '100%', borderRadius: 8 }}
-                            onClick={e => {
-                              e.preventDefault();
-                              if (product.stock === 0) return;
-                              addItem({ productId: product.id, name: product.name, price: product.price, image: '', stock: product.stock });
-                              addToast(`${product.name} added to cart`, 'success');
-                            }}
-                            disabled={product.stock === 0}
-                          >
-                            {product.stock === 0 ? 'Out of Stock' : '+ Add to Cart'}
-                          </button>
+                          {product.variants && product.variants.length > 0 ? (
+                            <button
+                              type="button"
+                              className="btn btn-gold"
+                              style={{ width: '100%', borderRadius: 8 }}
+                              onClick={e => {
+                                e.preventDefault();
+                                router.push(`/products/${product.id}`);
+                              }}
+                            >
+                              🔍 View Options
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-gold"
+                              style={{ width: '100%', borderRadius: 8 }}
+                              onClick={e => {
+                                e.preventDefault();
+                                if (product.stock === 0) return;
+                                addItem({ productId: product.id, name: product.name, price: product.price, image: '', stock: product.stock });
+                                addToast(`${product.name} added to cart`, 'success');
+                              }}
+                              disabled={product.stock === 0}
+                            >
+                              {product.stock === 0 ? 'Out of Stock' : '+ Add to Cart'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </Link>

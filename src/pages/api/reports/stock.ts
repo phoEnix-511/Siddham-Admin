@@ -13,22 +13,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const products = await prisma.product.findMany({
-      include: { category: true },
+      include: { category: true, variants: true },
       orderBy: { stock: 'asc' },
     });
 
     const LOW_STOCK_THRESHOLD = 10;
+    const stockData: any[] = [];
 
-    const stockData = products.map(p => ({
-      id: p.id,
-      name: p.name,
-      sku: p.sku || 'N/A',
-      category: p.category.name,
-      stock: p.stock,
-      status: p.stock === 0 ? 'OUT_OF_STOCK' : p.stock <= LOW_STOCK_THRESHOLD ? 'LOW_STOCK' : 'IN_STOCK',
-      price: p.price,
-      isActive: p.isActive,
-    }));
+    for (const p of products) {
+      if (p.variants && p.variants.length > 0) {
+        for (const v of p.variants) {
+          stockData.push({
+            id: `${p.id}-${v.id}`,
+            name: `${p.name} (${v.name})`,
+            sku: v.sku || 'N/A',
+            category: p.category.name,
+            stock: v.stock,
+            status: v.stock === 0 ? 'OUT_OF_STOCK' : v.stock <= LOW_STOCK_THRESHOLD ? 'LOW_STOCK' : 'IN_STOCK',
+            price: v.price,
+            isActive: p.isActive,
+          });
+        }
+      } else {
+        stockData.push({
+          id: p.id,
+          name: p.name,
+          sku: p.sku || 'N/A',
+          category: p.category.name,
+          stock: p.stock,
+          status: p.stock === 0 ? 'OUT_OF_STOCK' : p.stock <= LOW_STOCK_THRESHOLD ? 'LOW_STOCK' : 'IN_STOCK',
+          price: p.price,
+          isActive: p.isActive,
+        });
+      }
+    }
 
     const summary = {
       total: stockData.length,

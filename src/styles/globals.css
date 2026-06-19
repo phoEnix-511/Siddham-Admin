@@ -7,21 +7,21 @@
 
 /* ── CSS Custom Properties ────────────────────────────────────── */
 :root {
-  /* Brand Colors */
-  --color-forest:       #18181b; /* Sleek charcoal (zinc-900) */
-  --color-forest-light: #27272a; /* Lighter charcoal (zinc-800) */
-  --color-forest-dark:  #09090b; /* Rich black (zinc-950) */
-  --color-saffron:      #c4852a; /* Gold/Saffron accent */
-  --color-saffron-light:#e0a855;
-  --color-saffron-dark: #9d6516;
-  --color-gold:         #d4a843;
-  --color-parchment:    #fafafa; /* Clean warm off-white (zinc-50) */
-  --color-parchment-dark: #f4f4f5; /* Light gray (zinc-100) */
-  --color-cream:        #ffffff; /* Pure white */
-  --color-bark:         #3f3f46; /* Muted zinc-600 */
-  --color-bark-light:   #52525b; /* Muted zinc-500 */
-  --color-sage:         #71717a; /* Neutral zinc-500 */
-  --color-sage-light:   #e4e4e7; /* Light zinc-200 */
+  /* Brand Colors - Luxury Ayurvedic Apothecary Theme */
+  --color-forest:       #0d2c1d; /* Rich deep forest green */
+  --color-forest-light: #16402c; /* Mid-tone forest green */
+  --color-forest-dark:  #061a11; /* Ultra deep forest black */
+  --color-saffron:      #c5a059; /* Elegant satin gold */
+  --color-saffron-light:#ebd6ad; /* Soft pale gold */
+  --color-saffron-dark: #a27e38; /* Muted bronze gold */
+  --color-gold:         #d9b873; /* Golden accent */
+  --color-parchment:    #f9f7f2; /* Warm comforting parchment cream */
+  --color-parchment-dark: #eeeae0; /* Deep warm parchment grey */
+  --color-cream:        #fdfbf7; /* Pure warm cream white */
+  --color-bark:         #4a453f; /* Warm earth brown */
+  --color-bark-light:   #706a61; /* Soft slate grey-brown */
+  --color-sage:         #5f7566; /* Elegant sage green */
+  --color-sage-light:   #d8e2dc; /* Muted soft sage green */
 
   /* Legacy layout variable mappings */
   --forest:             var(--color-forest);
@@ -31,26 +31,26 @@
 
   /* Neutral */
   --color-white:   #ffffff;
-  --color-gray-50: #f9fafb;
-  --color-gray-100:#f3f4f6;
-  --color-gray-200:#e5e7eb;
-  --color-gray-300:#d1d5db;
-  --color-gray-400:#9ca3af;
-  --color-gray-500:#6b7280;
-  --color-gray-600:#4b5563;
-  --color-gray-700:#374151;
-  --color-gray-800:#1f2937;
-  --color-gray-900:#111827;
+  --color-gray-50: #fbfbfa;
+  --color-gray-100:#f4f3f0;
+  --color-gray-200:#e3e1da;
+  --color-gray-300:#cfcbbf;
+  --color-gray-400:#a8a295;
+  --color-gray-500:#8a8375;
+  --color-gray-600:#6b6456;
+  --color-gray-700:#4e483e;
+  --color-gray-800:#332f28;
+  --color-gray-900:#1a1815;
 
   /* Semantic */
-  --color-success: #166534;
-  --color-success-bg: #dcfce7;
-  --color-warning: #92400e;
-  --color-warning-bg: #fef3c7;
-  --color-error:   #991b1b;
-  --color-error-bg: #fee2e2;
-  --color-info:    #1e40af;
-  --color-info-bg: #dbeafe;
+  --color-success: #1b5e20;
+  --color-success-bg: #e8f5e9;
+  --color-warning: #e65100;
+  --color-warning-bg: #fff3e0;
+  --color-error:   #b71c1c;
+  --color-error-bg: #ffebee;
+  --color-info:    #0d47a1;
+  --color-info-bg: #e3f2fd;
 
   /* Typography */
   --font-serif: 'Playfair Display', Georgia, serif;
@@ -71,19 +71,19 @@
   --space-24: 6rem;
 
   /* Radius */
-  --radius-sm:  4px;
-  --radius-md:  8px;
-  --radius-lg:  12px;
-  --radius-xl:  16px;
-  --radius-2xl: 24px;
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.03);
-  --shadow-md:  0 10px 30px rgba(0, 0, 0, 0.05);
-  --shadow-lg:  0 20px 50px rgba(0, 0, 0, 0.08);
-  --shadow-xl:  0 30px 70px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 25px rgba(196, 133, 42, 0.15);
+  --shadow-sm:  0 2px 10px rgba(13, 44, 29, 0.04);
+  --shadow-md:  0 10px 30px rgba(13, 44, 29, 0.06);
+  --shadow-lg:  0 20px 50px rgba(13, 44, 29, 0.09);
+  --shadow-xl:  0 30px 70px rgba(13, 44, 29, 0.14);
+  --shadow-glow: 0 0 25px rgba(197, 160, 89, 0.22);
 
   /* Transitions */
   --transition-fast:   150ms ease;

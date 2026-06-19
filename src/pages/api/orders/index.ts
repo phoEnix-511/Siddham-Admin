@@ -58,23 +58,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // Fetch products and calculate total
+      // Fetch products and variants, and calculate total
       const productIds = items.map((i: { productId: string }) => i.productId);
-      const products = await prisma.product.findMany({
-        where: { id: { in: productIds } },
-      });
+      const variantIds = items.map((i: { variantId?: string }) => i.variantId).filter(Boolean) as string[];
+
+      const [products, variants] = await Promise.all([
+        prisma.product.findMany({ where: { id: { in: productIds } } }),
+        variantIds.length > 0
+          ? prisma.productVariant.findMany({ where: { id: { in: variantIds } } })
+          : Promise.resolve([]),
+      ]);
 
       let totalAmount = 0;
-      const orderItems = items.map((item: { productId: string; quantity: number }) => {
+      const orderItems = items.map((item: { productId: string; variantId?: string; quantity: number }) => {
         const product = products.find(p => p.id === item.productId);
         if (!product) throw new Error(`Product ${item.productId} not found`);
-        if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.name}`);
-        totalAmount += product.price * item.quantity;
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: product.price,
-        };
+
+        if (item.variantId) {
+          const variant = variants.find(v => v.id === item.variantId);
+          if (!variant) throw new Error(`Variant ${item.variantId} not found`);
+          if (variant.stock < item.quantity) {
+            throw new Error(`Insufficient stock for ${product.name} (${variant.name})`);
+          }
+          totalAmount += variant.price * item.quantity;
+          return {
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+            price: variant.price,
+          };
+        } else {
+          if (product.stock < item.quantity) {
+            throw new Error(`Insufficient stock for ${product.name}`);
+          }
+          totalAmount += product.price * item.quantity;
+          return {
+            productId: item.productId,
+            variantId: null,
+            quantity: item.quantity,
+            price: product.price,
+          };
+        }
       });
 
       const shippingAmount = totalAmount >= 999 ? 0 : 99;
@@ -93,16 +117,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         include: {
           customer: true,
-          items: { include: { product: true } },
+          items: { include: { product: true, variant: true } },
         },
       });
 
       // Reduce stock
       for (const item of items) {
-        await prisma.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
+        if (item.variantId) {
+          await prisma.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { decrement: item.quantity } },
+          });
+        } else {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } },
+          });
+        }
       }
 
       // Send order confirmation email (non-blocking)
@@ -112,7 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           customerName: customerName,
           customerEmail: customerEmail,
           items: order.items.map(i => ({
-            name: i.product.name,
+            name: i.product.name + (i.variant ? ` (${i.variant.name})` : ''),
             quantity: i.quantity,
             price: i.price,
           })),

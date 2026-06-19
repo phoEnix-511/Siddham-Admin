@@ -33,6 +33,7 @@ interface OrderDetail {
     quantity: number;
     price: number;
     product: { name: string; sku?: string; category: { name: string } };
+    variant?: { name: string; sku?: string } | null;
   }>;
 }
 
@@ -250,7 +251,14 @@ export default function AdminOrderDetailPage() {
                   <tbody>
                     {order.items.map(item => (
                       <tr key={item.id}>
-                        <td style={{ fontWeight: 600 }}>{item.product.name}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {item.product.name}
+                          {item.variant && (
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-gray-500)', fontWeight: 400, marginTop: 2 }}>
+                              Variant: {item.variant.name}
+                            </span>
+                          )}
+                        </td>
                         <td style={{ color: 'var(--color-gray-500)', fontSize: '0.8rem' }}>
                           {item.product.category ? item.product.category.name : 'Uncategorized'}
                         </td>

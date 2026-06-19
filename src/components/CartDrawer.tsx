@@ -37,38 +37,48 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
               </p>
             </div>
           ) : (
-            items.map(item => (
-              <div key={item.productId} className="cart-item">
-                <div
-                  className="cart-item-image"
-                  style={{
-                    width: 70, height: 70, borderRadius: 8,
-                    background: 'var(--color-parchment)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '1.5rem', flexShrink: 0,
-                  }}
-                >
-                  🌿
-                </div>
-                <div className="cart-item-info">
-                  <div className="cart-item-name">{item.name}</div>
-                  <div className="cart-item-price">₹{item.price}</div>
-                  <div className="quantity-control">
-                    <button className="qty-btn" onClick={() => updateQuantity(item.productId, item.quantity - 1)}>−</button>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
-                      {item.quantity}
-                    </span>
-                    <button className="qty-btn" onClick={() => updateQuantity(item.productId, item.quantity + 1)}>+</button>
-                    <button
-                      onClick={() => removeItem(item.productId)}
-                      style={{ marginLeft: 'auto', color: 'var(--color-error)', fontSize: '0.8rem' }}
-                    >
-                      Remove
-                    </button>
+            items.map(item => {
+              const itemKey = item.productId + (item.variantId ? `-${item.variantId}` : '');
+              return (
+                <div key={itemKey} className="cart-item">
+                  <div
+                    className="cart-item-image"
+                    style={{
+                      width: 70, height: 70, borderRadius: 8,
+                      background: 'var(--color-parchment)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '1.5rem', flexShrink: 0,
+                    }}
+                  >
+                    🌿
+                  </div>
+                  <div className="cart-item-info">
+                    <div className="cart-item-name">
+                      {item.name}
+                      {item.variantName && (
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '2px', fontWeight: 400 }}>
+                          Variant: {item.variantName}
+                        </span>
+                      )}
+                    </div>
+                    <div className="cart-item-price">₹{item.price}</div>
+                    <div className="quantity-control">
+                      <button className="qty-btn" onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}>−</button>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 600, minWidth: 24, textAlign: 'center' }}>
+                        {item.quantity}
+                      </span>
+                      <button className="qty-btn" onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}>+</button>
+                      <button
+                        onClick={() => removeItem(item.productId, item.variantId)}
+                        style={{ marginLeft: 'auto', color: 'var(--color-error)', fontSize: '0.8rem' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

@@ -34,6 +34,15 @@ const defaultForm: FormData = {
   images: [], videoUrl: '',
 };
 
+interface ProductVariantForm {
+  id?: string;
+  name: string;
+  price: string;
+  comparePrice: string;
+  stock: string;
+  sku: string;
+}
+
 export default function ProductFormPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -41,6 +50,7 @@ export default function ProductFormPage() {
   const { addToast } = useToast();
 
   const [form, setForm] = useState<FormData>(defaultForm);
+  const [variants, setVariants] = useState<ProductVariantForm[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -149,6 +159,16 @@ export default function ProductFormPage() {
             isActive: p.isActive, isFeatured: p.isFeatured,
             images: p.images || [], videoUrl: p.videoUrl || '',
           });
+          if (p.variants) {
+            setVariants(p.variants.map((v: any) => ({
+              id: v.id,
+              name: v.name,
+              price: String(v.price),
+              comparePrice: v.comparePrice ? String(v.comparePrice) : '',
+              stock: String(v.stock),
+              sku: v.sku || '',
+            })));
+          }
         }
         setLoading(false);
       });
@@ -175,6 +195,14 @@ export default function ProductFormPage() {
           price: parseFloat(form.price),
           comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
           stock: parseInt(form.stock),
+          variants: variants.map(v => ({
+            id: v.id,
+            name: v.name,
+            price: parseFloat(v.price) || 0,
+            comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+            stock: parseInt(v.stock) || 0,
+            sku: v.sku || null,
+          })),
         }),
       });
       const data = await res.json();
@@ -288,7 +316,7 @@ export default function ProductFormPage() {
               </div>
 
               <div className="card">
-                <div className="card-header"><h4 style={{ color: 'var(--color-forest-dark)' }}>Pricing & Inventory</h4></div>
+                <div className="card-header"><h4 style={{ color: 'var(--color-forest-dark)' }}>Pricing & Inventory (Base Product)</h4></div>
                 <div className="card-body">
                   <div className="grid-3" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
                     <div className="form-group">
@@ -314,6 +342,133 @@ export default function ProductFormPage() {
                       <input id="prod-weight" className="form-input" name="weight" value={form.weight} onChange={handleChange} placeholder="200ml or 60 Capsules" />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ color: 'var(--color-forest-dark)' }}>Product Variants (e.g., sizes, volumes)</h4>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setVariants(prev => [...prev, { name: '', price: '', comparePrice: '', stock: '0', sku: '' }])}
+                  >
+                    + Add Variant
+                  </button>
+                </div>
+                <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {variants.length === 0 ? (
+                    <div style={{ padding: 'var(--space-4)', textAlign: 'center', color: 'var(--color-gray-400)', border: '2px dashed var(--color-gray-200)', borderRadius: 'var(--radius-md)' }}>
+                      No variants added. Single-variant products will use the base price and stock above.
+                    </div>
+                  ) : (
+                    variants.map((v, idx) => (
+                      <div key={idx} style={{
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 1fr 1fr 1fr 2fr auto',
+                        gap: 'var(--space-3)',
+                        alignItems: 'end',
+                        padding: 'var(--space-3)',
+                        border: '1px solid var(--color-gray-200)',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-gray-50)'
+                      }}>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.75rem' }}>Name (e.g. 200 ml) *</label>
+                          <input
+                            required
+                            className="form-input form-input-sm"
+                            style={{ padding: '6px var(--space-2)' }}
+                            value={v.name}
+                            onChange={e => {
+                              const next = [...variants];
+                              next[idx].name = e.target.value;
+                              setVariants(next);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.75rem' }}>Price (₹) *</label>
+                          <input
+                            required
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="form-input form-input-sm"
+                            style={{ padding: '6px var(--space-2)' }}
+                            value={v.price}
+                            onChange={e => {
+                              const next = [...variants];
+                              next[idx].price = e.target.value;
+                              setVariants(next);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.75rem' }}>Compare Price (₹)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="form-input form-input-sm"
+                            style={{ padding: '6px var(--space-2)' }}
+                            value={v.comparePrice}
+                            onChange={e => {
+                              const next = [...variants];
+                              next[idx].comparePrice = e.target.value;
+                              setVariants(next);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.75rem' }}>Stock *</label>
+                          <input
+                            required
+                            type="number"
+                            min="0"
+                            className="form-input form-input-sm"
+                            style={{ padding: '6px var(--space-2)' }}
+                            value={v.stock}
+                            onChange={e => {
+                              const next = [...variants];
+                              next[idx].stock = e.target.value;
+                              setVariants(next);
+                            }}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label" style={{ fontSize: '0.75rem' }}>SKU</label>
+                          <input
+                            className="form-input form-input-sm"
+                            style={{ padding: '6px var(--space-2)' }}
+                            value={v.sku}
+                            onChange={e => {
+                              const next = [...variants];
+                              next[idx].sku = e.target.value;
+                              setVariants(next);
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          style={{
+                            padding: 'var(--space-2) var(--space-3)',
+                            color: 'var(--color-error)',
+                            background: 'var(--color-error-bg)',
+                            marginBottom: '2px',
+                            height: '38px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

@@ -15,12 +15,21 @@ interface Product {
   comparePrice?: number;
   images: string[];
   stock: number;
+  sku?: string;
   ingredients?: string;
   benefits?: string;
   usage?: string;
   weight?: string;
   videoUrl?: string;
   category: { name: string; slug: string };
+  variants?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    comparePrice?: number;
+    stock: number;
+    sku?: string;
+  }>;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -44,13 +53,27 @@ export default function ProductDetailPage() {
   const [qty, setQty] = useState(1);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage' | 'video'>('description');
+  
+  const [selectedVariant, setSelectedVariant] = useState<{
+    id: string;
+    name: string;
+    price: number;
+    comparePrice?: number;
+    stock: number;
+    sku?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!id) return;
     fetch(`/api/products/${id}`)
       .then(r => r.json())
       .then(d => {
-        setProduct(d.product);
+        if (d.product) {
+          setProduct(d.product);
+          if (d.product.variants && d.product.variants.length > 0) {
+            setSelectedVariant(d.product.variants[0]);
+          }
+        }
         setLoading(false);
       });
   }, [id]);
@@ -73,15 +96,29 @@ export default function ProductDetailPage() {
     </>
   );
 
-  const discount = product.comparePrice
-    ? Math.round((1 - product.price / product.comparePrice) * 100)
+  const activePrice = selectedVariant ? selectedVariant.price : product.price;
+  const activeComparePrice = selectedVariant ? selectedVariant.comparePrice : product.comparePrice;
+  const activeStock = selectedVariant ? selectedVariant.stock : product.stock;
+  const activeSku = selectedVariant ? selectedVariant.sku : product.sku;
+
+  const discount = activeComparePrice
+    ? Math.round((1 - activePrice / activeComparePrice) * 100)
     : 0;
 
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
-      addItem({ productId: product.id, name: product.name, price: product.price, image: '', stock: product.stock });
+      addItem({
+        productId: product.id,
+        variantId: selectedVariant?.id,
+        variantName: selectedVariant?.name,
+        name: product.name,
+        price: activePrice,
+        image: product.images?.[0] || '',
+        stock: activeStock,
+      });
     }
-    addToast(`${qty}× ${product.name} added to cart`, 'success');
+    const itemLabel = selectedVariant ? `${product.name} (${selectedVariant.name})` : product.name;
+    addToast(`${qty}× ${itemLabel} added to cart`, 'success');
   };
 
   return (
@@ -178,23 +215,71 @@ export default function ProductDetailPage() {
               <div className="product-category-tag" style={{ fontSize: '0.8rem', marginBottom: 'var(--space-2)' }}>
                 {product.category.name}
               </div>
-              <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', marginBottom: 'var(--space-4)', color: 'var(--color-forest-dark)' }}>
+              <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', marginBottom: 'var(--space-3)', color: 'var(--color-forest-dark)' }}>
                 {product.name}
               </h1>
 
-              {product.weight && (
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span>⚖️</span> {product.weight}
+              <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+                {product.weight && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span>⚖️</span> {product.weight}
+                  </div>
+                )}
+                {activeSku && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span>SKU:</span> <code style={{ fontSize: '0.75rem' }}>{activeSku}</code>
+                  </div>
+                )}
+              </div>
+
+              {/* Variant Selector */}
+              {product.variants && product.variants.length > 0 && (
+                <div style={{ marginBottom: 'var(--space-5)', borderBottom: '1px solid var(--color-gray-100)', paddingBottom: 'var(--space-4)' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gray-700)', marginBottom: 'var(--space-2)' }}>
+                    Select Option / Size:
+                  </div>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                    {product.variants.map(v => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedVariant(v);
+                          setQty(1);
+                        }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 'var(--radius-md)',
+                          border: selectedVariant?.id === v.id
+                            ? '2px solid var(--color-saffron)'
+                            : '1.5px solid var(--color-gray-200)',
+                          background: selectedVariant?.id === v.id
+                            ? 'rgba(196, 133, 42, 0.08)'
+                            : 'var(--color-white)',
+                          color: selectedVariant?.id === v.id
+                            ? 'var(--color-saffron-dark)'
+                            : 'var(--color-gray-700)',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          boxShadow: selectedVariant?.id === v.id ? 'var(--shadow-glow)' : 'none',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {v.name} - ₹{v.price}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
                 <span style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 700, color: 'var(--color-forest)' }}>
-                  ₹{product.price}
+                  ₹{activePrice}
                 </span>
-                {product.comparePrice && (
+                {activeComparePrice && (
                   <span style={{ fontSize: '1.1rem', color: 'var(--color-gray-400)', textDecoration: 'line-through' }}>
-                    ₹{product.comparePrice}
+                    ₹{activeComparePrice}
                   </span>
                 )}
                 {discount > 0 && (
@@ -204,20 +289,20 @@ export default function ProductDetailPage() {
 
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: product.stock === 0 ? 'var(--color-error-bg)' : product.stock <= 10 ? 'var(--color-warning-bg)' : 'var(--color-success-bg)',
-                color: product.stock === 0 ? 'var(--color-error)' : product.stock <= 10 ? 'var(--color-warning)' : 'var(--color-success)',
+                background: activeStock === 0 ? 'var(--color-error-bg)' : activeStock <= 10 ? 'var(--color-warning-bg)' : 'var(--color-success-bg)',
+                color: activeStock === 0 ? 'var(--color-error)' : activeStock <= 10 ? 'var(--color-warning)' : 'var(--color-success)',
                 borderRadius: 'var(--radius-full)', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 700,
                 marginBottom: 'var(--space-6)',
               }}>
-                {product.stock === 0 ? '❌ Out of Stock' : product.stock <= 10 ? `⚠️ Only ${product.stock} left` : '✅ In Stock'}
+                {activeStock === 0 ? '❌ Out of Stock' : activeStock <= 10 ? `⚠️ Only ${activeStock} left` : '✅ In Stock'}
               </div>
 
-              {product.stock > 0 && (
+              {activeStock > 0 && (
                 <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                     <button className="qty-btn" style={{ width: 36, height: 36 }} onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
                     <span style={{ fontWeight: 700, fontSize: '1.1rem', minWidth: 32, textAlign: 'center' }}>{qty}</span>
-                    <button className="qty-btn" style={{ width: 36, height: 36 }} onClick={() => setQty(Math.min(product.stock, qty + 1))}>+</button>
+                    <button className="qty-btn" style={{ width: 36, height: 36 }} onClick={() => setQty(Math.min(activeStock, qty + 1))}>+</button>
                   </div>
                   <button
                     id="add-to-cart-btn"

@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const product = await prisma.product.findUnique({
         where: { id: productId },
-        include: { category: true },
+        include: { category: true, variants: true },
       });
       if (!product) return res.status(404).json({ error: 'Product not found' });
       return res.status(200).json({ product });
@@ -31,6 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const {
       name, description, price, comparePrice, images, stock, sku,
       isActive, isFeatured, ingredients, benefits, usage, weight, videoUrl, categoryId,
+      variants,
     } = req.body;
 
     try {
@@ -49,10 +50,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (stock !== undefined) updateData.stock = parseInt(stock);
       if (sku !== undefined) updateData.sku = sku || null;
 
+      // Handle variant updates if present
+      if (variants !== undefined) {
+        const existingVariants = await prisma.productVariant.findMany({
+          where: { productId },
+        });
+        const existingIds = existingVariants.map(v => v.id);
+        const incomingIds = variants.map((v: any) => v.id).filter(Boolean);
+
+        // Delete variants not in incoming list
+        const idsToDelete = existingIds.filter(id => !incomingIds.includes(id));
+        if (idsToDelete.length > 0) {
+          await prisma.productVariant.deleteMany({
+            where: { id: { in: idsToDelete } },
+          });
+        }
+
+        // Upsert incoming variants
+        for (const v of variants) {
+          if (v.id) {
+            await prisma.productVariant.update({
+              where: { id: v.id },
+              data: {
+                name: v.name,
+                price: parseFloat(v.price),
+                comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+                stock: parseInt(v.stock) || 0,
+                sku: v.sku || null,
+              },
+            });
+          } else {
+            await prisma.productVariant.create({
+              data: {
+                productId,
+                name: v.name,
+                price: parseFloat(v.price),
+                comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+                stock: parseInt(v.stock) || 0,
+                sku: v.sku || null,
+              },
+            });
+          }
+        }
+      }
+
       const product = await prisma.product.update({
         where: { id: productId },
         data: updateData,
-        include: { category: true },
+        include: { category: true, variants: true },
       });
       return res.status(200).json({ product });
     } catch (error) {

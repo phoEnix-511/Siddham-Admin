@@ -61,13 +61,17 @@ async function main() {
       comparePrice: 399,
       stock: 150,
       sku: "SW-LIVER-001",
-      weight: "200 ml",
+      weight: "200 ml, 450 ml",
       ingredients: "Giloy, Punarnava, Kalmegh, Bhumi Amla, Nagarmotha, Indrayan Jad (Indian Gentian Root)",
       benefits: "Liver Detoxification, Effective for Fatty Liver, Improves Overall Liver Functioning, Complete Digestive Care, Relieves Acidity & Hyperacidity, Promotes Healthy Digestion & Metabolism",
       usage: "10-15 ml twice daily after meals or as directed by a physician.",
       isActive: true,
       isFeatured: true,
       categorySlug: "ayurvedic-herbal-formulation",
+      variants: [
+        { name: "200 ml", price: 299, comparePrice: 399, stock: 100, sku: "SW-LIVER-200" },
+        { name: "450 ml", price: 549, comparePrice: 699, stock: 50, sku: "SW-LIVER-450" }
+      ]
     },
     {
       name: "Piles Cure",
@@ -77,13 +81,17 @@ async function main() {
       comparePrice: 449,
       stock: 100,
       sku: "SW-PILES-001",
-      weight: "200 ml",
+      weight: "200 ml, 450 ml",
       ingredients: "Mahuwa, Munakka, Nagkesar, Harad, Kalimirch, Sonth, Vayvidang",
       benefits: "Helps in Bleeding & Non-Bleeding Piles, Relief in External & Internal Piles, Helps in Anal Fissures, Relief in Inflammatory Conditions of Rectum, Relieves Constipation & Improves Bowel Movement, Improves Blood Circulation & Strengthens Veins",
       usage: "10-15 ml twice a day after meals or as directed by the physician.",
       isActive: true,
       isFeatured: true,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "200 ml", price: 349, comparePrice: 449, stock: 60, sku: "SW-PILES-200" },
+        { name: "450 ml", price: 599, comparePrice: 799, stock: 40, sku: "SW-PILES-450" }
+      ]
     },
     {
       name: "Digesto Prash",
@@ -93,13 +101,17 @@ async function main() {
       comparePrice: 649,
       stock: 120,
       sku: "SW-DIGEST-001",
-      weight: "150 GM",
+      weight: "150 g, 300 g",
       ingredients: "Triphala, Khajur (Dates), Munakka (Raisins), Mulethi (Licorice), Lendi Pipal, Prawal Pishti, Jaiphal, Saunf, Elaichi, Dalchini, Nagkesar, Vidhara, Amla",
       benefits: "Improves digestion & nutrient absorption, Relieves constipation & regulates bowel movements, Reduces acidity & soothes the stomach lining, Relieves gas, bloating & heaviness, Detoxifies & cleanses the gut naturally, Supports immunity and overall well-being",
       usage: "1-2 teaspoons (5-10 g) with lukewarm water or milk 1-2 times daily or as directed by the physician.",
       isActive: true,
       isFeatured: true,
       categorySlug: "ayurvedic-formulation",
+      variants: [
+        { name: "150 g", price: 499, comparePrice: 649, stock: 80, sku: "SW-DIGEST-150" },
+        { name: "300 g", price: 899, comparePrice: 1199, stock: 40, sku: "SW-DIGEST-300" }
+      ]
     },
     {
       name: "Forest Sulfate Free Shampoo",
@@ -109,13 +121,17 @@ async function main() {
       comparePrice: 549,
       stock: 150,
       sku: "SW-SHAMP-001",
-      weight: "200 ML",
+      weight: "200 ml, 400 ml",
       ingredients: "Reetha, Shikakai, Amla, Bhringraj, Aloevera, Henna",
       benefits: "Gently cleanses scalp & hair without stripping natural oils, Retains natural moisture and hydration, Reduces hair breakage, hair fall & split ends, Helps relieve scalp irritation, dandruff & itchiness, Leaves hair soft, shiny and easy to manage",
       usage: "Wet your hair. Take a small amount & gently massage. Rinse thoroughly.",
       isActive: true,
       isFeatured: true,
       categorySlug: "hair-care",
+      variants: [
+        { name: "200 ml", price: 399, comparePrice: 549, stock: 100, sku: "SW-SHAMP-200" },
+        { name: "400 ml", price: 699, comparePrice: 899, stock: 50, sku: "SW-SHAMP-400" }
+      ]
     },
     {
       name: "Ashwagandha",
@@ -125,13 +141,17 @@ async function main() {
       comparePrice: 399,
       stock: 200,
       sku: "SW-ASHWA-001",
-      weight: "60 Tablets",
+      weight: "60 Tablets, 120 Tablets",
       ingredients: "Organic Ashwagandha Root extract",
       benefits: "Helps reduce stress & anxiety, Supports strength, stamina & endurance, Promotes better sleep quality, Supports brain function & focus, Supports overall vitality & well-being",
       usage: "1 tablet twice a day with milk / water or as advised by physician.",
       isActive: true,
       isFeatured: true,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "60 Tablets", price: 299, comparePrice: 399, stock: 120, sku: "SW-ASHWA-060" },
+        { name: "120 Tablets", price: 549, comparePrice: 699, stock: 80, sku: "SW-ASHWA-120" }
+      ]
     },
     {
       name: "Shatavari",
@@ -141,13 +161,17 @@ async function main() {
       comparePrice: 399,
       stock: 180,
       sku: "SW-SHATA-001",
-      weight: "60 Tablets",
+      weight: "60 Tablets, 120 Tablets",
       ingredients: "Organic Shatavari Root extract",
       benefits: "Supports women's hormonal balance, Supports reproductive health, Helps improve lactation, Nourishes & supports overall vitality, Promotes inner balance & well-being",
       usage: "1 tablet twice a day with milk / water or as advised by physician.",
       isActive: true,
       isFeatured: false,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "60 Tablets", price: 299, comparePrice: 399, stock: 100, sku: "SW-SHATA-060" },
+        { name: "120 Tablets", price: 549, comparePrice: 699, stock: 80, sku: "SW-SHATA-120" }
+      ]
     },
     {
       name: "Giloy",
@@ -157,13 +181,17 @@ async function main() {
       comparePrice: 349,
       stock: 250,
       sku: "SW-GILOY-001",
-      weight: "60 Tablets",
+      weight: "60 Tablets, 120 Tablets",
       ingredients: "Organic Giloy Stem extract",
       benefits: "Boosts immunity, Helps detoxify the body, Supports respiratory health, Helps manage fever & infections, Promotes overall health & wellness",
       usage: "1 tablet twice a day with milk / water or as advised by physician.",
       isActive: true,
       isFeatured: false,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "60 Tablets", price: 249, comparePrice: 349, stock: 150, sku: "SW-GILOY-060" },
+        { name: "120 Tablets", price: 449, comparePrice: 599, stock: 100, sku: "SW-GILOY-120" }
+      ]
     },
     {
       name: "Shilajeet",
@@ -173,13 +201,17 @@ async function main() {
       comparePrice: 1499,
       stock: 80,
       sku: "SW-SHILA-001",
-      weight: "30 Tablets",
+      weight: "30 Tablets, 60 Tablets",
       ingredients: "Himalayan Shilajeet extract",
       benefits: "Improves strength, stamina & endurance, Enhances energy & reduces fatigue, Supports healthy aging & vitality, Improves testosterone levels & sexual health, Supports immune function & overall well-being",
       usage: "1 tablet twice a day with milk / water or as advised by physician.",
       isActive: true,
       isFeatured: true,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "30 Tablets", price: 999, comparePrice: 1499, stock: 50, sku: "SW-SHILA-030" },
+        { name: "60 Tablets", price: 1799, comparePrice: 2499, stock: 30, sku: "SW-SHILA-060" }
+      ]
     },
     {
       name: "Arjuna",
@@ -189,13 +221,17 @@ async function main() {
       comparePrice: 349,
       stock: 150,
       sku: "SW-ARJUN-001",
-      weight: "30 Tablets",
+      weight: "30 Tablets, 60 Tablets",
       ingredients: "Organic Arjuna Extract",
       benefits: "Supports healthy heart function, Helps maintain normal blood pressure, Supports healthy blood circulation, Strengthens heart muscles & improves endurance, Supports overall cardiovascular health & well-being",
       usage: "1 tablet twice a day with milk / water or as advised by physician.",
       isActive: true,
       isFeatured: false,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "30 Tablets", price: 249, comparePrice: 349, stock: 100, sku: "SW-ARJUN-030" },
+        { name: "60 Tablets", price: 449, comparePrice: 599, stock: 50, sku: "SW-ARJUN-060" }
+      ]
     },
     {
       name: "Gokshura",
@@ -205,22 +241,26 @@ async function main() {
       comparePrice: 399,
       stock: 150,
       sku: "SW-GOKSH-001",
-      weight: "30 Tablets",
+      weight: "30 Tablets, 60 Tablets",
       ingredients: "Organic Gokshura Extract",
       benefits: "Improves strength, stamina & physical performance, Supports healthy kidney & urinary function, Helps balance hormones naturally, Enhances libido & reproductive health, Supports overall vitality & well-being",
       usage: "1 tablet twice a day with milk / water or as advised by physician.",
       isActive: true,
       isFeatured: true,
       categorySlug: "ayurvedic-proprietary-medicine",
+      variants: [
+        { name: "30 Tablets", price: 299, comparePrice: 399, stock: 100, sku: "SW-GOKSH-030" },
+        { name: "60 Tablets", price: 549, comparePrice: 699, stock: 50, sku: "SW-GOKSH-060" }
+      ]
     },
   ];
 
   for (const p of products) {
-    const { categorySlug, ...productData } = p;
+    const { categorySlug, variants, ...productData } = p;
     const categoryId = createdCategories[categorySlug];
     if (!categoryId) continue;
 
-    await prisma.product.upsert({
+    const createdProduct = await prisma.product.upsert({
       where: { slug: productData.slug },
       update: {
         description: productData.description,
@@ -240,7 +280,28 @@ async function main() {
         categoryId,
       },
     });
+
     console.log(`✅ Product: ${productData.name}`);
+
+    if (variants) {
+      for (const v of variants) {
+        await prisma.productVariant.upsert({
+          where: { sku: v.sku },
+          update: {
+            name: v.name,
+            price: v.price,
+            comparePrice: v.comparePrice,
+            stock: v.stock,
+            productId: createdProduct.id,
+          },
+          create: {
+            ...v,
+            productId: createdProduct.id,
+          },
+        });
+      }
+      console.log(`   └─ Added ${variants.length} variants`);
+    }
   }
 
   // ── Default Settings ─────────────────────────────────────────

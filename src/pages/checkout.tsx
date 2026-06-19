@@ -66,7 +66,11 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+          items: items.map(i => ({
+            productId: i.productId,
+            variantId: i.variantId || null,
+            quantity: i.quantity,
+          })),
           customerName: form.name,
           customerEmail: form.email,
           customerPhone: form.phone,
@@ -243,17 +247,27 @@ export default function CheckoutPage() {
                 </h3>
               </div>
               <div style={{ padding: 'var(--space-4) var(--space-5)' }}>
-                {items.map(item => (
-                  <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-3) 0', borderBottom: '1px solid var(--color-gray-100)' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-forest-dark)' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>Qty: {item.quantity}</div>
+                {items.map(item => {
+                  const itemKey = item.productId + (item.variantId ? `-${item.variantId}` : '');
+                  return (
+                    <div key={itemKey} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-3) 0', borderBottom: '1px solid var(--color-gray-100)' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-forest-dark)' }}>
+                          {item.name}
+                          {item.variantName && (
+                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '2px', fontWeight: 400 }}>
+                              Variant: {item.variantName}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>Qty: {item.quantity}</div>
+                      </div>
+                      <div style={{ fontWeight: 700, color: 'var(--color-forest)', fontSize: '0.875rem' }}>
+                        ₹{item.price * item.quantity}
+                      </div>
                     </div>
-                    <div style={{ fontWeight: 700, color: 'var(--color-forest)', fontSize: '0.875rem' }}>
-                      ₹{item.price * item.quantity}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'var(--color-parchment)', borderTop: '1px solid var(--color-gray-100)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-2)' }}>

@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id: id as string },
         include: {
           customer: true,
-          items: { include: { product: { include: { category: true } } } },
+          items: { include: { product: { include: { category: true } }, variant: true } },
         },
       });
       if (!order) return res.status(404).json({ error: 'Order not found' });
@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         include: {
           customer: true,
-          items: { include: { product: { include: { category: true } } } },
+          items: { include: { product: { include: { category: true } }, variant: true } },
         },
       });
 

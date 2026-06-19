@@ -16,6 +16,12 @@ interface Product {
   isFeatured: boolean;
   category: { name: string; slug: string };
   description: string;
+  variants?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    stock: number;
+  }>;
 }
 
 interface Category {
@@ -86,9 +92,23 @@ function ProductCard({ product }: { product: Product }) {
             </span>
           )}
           <div className="product-card-actions">
-            <button className="btn btn-gold" style={{ width: '100%', borderRadius: 8 }} onClick={e => { e.preventDefault(); handleAdd(); }}>
-              + Add to Cart
-            </button>
+            {product.variants && product.variants.length > 0 ? (
+              <span className="btn btn-gold" style={{ width: '100%', borderRadius: 8, display: 'inline-flex', justifyContent: 'center' }}>
+                🔍 View Options
+              </span>
+            ) : (
+              <button
+                className="btn btn-gold"
+                style={{ width: '100%', borderRadius: 8 }}
+                onClick={e => {
+                  e.preventDefault();
+                  handleAdd();
+                }}
+                disabled={product.stock === 0}
+              >
+                {product.stock === 0 ? 'Out of Stock' : '+ Add to Cart'}
+              </button>
+            )}
           </div>
         </div>
       </Link>
