@@ -53,6 +53,19 @@ const defaultSettings: Settings = {
   shipping_returns_content: '<h2>Shipping & Returns</h2><h3>Shipping Policy</h3><p>We offer free standard shipping on all orders above ₹999. For orders below this threshold, a flat shipping fee of ₹99 is charged. Orders are typically processed within 24-48 hours and delivered in 3-5 business days.</p><h3>Returns & Exchange Policy</h3><p>Due to the personal and health nature of Ayurvedic products, we do not accept returns. However, if you receive a damaged or incorrect product, please contact us at support@siddhamwellness.com within 48 hours of delivery with photos of the package, and we will send a free replacement.</p>',
 };
 
+const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
+  <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+    <div className="card-header">
+      <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        {icon} {title}
+      </h3>
+    </div>
+    <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      {children}
+    </div>
+  </div>
+);
+
 export default function AdminSettingsPage() {
   const router = useRouter();
   const { addToast } = useToast();
@@ -141,19 +154,6 @@ export default function AdminSettingsPage() {
   };
 
   if (loading) return <AdminLayout title="Settings"><div className="loading-page"><div className="spinner" /></div></AdminLayout>;
-
-  const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
-    <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
-      <div className="card-header">
-        <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          {icon} {title}
-        </h3>
-      </div>
-      <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-        {children}
-      </div>
-    </div>
-  );
 
   return (
     <>
