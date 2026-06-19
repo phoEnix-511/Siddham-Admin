@@ -19,6 +19,7 @@ interface Product {
   benefits?: string;
   usage?: string;
   weight?: string;
+  videoUrl?: string;
   category: { name: string; slug: string };
 }
 
@@ -35,7 +36,8 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
-  const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage'>('description');
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage' | 'video'>('description');
 
   useEffect(() => {
     if (!id) return;
@@ -97,17 +99,72 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="product-detail-grid">
-            {/* Product Image */}
-            <div>
+            {/* Product Image Gallery */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
               <div style={{
                 background: 'var(--color-parchment)',
                 borderRadius: 'var(--radius-2xl)',
                 aspectRatio: '1',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '8rem', border: '1px solid var(--color-gray-100)',
+                border: '1px solid var(--color-gray-100)',
+                overflow: 'hidden',
+                position: 'relative'
               }}>
-                {CATEGORY_ICONS[product.category.slug] || '🌿'}
+                {product.images && product.images.length > 0 && product.images[activeImageIdx] ? (
+                  <img
+                    src={product.images[activeImageIdx]}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      const parent = (e.target as HTMLImageElement).parentElement;
+                      const fallback = parent?.querySelector('.detail-fallback-placeholder');
+                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="detail-fallback-placeholder"
+                  style={{
+                    display: product.images && product.images.length > 0 && product.images[activeImageIdx] ? 'none' : 'flex',
+                    fontSize: '8rem'
+                  }}
+                >
+                  {CATEGORY_ICONS[product.category.slug] || '🌿'}
+                </div>
               </div>
+
+              {/* Thumbnails */}
+              {product.images && product.images.length > 1 && (
+                <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                  {product.images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveImageIdx(idx)}
+                      style={{
+                        width: 70, height: 70,
+                        border: activeImageIdx === idx ? '2.5px solid var(--color-saffron)' : '1px solid var(--color-gray-200)',
+                        borderRadius: 'var(--radius-md)',
+                        overflow: 'hidden',
+                        padding: 0,
+                        background: 'var(--color-parchment)',
+                        cursor: 'pointer',
+                        boxShadow: activeImageIdx === idx ? 'var(--shadow-glow)' : 'none',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${idx + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="3" width="18" height="18" rx="2" ry="2"%3E%3C/rect%3E%3Ccircle cx="8.5" cy="8.5" r="1.5"%3E%3C/circle%3E%3Cpolyline points="21 15 16 10 5 21"%3E%3C/polyline%3E%3C/svg%3E';
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Product Details */}
@@ -185,55 +242,104 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Tabs */}
-          <div style={{ marginTop: 'var(--space-12)' }}>
-            <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--color-gray-200)', marginBottom: 'var(--space-6)' }}>
-              {(['description', 'ingredients', 'usage'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: 'var(--space-3) var(--space-6)',
-                    fontWeight: 600, fontSize: '0.875rem', textTransform: 'capitalize',
-                    color: activeTab === tab ? 'var(--color-forest)' : 'var(--color-gray-500)',
-                    borderBottom: activeTab === tab ? '2px solid var(--color-saffron)' : '2px solid transparent',
-                    marginBottom: -2, transition: 'all 0.2s', cursor: 'pointer',
-                    background: 'none',
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+          {(() => {
+            const tabs: { id: 'description' | 'ingredients' | 'usage' | 'video'; label: string }[] = [
+              { id: 'description', label: 'Description' }
+            ];
+            if (product.ingredients || product.benefits) {
+              tabs.push({ id: 'ingredients', label: 'Ingredients' });
+            }
+            if (product.usage) {
+              tabs.push({ id: 'usage', label: 'Usage Instructions' });
+            }
+            if (product.videoUrl) {
+              tabs.push({ id: 'video', label: 'Video Demo' });
+            }
 
-            <div style={{ maxWidth: 760 }}>
-              {activeTab === 'description' && (
-                <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)' }}>{product.description}</p>
-              )}
-              {activeTab === 'ingredients' && product.ingredients && (
-                <div>
-                  <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)', marginBottom: 'var(--space-4)' }}>
-                    {product.ingredients}
-                  </p>
-                  {product.benefits && (
-                    <>
-                      <h4 style={{ color: 'var(--color-forest-dark)', marginBottom: 'var(--space-3)' }}>Key Benefits</h4>
-                      <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                        {product.benefits.split(',').map((b, i) => (
-                          <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', color: 'var(--color-gray-700)' }}>
-                            <span style={{ color: 'var(--color-saffron)', fontWeight: 700 }}>✦</span>
-                            {b.trim()}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
+            return (
+              <div style={{ marginTop: 'var(--space-12)' }}>
+                <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--color-gray-200)', marginBottom: 'var(--space-6)' }}>
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      style={{
+                        padding: 'var(--space-3) var(--space-6)',
+                        fontWeight: 600, fontSize: '0.875rem',
+                        color: activeTab === tab.id ? 'var(--color-forest)' : 'var(--color-gray-500)',
+                        borderBottom: activeTab === tab.id ? '2px solid var(--color-saffron)' : '2px solid transparent',
+                        marginBottom: -2, transition: 'all 0.2s', cursor: 'pointer',
+                        background: 'none',
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ maxWidth: 760 }}>
+                  {activeTab === 'description' && (
+                    <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)' }}>{product.description}</p>
+                  )}
+                  {activeTab === 'ingredients' && (product.ingredients || product.benefits) && (
+                    <div>
+                      {product.ingredients && (
+                        <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)', marginBottom: 'var(--space-4)' }}>
+                          {product.ingredients}
+                        </p>
+                      )}
+                      {product.benefits && (
+                        <>
+                          <h4 style={{ color: 'var(--color-forest-dark)', marginBottom: 'var(--space-3)' }}>Key Benefits</h4>
+                          <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                            {product.benefits.split(',').map((b, i) => (
+                              <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', color: 'var(--color-gray-700)' }}>
+                                <span style={{ color: 'var(--color-saffron)', fontWeight: 700 }}>✦</span>
+                                {b.trim()}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {activeTab === 'usage' && product.usage && (
+                    <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)' }}>{product.usage}</p>
+                  )}
+                  {activeTab === 'video' && product.videoUrl && (
+                    <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)', background: '#000' }}>
+                      {(() => {
+                        const getYouTubeEmbedId = (url?: string) => {
+                          if (!url) return null;
+                          const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                          const match = url.match(regExp);
+                          return (match && match[2].length === 11) ? match[2] : null;
+                        };
+                        const embedId = getYouTubeEmbedId(product.videoUrl);
+                        if (embedId) {
+                          return (
+                            <iframe
+                              src={`https://www.youtube.com/embed/${embedId}`}
+                              title={`${product.name} Video Demonstration`}
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                            />
+                          );
+                        }
+                        return (
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-parchment-dark)', color: 'var(--color-gray-500)' }}>
+                            Invalid video link: {product.videoUrl}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   )}
                 </div>
-              )}
-              {activeTab === 'usage' && product.usage && (
-                <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)' }}>{product.usage}</p>
-              )}
-            </div>
-          </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 

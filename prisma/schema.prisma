@@ -116,6 +116,7 @@ model Product {
   benefits     String?
   usage        String?
   weight       String?
+  videoUrl     String?
   categoryId   String
   category     Category    @relation(fields: [categoryId], references: [id])
   orderItems   OrderItem[]

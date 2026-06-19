@@ -23,12 +23,15 @@ interface FormData {
   weight: string;
   isActive: boolean;
   isFeatured: boolean;
+  images: string[];
+  videoUrl: string;
 }
 
 const defaultForm: FormData = {
   name: '', description: '', price: '', comparePrice: '', stock: '0',
   sku: '', categoryId: '', ingredients: '', benefits: '',
   usage: '', weight: '', isActive: true, isFeatured: false,
+  images: [], videoUrl: '',
 };
 
 export default function ProductFormPage() {
@@ -41,6 +44,35 @@ export default function ProductFormPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
+
+  const handleAddImage = () => {
+    if (!newImageUrl.trim()) return;
+    setForm(prev => ({
+      ...prev,
+      images: [...prev.images, newImageUrl.trim()],
+    }));
+    setNewImageUrl('');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleMoveImage = (index: number, direction: 'up' | 'down') => {
+    setForm(prev => {
+      const newImages = [...prev.images];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newImages.length) return prev;
+      const temp = newImages[index];
+      newImages[index] = newImages[targetIndex];
+      newImages[targetIndex] = temp;
+      return { ...prev, images: newImages };
+    });
+  };
 
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || []));
@@ -55,6 +87,7 @@ export default function ProductFormPage() {
             ingredients: p.ingredients || '', benefits: p.benefits || '',
             usage: p.usage || '', weight: p.weight || '',
             isActive: p.isActive, isFeatured: p.isFeatured,
+            images: p.images || [], videoUrl: p.videoUrl || '',
           });
         }
         setLoading(false);
@@ -82,7 +115,6 @@ export default function ProductFormPage() {
           price: parseFloat(form.price),
           comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
           stock: parseInt(form.stock),
-          images: [],
         }),
       });
       const data = await res.json();
@@ -122,6 +154,80 @@ export default function ProductFormPage() {
                       <option value="">Select Category...</option>
                       {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-header"><h4 style={{ color: 'var(--color-forest-dark)' }}>Media (Photos & Video)</h4></div>
+                <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                  <div className="form-group">
+                    <label className="form-label">Add Product Image URL</label>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                      <input
+                        className="form-input"
+                        placeholder="e.g. https://images.unsplash.com/photo-..."
+                        value={newImageUrl}
+                        onChange={e => setNewImageUrl(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddImage();
+                          }
+                        }}
+                      />
+                      <button type="button" className="btn btn-outline" style={{ borderRadius: 'var(--radius-md)', padding: '0 var(--space-4)' }} onClick={handleAddImage}>
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {form.images.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                      <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)' }}>Current Images (First is cover)</label>
+                      {form.images.map((img, idx) => (
+                        <div key={idx} style={{
+                          display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+                          padding: 'var(--space-2)', border: '1px solid var(--color-gray-200)',
+                          borderRadius: 'var(--radius-md)', background: 'var(--color-gray-50)'
+                        }}>
+                          <img
+                            src={img}
+                            alt={`Preview ${idx + 1}`}
+                            style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 'var(--radius-sm)', background: 'var(--color-gray-100)' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="3" width="18" height="18" rx="2" ry="2"%3E%3C/rect%3E%3Ccircle cx="8.5" cy="8.5" r="1.5"%3E%3C/circle%3E%3Cpolyline points="21 15 16 10 5 21"%3E%3C/polyline%3E%3C/svg%3E';
+                            }}
+                          />
+                          <div style={{ flex: 1, fontSize: '0.8rem', color: 'var(--color-gray-600)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {img}
+                          </div>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} disabled={idx === 0} onClick={() => handleMoveImage(idx, 'up')}>
+                              ▲
+                            </button>
+                            <button type="button" className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} disabled={idx === form.images.length - 1} onClick={() => handleMoveImage(idx, 'down')}>
+                              ▼
+                            </button>
+                            <button type="button" className="btn btn-sm" style={{ padding: '4px 8px', color: 'var(--color-error)', background: 'var(--color-error-bg)' }} onClick={() => handleRemoveImage(idx)}>
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="form-group" style={{ marginTop: 'var(--space-2)' }}>
+                    <label className="form-label" htmlFor="prod-video">YouTube Video URL</label>
+                    <input
+                      id="prod-video"
+                      className="form-input"
+                      name="videoUrl"
+                      placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                      value={form.videoUrl}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
               </div>

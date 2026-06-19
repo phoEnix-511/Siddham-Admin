@@ -156,7 +156,27 @@ export default function ShopPage() {
                   <div className="product-card" key={product.id}>
                     <Link href={`/products/${product.id}`}>
                       <div className="product-card-image">
-                        <div className="img-placeholder">{CATEGORY_ICONS[product.category.slug] || '🌿'}</div>
+                        {product.images && product.images.length > 0 && product.images[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              const parent = (e.target as HTMLImageElement).parentElement;
+                              const fallback = parent?.querySelector('.fallback-placeholder');
+                              if (fallback) (fallback as HTMLElement).style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className="img-placeholder fallback-placeholder"
+                          style={{
+                            display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex'
+                          }}
+                        >
+                          {CATEGORY_ICONS[product.category.slug] || '🌿'}
+                        </div>
                         {disc > 0 && <span className="product-card-badge">{disc}% OFF</span>}
                         {product.stock <= 10 && product.stock > 0 && (
                           <span className="product-card-badge" style={{ left: 'auto', right: 'var(--space-3)', background: 'var(--color-bark)' }}>

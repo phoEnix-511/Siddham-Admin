@@ -8,20 +8,26 @@
 /* ── CSS Custom Properties ────────────────────────────────────── */
 :root {
   /* Brand Colors */
-  --color-forest:       #1a3d2b;
-  --color-forest-light: #2a5c3f;
-  --color-forest-dark:  #0f2318;
-  --color-saffron:      #c4852a;
+  --color-forest:       #18181b; /* Sleek charcoal (zinc-900) */
+  --color-forest-light: #27272a; /* Lighter charcoal (zinc-800) */
+  --color-forest-dark:  #09090b; /* Rich black (zinc-950) */
+  --color-saffron:      #c4852a; /* Gold/Saffron accent */
   --color-saffron-light:#e0a855;
   --color-saffron-dark: #9d6516;
   --color-gold:         #d4a843;
-  --color-parchment:    #f8f4ee;
-  --color-parchment-dark: #ede8df;
-  --color-cream:        #faf8f4;
-  --color-bark:         #5c3d2e;
-  --color-bark-light:   #8b6452;
-  --color-sage:         #6b8f71;
-  --color-sage-light:   #a8c5ac;
+  --color-parchment:    #fafafa; /* Clean warm off-white (zinc-50) */
+  --color-parchment-dark: #f4f4f5; /* Light gray (zinc-100) */
+  --color-cream:        #ffffff; /* Pure white */
+  --color-bark:         #3f3f46; /* Muted zinc-600 */
+  --color-bark-light:   #52525b; /* Muted zinc-500 */
+  --color-sage:         #71717a; /* Neutral zinc-500 */
+  --color-sage-light:   #e4e4e7; /* Light zinc-200 */
+
+  /* Legacy layout variable mappings */
+  --forest:             var(--color-forest);
+  --forest-dark:        var(--color-forest-dark);
+  --forest-light:       var(--color-forest-light);
+  --saffron-pale:       var(--color-parchment-dark);
 
   /* Neutral */
   --color-white:   #ffffff;
@@ -73,10 +79,10 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm:  0 1px 2px rgba(26, 61, 43, 0.06);
-  --shadow-md:  0 4px 12px rgba(26, 61, 43, 0.10);
-  --shadow-lg:  0 8px 30px rgba(26, 61, 43, 0.14);
-  --shadow-xl:  0 16px 50px rgba(26, 61, 43, 0.18);
+  --shadow-sm:  0 1px 2px rgba(24, 24, 27, 0.06);
+  --shadow-md:  0 4px 12px rgba(24, 24, 27, 0.10);
+  --shadow-lg:  0 8px 30px rgba(24, 24, 27, 0.14);
+  --shadow-xl:  0 16px 50px rgba(24, 24, 27, 0.18);
   --shadow-glow: 0 0 20px rgba(196, 133, 42, 0.25);
 
   /* Transitions */
@@ -193,11 +199,11 @@ p { color: var(--color-gray-600); line-height: 1.7; }
 .btn-primary {
   background: linear-gradient(135deg, var(--color-forest), var(--color-forest-light));
   color: var(--color-white);
-  box-shadow: 0 4px 15px rgba(26, 61, 43, 0.3);
+  box-shadow: 0 4px 15px rgba(24, 24, 27, 0.3);
 }
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--color-forest-dark), var(--color-forest));
-  box-shadow: 0 6px 20px rgba(26, 61, 43, 0.4);
+  box-shadow: 0 6px 20px rgba(24, 24, 27, 0.4);
   transform: translateY(-1px);
 }
 
@@ -237,7 +243,7 @@ p { color: var(--color-gray-600); line-height: 1.7; }
   background: transparent;
   color: var(--color-forest);
 }
-.btn-ghost:hover { background: rgba(26, 61, 43, 0.08); }
+.btn-ghost:hover { background: rgba(24, 24, 27, 0.08); }
 
 .btn-danger {
   background: linear-gradient(135deg, #dc2626, #b91c1c);
@@ -364,7 +370,7 @@ p { color: var(--color-gray-600); line-height: 1.7; }
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(26, 61, 43, 0.97);
+  background: rgba(24, 24, 27, 0.97);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(196, 133, 42, 0.2);
 }
@@ -629,7 +635,7 @@ p { color: var(--color-gray-600); line-height: 1.7; }
   left: 0;
   right: 0;
   padding: var(--space-4);
-  background: linear-gradient(transparent, rgba(26, 61, 43, 0.9));
+  background: linear-gradient(transparent, rgba(24, 24, 27, 0.9));
   transform: translateY(100%);
   transition: transform var(--transition-normal);
 }

@@ -80,7 +80,7 @@ export default async function handler(
     data: {
       name: name.trim(),
       email: normalizedEmail,
-      password: hashedPassword,
+      hashedPassword: hashedPassword,
     },
     select: { id: true, name: true, email: true },
   });
@@ -88,7 +88,7 @@ export default async function handler(
   // -------------------------------------------------------------------------
   // 6. Send welcome email (non-blocking — errors are swallowed inside the util)
   // -------------------------------------------------------------------------
-  void sendWelcomeEmail(customer.name, customer.email);
+  void sendWelcomeEmail(customer.name || 'Valued Customer', customer.email);
 
   // -------------------------------------------------------------------------
   // 7. Respond

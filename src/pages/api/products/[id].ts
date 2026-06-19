@@ -30,13 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const {
       name, description, price, comparePrice, images, stock, sku,
-      isActive, isFeatured, ingredients, benefits, usage, weight, categoryId,
+      isActive, isFeatured, ingredients, benefits, usage, weight, videoUrl, categoryId,
     } = req.body;
 
     try {
       const updateData: Record<string, unknown> = {
         description, images, isActive, isFeatured,
         ingredients, benefits, usage, weight, categoryId,
+        videoUrl: videoUrl !== undefined ? (videoUrl || null) : undefined,
       };
 
       if (name) {
@@ -46,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (price !== undefined) updateData.price = parseFloat(price);
       if (comparePrice !== undefined) updateData.comparePrice = comparePrice ? parseFloat(comparePrice) : null;
       if (stock !== undefined) updateData.stock = parseInt(stock);
-      if (sku !== undefined) updateData.sku = sku;
+      if (sku !== undefined) updateData.sku = sku || null;
 
       const product = await prisma.product.update({
         where: { id: productId },

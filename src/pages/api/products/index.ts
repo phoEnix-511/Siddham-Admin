@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const {
       name, description, price, comparePrice, images, stock, sku,
-      isActive, isFeatured, ingredients, benefits, usage, weight, categoryId,
+      isActive, isFeatured, ingredients, benefits, usage, weight, videoUrl, categoryId,
     } = req.body;
 
     if (!name || !description || !price || !categoryId) {
@@ -73,7 +73,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           sku: sku || null, isActive: isActive ?? true,
           isFeatured: isFeatured ?? false,
           ingredients: ingredients || null, benefits: benefits || null,
-          usage: usage || null, weight: weight || null, categoryId,
+          usage: usage || null, weight: weight || null,
+          videoUrl: videoUrl || null, categoryId,
         },
         include: { category: true },
       });

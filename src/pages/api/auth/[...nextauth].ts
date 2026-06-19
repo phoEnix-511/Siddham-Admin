@@ -6,7 +6,6 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
 export const authOptions: NextAuthOptions = {
-  // @ts-expect-error — @auth/prisma-adapter types are compatible at runtime
   adapter: PrismaAdapter(prisma),
 
   session: {

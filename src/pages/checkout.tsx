@@ -123,7 +123,7 @@ export default function CheckoutPage() {
           }
         },
         prefill: { name: form.name, email: form.email, contact: form.phone },
-        theme: { color: '#1a3d2b' },
+        theme: { color: '#18181b' },
         modal: {
           ondismiss: () => { setLoading(false); },
         },
