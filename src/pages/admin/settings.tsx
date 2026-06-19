@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/context/ToastContext';
+import 'quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 interface Settings {
   // Payment
@@ -119,6 +123,10 @@ export default function AdminSettingsPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRichTextChange = (field: string, value: string) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,54 +360,90 @@ export default function AdminSettingsPage() {
             </SettingSection>
 
             {/* Dynamic Pages Content */}
-            <SettingSection title="Dynamic CMS Page Editors (HTML Supported)" icon="📝">
+            <SettingSection title="Dynamic CMS Page Editors (Rich Text)" icon="📝">
               <div className="form-group">
                 <label className="form-label" htmlFor="about-content">About Us Page Content</label>
-                <textarea
-                  id="about-content"
-                  className="form-input"
-                  name="about_us_content"
-                  value={settings.about_us_content}
-                  onChange={handleChange}
-                  rows={8}
-                  style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
-                />
+                <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-200)', overflow: 'hidden' }}>
+                  <ReactQuill
+                    value={settings.about_us_content}
+                    onChange={(content) => handleRichTextChange('about_us_content', content)}
+                    theme="snow"
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        ['clean']
+                      ]
+                    }}
+                    style={{ height: 250 }}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="privacy-content">Privacy Policy Page Content</label>
-                <textarea
-                  id="privacy-content"
-                  className="form-input"
-                  name="privacy_policy_content"
-                  value={settings.privacy_policy_content}
-                  onChange={handleChange}
-                  rows={8}
-                  style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
-                />
+                <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-200)', overflow: 'hidden' }}>
+                  <ReactQuill
+                    value={settings.privacy_policy_content}
+                    onChange={(content) => handleRichTextChange('privacy_policy_content', content)}
+                    theme="snow"
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        ['clean']
+                      ]
+                    }}
+                    style={{ height: 250 }}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="terms-content">Terms & Conditions Page Content</label>
-                <textarea
-                  id="terms-content"
-                  className="form-input"
-                  name="terms_conditions_content"
-                  value={settings.terms_conditions_content}
-                  onChange={handleChange}
-                  rows={8}
-                  style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
-                />
+                <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-200)', overflow: 'hidden' }}>
+                  <ReactQuill
+                    value={settings.terms_conditions_content}
+                    onChange={(content) => handleRichTextChange('terms_conditions_content', content)}
+                    theme="snow"
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        ['clean']
+                      ]
+                    }}
+                    style={{ height: 250 }}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="shipping-content">Shipping & Returns Page Content</label>
-                <textarea
-                  id="shipping-content"
-                  className="form-input"
-                  name="shipping_returns_content"
-                  value={settings.shipping_returns_content}
-                  onChange={handleChange}
-                  rows={8}
-                  style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
-                />
+                <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-200)', overflow: 'hidden' }}>
+                  <ReactQuill
+                    value={settings.shipping_returns_content}
+                    onChange={(content) => handleRichTextChange('shipping_returns_content', content)}
+                    theme="snow"
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['blockquote', 'code-block'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['link'],
+                        ['clean']
+                      ]
+                    }}
+                    style={{ height: 250 }}
+                  />
+                </div>
               </div>
             </SettingSection>
 
