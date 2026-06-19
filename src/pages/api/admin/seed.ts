@@ -2,12 +2,17 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
-// This route seeds the initial admin user and product data
-// Run once: POST /api/admin/seed
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    // Clear Database
+    console.log('🧹 Clearing existing database records...');
+    await prisma.orderItem.deleteMany({});
+    await prisma.order.deleteMany({});
+    await prisma.product.deleteMany({});
+    await prisma.category.deleteMany({});
+
     // Create admin user
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@siddhamwellness.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
@@ -23,144 +28,200 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Create categories
     const categoryData = [
-      { name: 'Hair Care', slug: 'hair-care', description: 'Natural Ayurvedic hair care products', imageUrl: '/images/categories/hair-care.jpg' },
-      { name: 'Supplements', slug: 'supplements', description: 'Ayurvedic health supplements and tonics', imageUrl: '/images/categories/supplements.jpg' },
-      { name: 'Skin Care', slug: 'skin-care', description: 'Natural skincare with herbal ingredients', imageUrl: '/images/categories/skin-care.jpg' },
-      { name: 'Oils & Essentials', slug: 'oils-essentials', description: 'Pure Ayurvedic oils and essential blends', imageUrl: '/images/categories/oils.jpg' },
+      { name: 'Ayurvedic Herbal Formulation', slug: 'ayurvedic-herbal-formulation', description: 'Tonics and liquid formulations for targeted health goals', imageUrl: '/images/categories/herbal-formulations.jpg' },
+      { name: 'Ayurvedic Proprietary Medicine', slug: 'ayurvedic-proprietary-medicine', description: 'Classical and proprietary Ayurvedic tablets and remedies', imageUrl: '/images/categories/proprietary-medicines.jpg' },
+      { name: 'Ayurvedic Formulation', slug: 'ayurvedic-formulation', description: 'Prash, churnas, and traditional herbal mixtures', imageUrl: '/images/categories/ayurvedic-formulations.jpg' },
+      { name: 'Hair Care', slug: 'hair-care', description: 'Natural Ayurvedic hair cleansers, oils and treatments', imageUrl: '/images/categories/hair-care.jpg' },
     ];
 
     const categories: Record<string, string> = {};
     for (const cat of categoryData) {
-      const existing = await prisma.category.findUnique({ where: { slug: cat.slug } });
-      if (!existing) {
-        const created = await prisma.category.create({ data: cat });
-        categories[cat.slug] = created.id;
-      } else {
-        categories[cat.slug] = existing.id;
-      }
+      const created = await prisma.category.create({ data: cat });
+      categories[cat.slug] = created.id;
     }
 
     // Create products
     const products = [
       {
-        name: 'Brahmi Amla Shampoo',
-        slug: 'brahmi-amla-shampoo',
-        description: 'A revitalizing Ayurvedic shampoo enriched with Brahmi, Amla, and Bhringraj extracts. Strengthens hair roots, reduces hair fall, and promotes lustrous growth.',
+        name: "Liver Sanjeevani",
+        slug: "liver-sanjeevani",
+        description: "Your Daily Liver Care Tonic. A powerful and advanced Ayurvedic formulation for complete liver & digestive wellness.",
+        price: 299,
+        comparePrice: 399,
+        stock: 150,
+        sku: "SW-LIVER-001",
+        weight: "200 ml",
+        ingredients: "Giloy, Punarnava, Kalmegh, Bhumi Amla, Nagarmotha, Indrayan Jad (Indian Gentian Root)",
+        benefits: "Liver Detoxification, Effective for Fatty Liver, Improves Overall Liver Functioning, Complete Digestive Care, Relieves Acidity & Hyperacidity, Promotes Healthy Digestion & Metabolism",
+        usage: "10-15 ml twice daily after meals or as directed by a physician.",
+        isActive: true,
+        isFeatured: true,
+        categorySlug: "ayurvedic-herbal-formulation",
+      },
+      {
+        name: "Piles Cure",
+        slug: "piles-cure",
+        description: "Your natural relief for piles. A natural and effective Ayurvedic formulation for bleeding and non-bleeding piles.",
         price: 349,
-        comparePrice: 450,
+        comparePrice: 449,
+        stock: 100,
+        sku: "SW-PILES-001",
+        weight: "200 ml",
+        ingredients: "Mahuwa, Munakka, Nagkesar, Harad, Kalimirch, Sonth, Vayvidang",
+        benefits: "Helps in Bleeding & Non-Bleeding Piles, Relief in External & Internal Piles, Helps in Anal Fissures, Relief in Inflammatory Conditions of Rectum, Relieves Constipation & Improves Bowel Movement, Improves Blood Circulation & Strengthens Veins",
+        usage: "10-15 ml twice a day after meals or as directed by the physician.",
+        isActive: true,
+        isFeatured: true,
+        categorySlug: "ayurvedic-proprietary-medicine",
+      },
+      {
+        name: "Digesto Prash",
+        slug: "digesto-prash",
+        description: "Ayurvedic Solution for Complete Gut Wellness. Helps improve digestive health, reduce acidity and constipation, relieve gas and excessive body heat.",
+        price: 499,
+        comparePrice: 649,
         stock: 120,
-        sku: 'SW-SHAMP-001',
+        sku: "SW-DIGEST-001",
+        weight: "150 GM",
+        ingredients: "Triphala, Khajur (Dates), Munakka (Raisins), Mulethi (Licorice), Lendi Pipal, Prawal Pishti, Jaiphal, Saunf, Elaichi, Dalchini, Nagkesar, Vidhara, Amla",
+        benefits: "Improves digestion & nutrient absorption, Relieves constipation & regulates bowel movements, Reduces acidity & soothes the stomach lining, Relieves gas, bloating & heaviness, Detoxifies & cleanses the gut naturally, Supports immunity and overall well-being",
+        usage: "1-2 teaspoons (5-10 g) with lukewarm water or milk 1-2 times daily or as directed by the physician.",
+        isActive: true,
         isFeatured: true,
-        ingredients: 'Brahmi (Bacopa monnieri), Amla (Indian Gooseberry), Bhringraj, Shikakai, Reetha, Neem',
-        benefits: 'Reduces hair fall, Strengthens hair roots, Adds natural shine, Prevents dandruff',
-        usage: 'Apply to wet hair, lather gently, leave for 2-3 minutes, rinse thoroughly. Use 2-3 times a week.',
-        weight: '200ml',
-        images: ['/images/products/brahmi-amla-shampoo.jpg'],
-        categorySlug: 'hair-care',
+        categorySlug: "ayurvedic-formulation",
       },
       {
-        name: 'Neem Tulsi Anti-Dandruff Shampoo',
-        slug: 'neem-tulsi-anti-dandruff-shampoo',
-        description: 'Powerful anti-dandruff shampoo infused with Neem and Tulsi extracts that fight scalp infections and eliminate flakes naturally.',
-        price: 329,
-        comparePrice: 420,
-        stock: 85,
-        sku: 'SW-SHAMP-002',
-        isFeatured: false,
-        ingredients: 'Neem (Azadirachta indica), Tulsi (Holy Basil), Tea Tree Oil, Aloe Vera, Kalonji',
-        benefits: 'Eliminates dandruff, Soothes scalp, Anti-bacterial, Anti-fungal',
-        usage: 'Apply to wet scalp, massage gently for 3 minutes, rinse well. Use 3 times a week for best results.',
-        weight: '200ml',
-        images: ['/images/products/neem-tulsi-shampoo.jpg'],
-        categorySlug: 'hair-care',
-      },
-      {
-        name: 'Ashwagandha Vitality Capsules',
-        slug: 'ashwagandha-vitality-capsules',
-        description: 'Premium KSM-66 Ashwagandha root extract capsules for stress relief, enhanced energy, and improved cognitive function. 500mg per capsule.',
-        price: 699,
-        comparePrice: 899,
-        stock: 200,
-        sku: 'SW-SUPP-001',
-        isFeatured: true,
-        ingredients: 'KSM-66 Ashwagandha Root Extract (500mg), Black Pepper (Piperine)',
-        benefits: 'Reduces stress & anxiety, Boosts energy, Improves sleep quality, Enhances cognitive function',
-        usage: 'Take 1 capsule twice daily with warm milk or water after meals.',
-        weight: '60 Capsules',
-        images: ['/images/products/ashwagandha-capsules.jpg'],
-        categorySlug: 'supplements',
-      },
-      {
-        name: 'Triphala Digestive Wellness',
-        slug: 'triphala-digestive-wellness',
-        description: 'Traditional Triphala formulation with Amla, Haritaki, and Bibhitaki for complete digestive health and gentle daily detox.',
-        price: 449,
+        name: "Forest Sulfate Free Shampoo",
+        slug: "forest-sulfate-free-shampoo",
+        description: "Inspired by Traditional Ayurvedic Hair Care. Gently cleanses the scalp and hair, deeply nourishes, and makes hair stronger, shinier and healthier naturally.",
+        price: 399,
         comparePrice: 549,
         stock: 150,
-        sku: 'SW-SUPP-002',
-        isFeatured: false,
-        ingredients: 'Amla (Emblica officinalis), Haritaki (Terminalia chebula), Bibhitaki (Terminalia bellirica)',
-        benefits: 'Improves digestion, Gentle detox, Boosts immunity, Rich in Vitamin C',
-        usage: 'Take 2 capsules at night before bed with warm water.',
-        weight: '60 Capsules',
-        images: ['/images/products/triphala-capsules.jpg'],
-        categorySlug: 'supplements',
-      },
-      {
-        name: 'Kumkumadi Brightening Face Oil',
-        slug: 'kumkumadi-brightening-face-oil',
-        description: 'Royal Kumkumadi oil with 16 rare herbs including Saffron and Sandalwood. Brightens skin, reduces dark spots, and provides deep nourishment.',
-        price: 899,
-        comparePrice: 1200,
-        stock: 60,
-        sku: 'SW-SKIN-001',
+        sku: "SW-SHAMP-001",
+        weight: "200 ML",
+        ingredients: "Reetha, Shikakai, Amla, Bhringraj, Aloevera, Henna",
+        benefits: "Gently cleanses scalp & hair without stripping natural oils, Retains natural moisture and hydration, Reduces hair breakage, hair fall & split ends, Helps relieve scalp irritation, dandruff & itchiness, Leaves hair soft, shiny and easy to manage",
+        usage: "Wet your hair. Take a small amount & gently massage. Rinse thoroughly.",
+        isActive: true,
         isFeatured: true,
-        ingredients: 'Saffron (Kesar), Sandalwood, Manjistha, Vetiver, Lodhra, Sesame Oil base',
-        benefits: 'Brightens skin, Reduces dark spots, Anti-aging, Deep nourishment',
-        usage: 'Apply 3-4 drops on clean face at night. Massage gently in upward circular motion.',
-        weight: '15ml',
-        images: ['/images/products/kumkumadi-oil.jpg'],
-        categorySlug: 'skin-care',
+        categorySlug: "hair-care",
       },
       {
-        name: 'Bhringraj Hair Growth Oil',
-        slug: 'bhringraj-hair-growth-oil',
-        description: 'Classic Bhringraj oil with Amla, Brahmi, and Hibiscus for accelerated hair growth, reduced greying, and scalp nourishment.',
-        price: 399,
-        comparePrice: 499,
-        stock: 8,
-        sku: 'SW-OIL-001',
+        name: "Ashwagandha",
+        slug: "ashwagandha",
+        description: "Relieves stress & boosts strength. Made with organic Ashwagandha root extract.",
+        price: 299,
+        comparePrice: 399,
+        stock: 200,
+        sku: "SW-ASHWA-001",
+        weight: "60 Tablets",
+        ingredients: "Organic Ashwagandha Root extract",
+        benefits: "Helps reduce stress & anxiety, Supports strength, stamina & endurance, Promotes better sleep quality, Supports brain function & focus, Supports overall vitality & well-being",
+        usage: "1 tablet twice a day with milk / water or as advised by physician.",
+        isActive: true,
+        isFeatured: true,
+        categorySlug: "ayurvedic-proprietary-medicine",
+      },
+      {
+        name: "Shatavari",
+        slug: "shatavari",
+        description: "Supports women's hormonal balance. Made with organic Shatavari root extract.",
+        price: 299,
+        comparePrice: 399,
+        stock: 180,
+        sku: "SW-SHATA-001",
+        weight: "60 Tablets",
+        ingredients: "Organic Shatavari Root extract",
+        benefits: "Supports women's hormonal balance, Supports reproductive health, Helps improve lactation, Nourishes & supports overall vitality, Promotes inner balance & well-being",
+        usage: "1 tablet twice a day with milk / water or as advised by physician.",
+        isActive: true,
         isFeatured: false,
-        ingredients: 'Bhringraj, Amla, Brahmi, Hibiscus, Coconut Oil base, Sesame Oil',
-        benefits: 'Accelerates hair growth, Reduces premature greying, Strengthens hair, Nourishes scalp',
-        usage: 'Warm slightly, apply to scalp and hair. Massage for 10 minutes. Leave for 1 hour or overnight. Wash with Ayurvedic shampoo.',
-        weight: '100ml',
-        images: ['/images/products/bhringraj-oil.jpg'],
-        categorySlug: 'oils-essentials',
+        categorySlug: "ayurvedic-proprietary-medicine",
+      },
+      {
+        name: "Giloy",
+        slug: "giloy",
+        description: "Boosts immunity. Made with organic Giloy stem extract.",
+        price: 249,
+        comparePrice: 349,
+        stock: 250,
+        sku: "SW-GILOY-001",
+        weight: "60 Tablets",
+        ingredients: "Organic Giloy Stem extract",
+        benefits: "Boosts immunity, Helps detoxify the body, Supports respiratory health, Helps manage fever & infections, Promotes overall health & wellness",
+        usage: "1 tablet twice a day with milk / water or as advised by physician.",
+        isActive: true,
+        isFeatured: false,
+        categorySlug: "ayurvedic-proprietary-medicine",
+      },
+      {
+        name: "Shilajeet",
+        slug: "shilajeet",
+        description: "Boosts strength & stamina. Made with Himalayan Shilajeet extract.",
+        price: 999,
+        comparePrice: 1499,
+        stock: 80,
+        sku: "SW-SHILA-001",
+        weight: "30 Tablets",
+        ingredients: "Himalayan Shilajeet extract",
+        benefits: "Improves strength, stamina & endurance, Enhances energy & reduces fatigue, Supports healthy aging & vitality, Improves testosterone levels & sexual health, Supports immune function & overall well-being",
+        usage: "1 tablet twice a day with milk / water or as advised by physician.",
+        isActive: true,
+        isFeatured: true,
+        categorySlug: "ayurvedic-proprietary-medicine",
+      },
+      {
+        name: "Arjuna",
+        slug: "arjuna",
+        description: "Cardiac wellness. Made with organic Arjuna extract.",
+        price: 249,
+        comparePrice: 349,
+        stock: 150,
+        sku: "SW-ARJUN-001",
+        weight: "30 Tablets",
+        ingredients: "Organic Arjuna Extract",
+        benefits: "Supports healthy heart function, Helps maintain normal blood pressure, Supports healthy blood circulation, Strengthens heart muscles & improves endurance, Supports overall cardiovascular health & well-being",
+        usage: "1 tablet twice a day with milk / water or as advised by physician.",
+        isActive: true,
+        isFeatured: false,
+        categorySlug: "ayurvedic-proprietary-medicine",
+      },
+      {
+        name: "Gokshura",
+        slug: "gokshura",
+        description: "Improves vigour & vitality. Made with organic Gokshura extract.",
+        price: 299,
+        comparePrice: 399,
+        stock: 150,
+        sku: "SW-GOKSH-001",
+        weight: "30 Tablets",
+        ingredients: "Organic Gokshura Extract",
+        benefits: "Improves strength, stamina & physical performance, Supports healthy kidney & urinary function, Helps balance hormones naturally, Enhances libido & reproductive health, Supports overall vitality & well-being",
+        usage: "1 tablet twice a day with milk / water or as advised by physician.",
+        isActive: true,
+        isFeatured: true,
+        categorySlug: "ayurvedic-proprietary-medicine",
       },
     ];
 
     for (const prod of products) {
-      const existing = await prisma.product.findUnique({ where: { slug: prod.slug } });
-      if (!existing) {
-        const { categorySlug, ...rest } = prod;
-        await prisma.product.create({
-          data: {
-            ...rest,
-            isActive: true,
-            categoryId: categories[categorySlug],
-          },
-        });
-      }
+      const { categorySlug, ...rest } = prod;
+      await prisma.product.create({
+        data: {
+          ...rest,
+          images: [],
+          categoryId: categories[categorySlug],
+        },
+      });
     }
 
     // Create default settings
     const defaultSettings = [
       { key: 'razorpay_key_id', value: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '', group: 'payment' },
       { key: 'razorpay_key_secret', value: process.env.RAZORPAY_KEY_SECRET || '', group: 'payment' },
-      { key: 'store_name', value: 'Siddham Wellness', group: 'general' },
-      { key: 'store_email', value: 'hello@siddhamwellness.com', group: 'general' },
-      { key: 'store_phone', value: '+91 98765 43210', group: 'general' },
+      { key: 'store_name', value: 'Siddham Wellness', group: 'store' },
+      { key: 'store_email', value: 'hello@siddhamwellness.com', group: 'store' },
+      { key: 'store_phone', value: '+91 83198 77420', group: 'store' },
       { key: 'free_shipping_threshold', value: '999', group: 'shipping' },
       { key: 'shipping_charge', value: '99', group: 'shipping' },
       { key: 'low_stock_threshold', value: '10', group: 'inventory' },

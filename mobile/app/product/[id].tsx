@@ -20,6 +20,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   'supplements': '💊',
   'skin-care': '✨',
   'oils-essentials': '🌿',
+  'ayurvedic-herbal-formulation': '🍶',
+  'ayurvedic-proprietary-medicine': '💊',
+  'ayurvedic-formulation': '🍯',
 };
 
 const TABS = ['Description', 'Ingredients', 'Usage'] as const;

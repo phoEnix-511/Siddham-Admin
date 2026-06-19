@@ -21,6 +21,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   'supplements': '💊',
   'skin-care': '✨',
   'oils-essentials': '🌿',
+  'ayurvedic-herbal-formulation': '🍶',
+  'ayurvedic-proprietary-medicine': '💊',
+  'ayurvedic-formulation': '🍯',
 };
 
 const NUM_COLUMNS = 2;

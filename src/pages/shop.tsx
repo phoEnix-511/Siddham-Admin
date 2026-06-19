@@ -31,6 +31,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   'supplements': '💊',
   'skin-care': '✨',
   'oils-essentials': '🌿',
+  'ayurvedic-herbal-formulation': '🍶',
+  'ayurvedic-proprietary-medicine': '💊',
+  'ayurvedic-formulation': '🍯',
 };
 
 export default function ShopPage() {

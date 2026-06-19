@@ -11,7 +11,13 @@ import { Colors, Spacing, Radius, Shadow, Fonts } from '../../constants/colors';
 const { width } = Dimensions.get('window');
 
 const CATEGORY_ICONS: Record<string, string> = {
-  'hair-care': '💆', 'supplements': '💊', 'skin-care': '✨', 'oils-essentials': '🌿',
+  'hair-care': '💆',
+  'supplements': '💊',
+  'skin-care': '✨',
+  'oils-essentials': '🌿',
+  'ayurvedic-herbal-formulation': '🍶',
+  'ayurvedic-proprietary-medicine': '💊',
+  'ayurvedic-formulation': '🍯',
 };
 
 function HeroSection() {
