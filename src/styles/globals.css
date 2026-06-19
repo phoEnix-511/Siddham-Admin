@@ -1653,15 +1653,64 @@ p { color: var(--color-gray-600); line-height: 1.7; }
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 4px 30px rgba(6, 26, 17, 0.05);
-  background: var(--color-cream);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(6, 26, 17, 0.08) !important;
+  background: var(--color-cream) !important;
+  border-bottom: 1px solid rgba(13, 44, 29, 0.08) !important;
 }
 
-.nav {
+.sticky-header .nav {
   background: transparent !important;
-  border-bottom: 1px solid rgba(13, 44, 29, 0.08) !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.sticky-header .nav-logo-name {
+  color: var(--color-forest-dark) !important;
+}
+
+.sticky-header .nav-logo-tagline {
+  color: var(--color-saffron-dark) !important;
+}
+
+.sticky-header .nav-link {
+  color: var(--color-gray-800) !important;
+}
+
+.sticky-header .nav-link:hover {
+  color: var(--color-forest) !important;
+}
+
+.sticky-header .nav-link.active {
+  color: var(--color-saffron-dark) !important;
+}
+
+.sticky-header .nav-cart-btn {
+  color: var(--color-forest-dark) !important;
+  border: 1px solid rgba(13, 44, 29, 0.25) !important;
+}
+
+.sticky-header .nav-cart-btn:hover {
+  border-color: var(--color-forest) !important;
+  background: rgba(13, 44, 29, 0.05) !important;
+}
+
+.sticky-header .cart-badge {
+  background: var(--color-forest) !important;
+  color: var(--color-cream) !important;
+}
+
+/* Page Header Organic Theme */
+.page-header {
+  background: linear-gradient(135deg, var(--color-forest-dark) 0%, var(--color-forest) 100%) !important;
+  border-bottom: 1px solid rgba(196, 133, 42, 0.15) !important;
+}
+
+.page-header h1 {
+  color: var(--color-cream) !important;
+}
+
+.page-header p {
+  color: var(--color-saffron-light) !important;
 }
 
 /* Mega Menu container */
