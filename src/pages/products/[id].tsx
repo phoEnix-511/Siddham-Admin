@@ -10,6 +10,7 @@ import { useToast } from '@/context/ToastContext';
 interface Product {
   id: string;
   name: string;
+  caption?: string;
   description: string;
   price: number;
   comparePrice?: number;
@@ -270,6 +271,10 @@ export default function ProductDetailPage() {
               <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', marginBottom: 'var(--space-2)', color: 'var(--color-forest-dark)' }}>
                 {product.name}
               </h1>
+
+              {product.caption && (
+                <div className="product-caption" style={{ marginBottom: 'var(--space-4)' }}>{product.caption}</div>
+              )}
 
               {/* Star rating summary */}
               {(() => {
