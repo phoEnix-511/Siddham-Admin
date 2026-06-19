@@ -44,15 +44,75 @@ export default function ProductFormPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  const handleAddImage = () => {
-    if (!newImageUrl.trim()) return;
-    setForm(prev => ({
-      ...prev,
-      images: [...prev.images, newImageUrl.trim()],
-    }));
-    setNewImageUrl('');
+  const compressImage = (file: File, maxWidth = 800, maxHeight = 800): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(compressedBase64);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const compressedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const compressed = await compressImage(file);
+        compressedUrls.push(compressed);
+      }
+      setForm(prev => ({
+        ...prev,
+        images: [...prev.images, ...compressedUrls],
+      }));
+      addToast(`Successfully added ${files.length} photo(s)`, 'success');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to compress and load photo', 'error');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -162,23 +222,18 @@ export default function ProductFormPage() {
                 <div className="card-header"><h4 style={{ color: 'var(--color-forest-dark)' }}>Media (Photos & Video)</h4></div>
                 <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                   <div className="form-group">
-                    <label className="form-label">Add Product Image URL</label>
-                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <label className="form-label">Upload Product Photos</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                       <input
+                        type="file"
+                        accept="image/*"
+                        multiple
                         className="form-input"
-                        placeholder="e.g. https://images.unsplash.com/photo-..."
-                        value={newImageUrl}
-                        onChange={e => setNewImageUrl(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddImage();
-                          }
-                        }}
+                        style={{ padding: 'var(--space-2)' }}
+                        onChange={handleFileChange}
+                        disabled={uploading}
                       />
-                      <button type="button" className="btn btn-outline" style={{ borderRadius: 'var(--radius-md)', padding: '0 var(--space-4)' }} onClick={handleAddImage}>
-                        Add
-                      </button>
+                      {uploading && <div style={{ fontSize: '0.85rem', color: 'var(--color-saffron)', fontWeight: 600 }}>⏳ Resizing & compressing photos...</div>}
                     </div>
                   </div>
 
