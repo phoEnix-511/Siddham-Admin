@@ -6,7 +6,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/context/ToastContext';
 import 'quill/dist/quill.snow.css';
 
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 interface Settings {
   // Payment
