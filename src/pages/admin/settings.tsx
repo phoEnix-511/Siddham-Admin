@@ -37,6 +37,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
+  const [downloadingBackup, setDownloadingBackup] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -50,6 +51,34 @@ export default function AdminSettingsPage() {
     };
     load();
   }, [router]);
+
+  const handleDownloadBackup = async () => {
+    setDownloadingBackup(true);
+    try {
+      const res = await fetch('/api/admin/backup');
+      if (res.status === 401) {
+        router.push('/admin/login');
+        return;
+      }
+      if (!res.ok) throw new Error('Backup failed');
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `siddham-db-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      addToast('Database backup downloaded successfully!', 'success');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to download backup', 'error');
+    } finally {
+      setDownloadingBackup(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -184,6 +213,23 @@ export default function AdminSettingsPage() {
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: 4 }}>
                   Products at or below this stock level will trigger a low stock alert
                 </div>
+              </div>
+            </SettingSection>
+
+            {/* Database Backup */}
+            <SettingSection title="Database & Backups" icon="📂">
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-2)' }}>
+                Download a complete copy of your database including categories, products, customer records, settings, and orders as a secure JSON file. You can store this backup file locally for safety.
+              </div>
+              <div style={{ marginTop: 'var(--space-2)' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handleDownloadBackup}
+                  disabled={downloadingBackup}
+                >
+                  {downloadingBackup ? '⏳ Exporting...' : '📥 Download Database Backup (JSON)'}
+                </button>
               </div>
             </SettingSection>
 

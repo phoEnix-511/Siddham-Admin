@@ -156,16 +156,63 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="hero-visual">
-            <div className="hero-image-wrapper">
+          <div className="hero-visual" style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="hero-image-wrapper" style={{ position: 'relative', width: '100%', maxWidth: 450, height: 450, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{
-                width: '100%', height: 450,
-                background: 'radial-gradient(circle at 40% 40%, rgba(196,133,42,0.15), transparent 70%), radial-gradient(circle at 70% 70%, rgba(107,143,113,0.2), transparent)',
-                borderRadius: 24,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '8rem',
+                position: 'absolute', width: 350, height: 350,
+                borderRadius: '50%', background: 'radial-gradient(circle, rgba(196,133,42,0.25) 0%, transparent 70%)',
+                filter: 'blur(30px)', animation: 'pulse 4s infinite'
+              }} />
+              <div style={{
+                position: 'relative', width: '85%', height: '85%',
+                background: 'rgba(24, 24, 27, 0.45)',
+                backdropFilter: 'blur(20px)',
+                border: '1.5px solid rgba(196, 133, 42, 0.25)',
+                borderRadius: 32,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: 'var(--space-6)',
+                boxShadow: 'var(--shadow-xl), 0 0 40px rgba(196,133,42,0.08)',
+                textAlign: 'center'
               }}>
-                🌿
+                <div style={{ fontSize: '5rem', marginBottom: 'var(--space-4)', filter: 'drop-shadow(0 4px 12px rgba(196,133,42,0.3))' }}>
+                  🌿
+                </div>
+                <div style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '1.4rem',
+                  fontWeight: 600,
+                  color: 'var(--color-saffron-light)',
+                  letterSpacing: '0.05em',
+                  marginBottom: 'var(--space-3)'
+                }}>
+                  SIDDHAM
+                </div>
+                <div style={{
+                  height: 1, width: 60,
+                  background: 'var(--color-saffron)',
+                  marginBottom: 'var(--space-4)'
+                }} />
+                <p style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontStyle: 'italic',
+                  fontSize: '0.9rem',
+                  color: 'rgba(248, 244, 238, 0.8)',
+                  lineHeight: 1.6,
+                  maxWidth: 280,
+                  margin: 0
+                }}>
+                  "स्वस्थस्य स्वास्थ्यरक्षणं, आतुरस्य विकारप्रशमनं च ।"
+                </p>
+                <span style={{
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color: 'var(--color-gray-400)',
+                  marginTop: 'var(--space-3)',
+                  display: 'block'
+                }}>
+                  — Charak Samhita
+                </span>
               </div>
             </div>
           </div>

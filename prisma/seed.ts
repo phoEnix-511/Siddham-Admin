@@ -1,5 +1,5 @@
 /**
- * Siddham Wellness – Database Seed Script
+ * Siddham Wellness – Database Seed Script (Safe Edition)
  * Run via: npx tsx prisma/seed.ts
  */
 import { config } from 'dotenv';
@@ -17,15 +17,7 @@ async function main() {
   const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
-  console.log('🌱 Seeding Siddham Wellness database...');
-
-  // ── Clear Database ──────────────────────────────────────────
-  console.log('🧹 Clearing existing database records...');
-  await prisma.orderItem.deleteMany({});
-  await prisma.order.deleteMany({});
-  await prisma.product.deleteMany({});
-  await prisma.category.deleteMany({});
-  console.log('✅ Database cleared.');
+  console.log('🌱 Seeding database (Safe Mode — no deletions)...');
 
   // ── Admin User ──────────────────────────────────────────────
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@siddhamwellness.com';
@@ -38,7 +30,7 @@ async function main() {
     update: {},
     create: { email: adminEmail, password: hashedPassword, name: adminName },
   });
-  console.log(`✅ Admin user created: ${adminEmail}`);
+  console.log(`✅ Admin user: ${adminEmail}`);
 
   // ── Categories ──────────────────────────────────────────────
   const categories = [
@@ -50,8 +42,10 @@ async function main() {
 
   const createdCategories: Record<string, string> = {};
   for (const cat of categories) {
-    const c = await prisma.category.create({
-      data: cat,
+    const c = await prisma.category.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name, description: cat.description },
+      create: cat,
     });
     createdCategories[cat.slug] = c.id;
     console.log(`✅ Category: ${cat.name}`);
@@ -226,8 +220,21 @@ async function main() {
     const categoryId = createdCategories[categorySlug];
     if (!categoryId) continue;
 
-    await prisma.product.create({
-      data: {
+    await prisma.product.upsert({
+      where: { slug: productData.slug },
+      update: {
+        description: productData.description,
+        price: productData.price,
+        comparePrice: productData.comparePrice,
+        stock: productData.stock,
+        sku: productData.sku,
+        weight: productData.weight,
+        ingredients: productData.ingredients,
+        benefits: productData.benefits,
+        usage: productData.usage,
+        categoryId,
+      },
+      create: {
         ...productData,
         images: [],
         categoryId,
@@ -257,14 +264,11 @@ async function main() {
   }
   console.log('✅ Default settings created');
 
-  console.log('\n🎉 Seed complete! You can now log in at /admin/login');
-  console.log(`   Email:    ${adminEmail}`);
-  console.log(`   Password: ${adminPassword}`);
-
   await pool.end();
+  console.log('🎉 Safe seeding complete!');
 }
 
 main().catch(e => {
-  console.error('❌ Seed failed:', e);
+  console.error('❌ Safe seed failed:', e);
   process.exit(1);
 });
