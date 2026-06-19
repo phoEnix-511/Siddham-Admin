@@ -9,6 +9,7 @@ import { useToast } from '@/context/ToastContext';
 interface Product {
   id: string;
   name: string;
+  caption?: string;
   price: number;
   comparePrice?: number;
   images: string[];
@@ -117,6 +118,9 @@ function ProductCard({ product }: { product: Product }) {
         <Link href={`/products/${product.id}`}>
           <div className="product-name">{product.name}</div>
         </Link>
+        {product.caption && (
+          <div className="product-caption">{product.caption}</div>
+        )}
         <div className="product-price">
           <span className="price-current">₹{product.price}</span>
           {product.comparePrice && <span className="price-compare">₹{product.comparePrice}</span>}

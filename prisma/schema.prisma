@@ -103,6 +103,7 @@ model Category {
 model Product {
   id           String           @id @default(uuid())
   name         String
+  caption      String?          // Short tagline/caption for display below name
   slug         String           @unique
   description  String
   price        Float

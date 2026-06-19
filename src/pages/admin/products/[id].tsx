@@ -11,6 +11,7 @@ interface Category {
 
 interface FormData {
   name: string;
+  caption: string;
   description: string;
   price: string;
   comparePrice: string;
@@ -28,7 +29,7 @@ interface FormData {
 }
 
 const defaultForm: FormData = {
-  name: '', description: '', price: '', comparePrice: '', stock: '0',
+  name: '', caption: '', description: '', price: '', comparePrice: '', stock: '0',
   sku: '', categoryId: '', ingredients: '', benefits: '',
   usage: '', weight: '', isActive: true, isFeatured: false,
   images: [], videoUrl: '',
@@ -151,7 +152,7 @@ export default function ProductFormPage() {
         if (d.product) {
           const p = d.product;
           setForm({
-            name: p.name, description: p.description,
+            name: p.name, caption: p.caption || '', description: p.description,
             price: String(p.price), comparePrice: p.comparePrice ? String(p.comparePrice) : '',
             stock: String(p.stock), sku: p.sku || '', categoryId: p.categoryId,
             ingredients: p.ingredients || '', benefits: p.benefits || '',
@@ -231,6 +232,11 @@ export default function ProductFormPage() {
                   <div className="form-group">
                     <label className="form-label" htmlFor="prod-name">Product Name *</label>
                     <input id="prod-name" className="form-input" name="name" required value={form.name} onChange={handleChange} placeholder="e.g. Brahmi Amla Shampoo" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="prod-caption">Short Caption / Tagline</label>
+                    <input id="prod-caption" className="form-input" name="caption" value={form.caption} onChange={handleChange} placeholder="e.g. Premium herbal shampoo for hair growth" maxLength={120} />
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>{form.caption.length}/120 characters</div>
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="prod-desc">Description *</label>
