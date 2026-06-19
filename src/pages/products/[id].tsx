@@ -30,6 +30,13 @@ interface Product {
     stock: number;
     sku?: string;
   }>;
+  reviews?: Array<{
+    id: string;
+    name: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+  }>;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -52,7 +59,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage' | 'video'>('description');
+  const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage' | 'video' | 'reviews'>('description');
   
   const [selectedVariant, setSelectedVariant] = useState<{
     id: string;
@@ -62,6 +69,12 @@ export default function ProductDetailPage() {
     stock: number;
     sku?: string;
   } | null>(null);
+
+  // Review submission state
+  const [reviewName, setReviewName] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -77,6 +90,45 @@ export default function ProductDetailPage() {
         setLoading(false);
       });
   }, [id]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    if (!reviewName || !reviewComment) {
+      addToast('Please fill in all fields', 'error');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          name: reviewName,
+          rating: reviewRating,
+          comment: reviewComment,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to submit review');
+      addToast('Review submitted successfully!', 'success');
+      setReviewName('');
+      setReviewComment('');
+      setReviewRating(5);
+      
+      // Refresh product details
+      const productRes = await fetch(`/api/products/${product.id}`);
+      const productData = await productRes.json();
+      if (productData.product) {
+        setProduct(productData.product);
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to submit review', 'error');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   if (loading) return (
     <>
@@ -215,9 +267,38 @@ export default function ProductDetailPage() {
               <div className="product-category-tag" style={{ fontSize: '0.8rem', marginBottom: 'var(--space-2)' }}>
                 {product.category.name}
               </div>
-              <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', marginBottom: 'var(--space-3)', color: 'var(--color-forest-dark)' }}>
+              <h1 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', marginBottom: 'var(--space-2)', color: 'var(--color-forest-dark)' }}>
                 {product.name}
               </h1>
+
+              {/* Star rating summary */}
+              {(() => {
+                const reviews = product.reviews || [];
+                const avgRating = reviews.length > 0
+                  ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+                  : null;
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+                    {avgRating ? (
+                      <>
+                        <div className="star-rating">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <span key={i}>{i < Math.round(Number(avgRating)) ? '★' : '☆'}</span>
+                          ))}
+                        </div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-gray-700)' }}>
+                          {avgRating} ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--color-gray-400)' }}>
+                        No reviews yet. Be the first to review!
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
                 {product.weight && (
@@ -334,7 +415,8 @@ export default function ProductDetailPage() {
 
           {/* Tabs */}
           {(() => {
-            const tabs: { id: 'description' | 'ingredients' | 'usage' | 'video'; label: string }[] = [
+            const reviews = product.reviews || [];
+            const tabs: { id: 'description' | 'ingredients' | 'usage' | 'video' | 'reviews'; label: string }[] = [
               { id: 'description', label: 'Description' }
             ];
             if (product.ingredients || product.benefits) {
@@ -346,6 +428,7 @@ export default function ProductDetailPage() {
             if (product.videoUrl) {
               tabs.push({ id: 'video', label: 'Video Demo' });
             }
+            tabs.push({ id: 'reviews', label: `Reviews (${reviews.length})` });
 
             return (
               <div style={{ marginTop: 'var(--space-12)' }}>
@@ -425,6 +508,91 @@ export default function ProductDetailPage() {
                           </div>
                         );
                       })()}
+                    </div>
+                  )}
+                  {activeTab === 'reviews' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-8)', flexWrap: 'wrap' }} className="grid-2">
+                      {/* Write a Review */}
+                      <div>
+                        <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)', marginTop: 0, marginBottom: 'var(--space-4)' }}>Write a Review</h3>
+                        <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                          <div className="form-group">
+                            <label className="form-label" htmlFor="review-name">Your Name</label>
+                            <input
+                              id="review-name"
+                              className="form-input"
+                              value={reviewName}
+                              onChange={e => setReviewName(e.target.value)}
+                              placeholder="E.g., Jane Doe"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="form-group">
+                            <label className="form-label" style={{ marginBottom: 4 }}>Rating</label>
+                            <div className="star-rating interactive" style={{ fontSize: '1.5rem' }}>
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <span
+                                  key={star}
+                                  onClick={() => setReviewRating(star)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  {star <= reviewRating ? '★' : '☆'}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label className="form-label" htmlFor="review-comment">Review Comment</label>
+                            <textarea
+                              id="review-comment"
+                              className="form-input"
+                              value={reviewComment}
+                              onChange={e => setReviewComment(e.target.value)}
+                              placeholder="Share your experience with this product..."
+                              rows={4}
+                              required
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={submittingReview}
+                            style={{ alignSelf: 'flex-start' }}
+                          >
+                            {submittingReview ? 'Submitting...' : 'Submit Review'}
+                          </button>
+                        </form>
+                      </div>
+
+                      {/* Reviews List */}
+                      <div>
+                        <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)', marginTop: 0, marginBottom: 'var(--space-4)' }}>Customer Reviews</h3>
+                        {reviews.length === 0 ? (
+                          <div style={{ padding: 'var(--space-4)', background: 'var(--color-parchment)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--color-gray-500)' }}>
+                            No reviews yet for this product.
+                          </div>
+                        ) : (
+                          <div style={{ maxHeight: 450, overflowY: 'auto', paddingRight: 4 }}>
+                            {reviews.map(r => (
+                              <div key={r.id} className="review-card">
+                                <div className="review-header">
+                                  <div className="review-author">{r.name}</div>
+                                  <div className="review-date">{new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                </div>
+                                <div className="star-rating" style={{ marginBottom: 'var(--space-2)', fontSize: '0.85rem' }}>
+                                  {Array.from({ length: 5 }, (_, i) => (
+                                    <span key={i}>{i < r.rating ? '★' : '☆'}</span>
+                                  ))}
+                                </div>
+                                <p className="review-comment">{r.comment}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

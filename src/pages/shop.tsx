@@ -52,13 +52,17 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
+  const [priceLimit, setPriceLimit] = useState(2000);
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
-  const fetchProducts = useCallback(async (cat = '', q = '', page = 1) => {
+  const fetchProducts = useCallback(async (cat = '', q = '', page = 1, maxP = 2000) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '12' });
     if (cat) params.set('category', cat);
     if (q) params.set('search', q);
+    if (maxP < 2000) params.set('maxPrice', String(maxP));
     const res = await fetch(`/api/products?${params}`);
     const data = await res.json();
     setProducts(data.products || []);
@@ -73,18 +77,51 @@ export default function ShopPage() {
   useEffect(() => {
     const cat = (router.query.category as string) || '';
     setActiveCategory(cat);
-    fetchProducts(cat, search);
+    fetchProducts(cat, search, 1, priceLimit);
   }, [router.query.category, fetchProducts]);
+
+  // Handle auto-suggestions loading
+  useEffect(() => {
+    if (search.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const delayDebounceFn = setTimeout(() => {
+      fetch(`/api/products?search=${encodeURIComponent(search)}&limit=5`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.products) {
+            setSuggestions(data.products);
+          }
+        })
+        .catch(err => console.error('Error loading suggestions:', err));
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search]);
+
+  // Handle price range update with debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchProducts(activeCategory, search, 1, priceLimit);
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [priceLimit, fetchProducts, activeCategory]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchProducts(activeCategory, search);
+    fetchProducts(activeCategory, search, 1, priceLimit);
   };
 
   const handleCategoryFilter = (slug: string) => {
     setActiveCategory(slug);
-    fetchProducts(slug, search);
+    fetchProducts(slug, search, 1, priceLimit);
     router.push(slug ? `/shop?category=${slug}` : '/shop', undefined, { shallow: true });
+  };
+
+  const handlePriceChange = (val: number) => {
+    setPriceLimit(val);
   };
 
   const discount = (price: number, comparePrice?: number) =>
@@ -113,20 +150,75 @@ export default function ShopPage() {
 
       <section className="section-sm">
         <div className="container">
-          {/* Search + Filter */}
-          <div className="filter-bar">
-            <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--space-2)', flex: 1 }}>
-              <input
-                id="search-input"
-                className="form-input"
-                placeholder="Search products..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ maxWidth: 280 }}
-              />
-              <button type="submit" className="btn btn-primary btn-sm">Search</button>
-            </form>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          {/* Search + Filter Panel */}
+          <div className="filter-bar" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Search Form with Auto-Suggest */}
+              <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--space-2)', flex: 1, position: 'relative', minWidth: 280 }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input
+                    id="search-input"
+                    className="form-input"
+                    placeholder="Search products..."
+                    value={search}
+                    onChange={e => {
+                      setSearch(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    style={{ width: '100%' }}
+                  />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="suggestions-dropdown">
+                      {suggestions.map(p => (
+                        <div
+                          key={p.id}
+                          className="suggestion-item"
+                          onMouseDown={() => {
+                            setSearch(p.name);
+                            setShowSuggestions(false);
+                            fetchProducts(activeCategory, p.name, 1, priceLimit);
+                          }}
+                        >
+                          🌿 {p.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button type="submit" className="btn btn-primary btn-sm">Search</button>
+              </form>
+
+              {/* Price Range Slider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 250 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)', whiteSpace: 'nowrap' }} htmlFor="price-slider">
+                  Max Price: <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>₹{priceLimit}</span>
+                </label>
+                <input
+                  id="price-slider"
+                  type="range"
+                  min="0"
+                  max="2000"
+                  step="50"
+                  value={priceLimit}
+                  onChange={e => handlePriceChange(Number(e.target.value))}
+                  style={{
+                    flex: 1,
+                    accentColor: 'var(--color-forest)',
+                    height: 6,
+                    borderRadius: 3,
+                    background: 'var(--color-gray-200)',
+                    cursor: 'pointer'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Category Filter Chips */}
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', borderTop: '1px solid rgba(13,44,29,0.06)', paddingTop: 'var(--space-3)' }}>
               <button
                 className={`filter-chip ${activeCategory === '' ? 'active' : ''}`}
                 onClick={() => handleCategoryFilter('')}
@@ -139,7 +231,7 @@ export default function ShopPage() {
                   className={`filter-chip ${activeCategory === cat.slug ? 'active' : ''}`}
                   onClick={() => handleCategoryFilter(cat.slug)}
                 >
-                  {CATEGORY_ICONS[cat.slug]} {cat.name}
+                  {CATEGORY_ICONS[cat.slug] || '🌿'} {cat.name}
                 </button>
               ))}
             </div>

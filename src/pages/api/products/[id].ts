@@ -11,7 +11,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const product = await prisma.product.findUnique({
         where: { id: productId },
-        include: { category: true, variants: true },
+        include: {
+          category: true,
+          variants: true,
+          reviews: { orderBy: { createdAt: 'desc' } },
+        },
       });
       if (!product) return res.status(404).json({ error: 'Product not found' });
       return res.status(200).json({ product });

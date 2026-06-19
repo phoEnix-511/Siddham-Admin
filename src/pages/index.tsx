@@ -135,6 +135,11 @@ function ProductCard({ product }: { product: Product }) {
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [hero, setHero] = useState({
+    title: 'Heal Naturally. Live Wholly.',
+    subtitle: "Discover our curated range of authentic Ayurvedic formulations, crafted from the finest herbs for your hair, skin, and inner wellbeing.",
+    image: '',
+  });
 
   useEffect(() => {
     fetch('/api/products?featured=true&limit=6')
@@ -143,6 +148,18 @@ export default function Home() {
     fetch('/api/categories')
       .then(r => r.json())
       .then(d => setCategories(d.categories || []));
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(d => {
+        if (d.settings) {
+          setHero({
+            title: d.settings.hero_title || 'Heal Naturally. Live Wholly.',
+            subtitle: d.settings.hero_subtitle || "Discover our curated range of authentic Ayurvedic formulations, crafted from the finest herbs for your hair, skin, and inner wellbeing.",
+            image: d.settings.hero_image || '',
+          });
+        }
+      })
+      .catch(err => console.error('Error fetching settings for Home:', err));
   }, []);
 
   return (
@@ -155,23 +172,32 @@ export default function Home() {
       <Navbar />
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="hero" aria-label="Hero">
+      <section 
+        className="hero" 
+        aria-label="Hero"
+        style={hero.image ? { 
+          backgroundImage: `linear-gradient(rgba(6, 26, 17, 0.75), rgba(6, 26, 17, 0.8)), url(${hero.image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          color: 'var(--color-parchment)',
+          position: 'relative'
+        } : undefined}
+      >
         <div className="hero-content">
           <div className="hero-text">
             <div className="hero-eyebrow">
               <span>🌿</span>
-              <span>Ayurveda · Since Ancient Times</span>
+              <span style={hero.image ? { color: 'var(--color-saffron-light)' } : undefined}>Ayurveda · Since Ancient Times</span>
             </div>
-            <h1>Heal Naturally.<br />Live Wholly.</h1>
-            <p className="hero-subtitle">
-              Discover our curated range of authentic Ayurvedic formulations, crafted from
-              the finest herbs for your hair, skin, and inner wellbeing.
+            <h1 style={hero.image ? { color: 'var(--color-cream)' } : undefined}>{hero.title}</h1>
+            <p className="hero-subtitle" style={hero.image ? { color: 'rgba(253, 251, 247, 0.85)' } : undefined}>
+              {hero.subtitle}
             </p>
             <div className="hero-actions">
               <Link href="/shop" className="btn btn-gold btn-lg" id="hero-shop-btn">
                 Explore Products →
               </Link>
-              <Link href="/about" className="btn btn-outline-gold btn-lg">
+              <Link href="/about" className="btn btn-outline-gold btn-lg" style={hero.image ? { color: 'var(--color-cream)', borderColor: 'var(--color-saffron-light)' } : undefined}>
                 Our Story
               </Link>
             </div>
@@ -185,7 +211,7 @@ export default function Home() {
               }} />
               <div style={{
                 position: 'relative', width: '85%', height: '85%',
-                background: 'rgba(24, 24, 27, 0.45)',
+                background: 'rgba(24, 24, 27, 0.55)',
                 backdropFilter: 'blur(20px)',
                 border: '1.5px solid rgba(196, 133, 42, 0.25)',
                 borderRadius: 32,
@@ -239,20 +265,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Trust Bar ─────────────────────────────────────────── */}
-      <section style={{ background: 'var(--color-parchment-dark)', padding: '1.25rem 0' }}>
+      {/* ── Trust Bar / Badges ────────────────────────────────── */}
+      <section style={{ background: 'var(--color-cream)', padding: 'var(--space-2) 0' }}>
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(1rem, 5vw, 5rem)', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="trust-badges-container">
             {[
-              { icon: '🌿', text: '100% Natural' },
-              { icon: '🔬', text: 'Lab Tested' },
-              { icon: '🚚', text: 'Free Shipping ₹999+' },
-              { icon: '🔄', text: '30-Day Returns' },
-              { icon: '🏆', text: 'GMP Certified' },
+              { icon: '🌿', title: '100% Organic', desc: 'Sourced from organic forest farms' },
+              { icon: '🔬', title: 'Lab Tested', desc: 'Purity & potency certified' },
+              { icon: '🚚', title: 'Free Shipping', desc: 'On orders above ₹999' },
+              { icon: '🏆', title: 'GMP Certified', desc: 'Highest safety standards' },
             ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)' }}>
-                <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-                {item.text}
+              <div key={i} className="trust-badge">
+                <span className="trust-badge-icon">{item.icon}</span>
+                <h4 className="trust-badge-title">{item.title}</h4>
+                <p className="trust-badge-desc">{item.desc}</p>
               </div>
             ))}
           </div>

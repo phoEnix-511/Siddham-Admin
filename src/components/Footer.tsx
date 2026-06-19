@@ -1,7 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function Footer() {
+  const [contacts, setContacts] = useState({
+    phone: '+91 98765 43210',
+    email: 'hello@siddhamwellness.com',
+    instagram: '',
+    facebook: '',
+  });
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setContacts({
+            phone: data.settings.store_phone || '+91 98765 43210',
+            email: data.settings.store_email || 'hello@siddhamwellness.com',
+            instagram: data.settings.social_instagram || '',
+            facebook: data.settings.social_facebook || '',
+          });
+        }
+      })
+      .catch(err => console.error('Error fetching settings for Footer:', err));
+  }, []);
+
   return (
     <footer className="footer" role="contentinfo">
       <div className="container">
@@ -14,11 +37,16 @@ export default function Footer() {
               the finest herbal formulations crafted with pure ingredients for holistic wellbeing.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-              {['📘', '📸', '🐦', '▶️'].map((icon, i) => (
-                <a key={i} href="#" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', transition: 'background 0.25s' }}>
-                  {icon}
+              {contacts.facebook && (
+                <a href={contacts.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', transition: 'background 0.25s' }} title="Facebook">
+                  📘
                 </a>
-              ))}
+              )}
+              {contacts.instagram && (
+                <a href={contacts.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', transition: 'background 0.25s' }} title="Instagram">
+                  📸
+                </a>
+              )}
             </div>
           </div>
 
@@ -29,7 +57,6 @@ export default function Footer() {
               <Link href="/shop?category=hair-care" className="footer-link">Hair Care</Link>
               <Link href="/shop?category=supplements" className="footer-link">Supplements</Link>
               <Link href="/shop?category=skin-care" className="footer-link">Skin Care</Link>
-              <Link href="/shop?category=oils-essentials" className="footer-link">Oils & Essentials</Link>
             </div>
           </div>
 
@@ -37,22 +64,20 @@ export default function Footer() {
             <div className="footer-heading">Company</div>
             <div className="footer-links">
               <Link href="/about" className="footer-link">Our Story</Link>
-              <a href="#" className="footer-link">Ayurveda Blog</a>
-              <a href="#" className="footer-link">Sustainability</a>
-              <a href="#" className="footer-link">Certifications</a>
-              <a href="#" className="footer-link">Careers</a>
+              <span className="footer-link" style={{ opacity: 0.5, cursor: 'default' }}>Ayurveda Blog</span>
+              <span className="footer-link" style={{ opacity: 0.5, cursor: 'default' }}>Sustainability</span>
             </div>
           </div>
 
           <div>
-            <div className="footer-heading">Support</div>
+            <div className="footer-heading">Support & Info</div>
             <div className="footer-links">
-              <a href="#" className="footer-link">📞 +91 98765 43210</a>
-              <a href="#" className="footer-link">✉️ hello@siddhamwellness.com</a>
-              <a href="#" className="footer-link">Shipping Policy</a>
-              <a href="#" className="footer-link">Return Policy</a>
-              <a href="#" className="footer-link">Privacy Policy</a>
-              <a href="#" className="footer-link">Terms of Service</a>
+              <a href={`tel:${contacts.phone}`} className="footer-link">📞 {contacts.phone}</a>
+              <a href={`mailto:${contacts.email}`} className="footer-link">✉️ {contacts.email}</a>
+              <Link href="/shipping-returns" className="footer-link">Shipping Policy</Link>
+              <Link href="/shipping-returns" className="footer-link">Return Policy</Link>
+              <Link href="/privacy" className="footer-link">Privacy Policy</Link>
+              <Link href="/terms" className="footer-link">Terms of Service</Link>
             </div>
           </div>
         </div>

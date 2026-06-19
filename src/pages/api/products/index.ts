@@ -14,14 +14,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Not admin
       }
 
-      const { category, featured, search, page = '1', limit = '12', showInactive } = req.query;
+      const { category, featured, search, page = '1', limit = '12', showInactive, minPrice, maxPrice } = req.query;
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      const where: Record<string, unknown> = {};
+      const where: Record<string, any> = {};
       if (!isAdmin || showInactive !== 'true') {
         where.isActive = true;
+      }
+      if (minPrice || maxPrice) {
+        const priceQuery: Record<string, number> = {};
+        if (minPrice) priceQuery.gte = parseFloat(minPrice as string);
+        if (maxPrice) priceQuery.lte = parseFloat(maxPrice as string);
+        where.price = priceQuery;
       }
       if (category) where.category = { slug: category };
       if (featured === 'true') where.isFeatured = true;

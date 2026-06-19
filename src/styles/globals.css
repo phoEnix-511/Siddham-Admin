@@ -1630,3 +1630,294 @@ p { color: var(--color-gray-600); line-height: 1.7; }
   justify-content: center;
   font-size: 3rem;
 }
+
+/* ── Additional Storefront CMS & Revamp Layouts ──────────────── */
+
+/* Announcement Bar */
+.announcement-bar {
+  background: var(--color-forest);
+  background: linear-gradient(90deg, var(--color-forest) 0%, var(--color-forest-light) 100%);
+  color: var(--color-parchment);
+  text-align: center;
+  padding: 8px var(--space-4);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  z-index: 1002;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Sticky Header & Navbar Modifications */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 30px rgba(6, 26, 17, 0.05);
+  background: var(--color-cream);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(13, 44, 29, 0.08) !important;
+}
+
+/* Mega Menu container */
+.nav-link-container {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-link-container:hover .mega-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Hover-triggered Mega Menu */
+.mega-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  width: 580px;
+  background: var(--color-cream);
+  border: 1px solid rgba(13, 44, 29, 0.1);
+  box-shadow: 0 15px 40px rgba(6, 26, 17, 0.12);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  display: grid;
+  grid-template-columns: 1.2fr 1.8fr;
+  gap: var(--space-6);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.mega-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 0 8px 8px;
+  border-style: solid;
+  border-color: transparent transparent var(--color-cream);
+  z-index: 1001;
+}
+
+.mega-menu-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mega-menu-col.highlight-col {
+  background: var(--color-sage-light);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-sage);
+}
+
+.mega-menu-title {
+  font-family: var(--font-serif);
+  color: var(--color-forest-dark);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  border-bottom: 1px solid rgba(13, 44, 29, 0.08);
+  padding-bottom: 4px;
+}
+
+.mega-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mega-menu-item {
+  color: var(--color-gray-600);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mega-menu-item:hover {
+  color: var(--color-forest);
+  transform: translateX(4px);
+}
+
+.mega-menu-item::before {
+  content: '🌿';
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+/* Trust Badges styling */
+.trust-badges-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-parchment);
+  border-radius: var(--radius-xl);
+  margin: var(--space-10) 0;
+  border: 1px solid rgba(13, 44, 29, 0.04);
+}
+
+.trust-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.trust-badge-icon {
+  font-size: 2.2rem;
+}
+
+.trust-badge-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--color-forest-dark);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.trust-badge-desc {
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  margin: 0;
+  max-width: 150px;
+}
+
+/* Star Ratings & Product Reviews */
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--color-saffron);
+}
+
+.star-rating.interactive span {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.star-rating.interactive span:hover {
+  transform: scale(1.2);
+}
+
+.review-card {
+  background: var(--color-white);
+  border: 1px solid rgba(13, 44, 29, 0.06);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  box-shadow: 0 4px 12px rgba(6, 26, 17, 0.02);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.review-author {
+  font-weight: 600;
+  color: var(--color-forest-dark);
+  font-size: 0.9rem;
+}
+
+.review-date {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+}
+
+.review-comment {
+  font-size: 0.85rem;
+  color: var(--color-gray-600);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Shop search suggestions dropdown */
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-cream);
+  border: 1px solid rgba(13, 44, 29, 0.1);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(6, 26, 17, 0.08);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 10;
+  margin-top: 4px;
+}
+
+.suggestion-item {
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.85rem;
+  color: var(--color-gray-700);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid rgba(13, 44, 29, 0.04);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: var(--color-sage-light);
+  color: var(--color-forest-dark);
+}
+
+/* Styled HTML content wrapper for dynamic CMS pages */
+.cms-content {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--color-gray-700);
+}
+
+.cms-content h2 {
+  font-family: var(--font-serif);
+  color: var(--color-forest-dark);
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-4);
+  font-size: 1.5rem;
+}
+
+.cms-content h3 {
+  font-family: var(--font-serif);
+  color: var(--color-forest);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+  font-size: 1.2rem;
+}
+
+.cms-content p {
+  margin-bottom: var(--space-4);
+}
+
+.cms-content ul, .cms-content ol {
+  margin-bottom: var(--space-4);
+  padding-left: var(--space-6);
+}
+
+.cms-content li {
+  margin-bottom: var(--space-2);
+}

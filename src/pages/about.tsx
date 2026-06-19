@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 export default function AboutPage() {
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(d => {
+        if (d.settings && d.settings.about_us_content) {
+          setContent(d.settings.about_us_content);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
     <>
       <Head>
@@ -27,23 +42,35 @@ export default function AboutPage() {
             <h2 style={{ marginTop: 'var(--space-3)', marginBottom: 'var(--space-5)' }}>
               Ancient Wisdom, Thoughtfully Reimagined
             </h2>
-            <p style={{ lineHeight: 1.9, marginBottom: 'var(--space-5)', fontSize: '1rem' }}>
-              Siddham Wellness was born from a simple belief: that the answers to modern health challenges
-              lie in nature's own pharmacy. Founded in the heartland of India, our brand draws inspiration
-              from the ancient Siddha and Ayurvedic traditions — systems of medicine that have stood the
-              test of time for over 5,000 years.
-            </p>
-            <p style={{ lineHeight: 1.9, marginBottom: 'var(--space-5)', fontSize: '1rem' }}>
-              Our founders, having witnessed firsthand the transformative power of herbal remedies in their
-              own families, set out to make these ancient formulations accessible to the modern world.
-              We work closely with certified organic farmers across India to source the finest ingredients,
-              ensuring every product we create is pure, potent, and respectful of the earth.
-            </p>
-            <p style={{ lineHeight: 1.9, fontSize: '1rem' }}>
-              Today, Siddham Wellness is a trusted name for those who seek holistic wellness — not just
-              treating symptoms, but nurturing the whole person. We are GMP certified, and every
-              batch is third-party lab tested for purity and efficacy.
-            </p>
+            {loading ? (
+              <div className="loading-page" style={{ minHeight: '20vh' }}><div className="spinner" /></div>
+            ) : content ? (
+              <div
+                className="cms-content"
+                style={{ lineHeight: 1.9, fontSize: '1rem' }}
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+            ) : (
+              <>
+                <p style={{ lineHeight: 1.9, marginBottom: 'var(--space-5)', fontSize: '1rem' }}>
+                  Siddham Wellness was born from a simple belief: that the answers to modern health challenges
+                  lie in nature's own pharmacy. Founded in the heartland of India, our brand draws inspiration
+                  from the ancient Siddha and Ayurvedic traditions — systems of medicine that have stood the
+                  test of time for over 5,000 years.
+                </p>
+                <p style={{ lineHeight: 1.9, marginBottom: 'var(--space-5)', fontSize: '1rem' }}>
+                  Our founders, having witnessed firsthand the transformative power of herbal remedies in their
+                  own families, set out to make these ancient formulations accessible to the modern world.
+                  We work closely with certified organic farmers across India to source the finest ingredients,
+                  ensuring every product we create is pure, potent, and respectful of the earth.
+                </p>
+                <p style={{ lineHeight: 1.9, fontSize: '1rem' }}>
+                  Today, Siddham Wellness is a trusted name for those who seek holistic wellness — not just
+                  treating symptoms, but nurturing the whole person. We are GMP certified, and every
+                  batch is third-party lab tested for purity and efficacy.
+                </p>
+              </>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-6)', marginTop: 'var(--space-12)' }}>

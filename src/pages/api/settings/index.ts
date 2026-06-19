@@ -4,16 +4,24 @@ import { requireAdmin } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
+    let isAdmin = false;
     try {
       requireAdmin(req);
+      isAdmin = true;
     } catch {
-      return res.status(401).json({ error: 'Unauthorized' });
+      // not admin
     }
 
     try {
       const settings = await prisma.setting.findMany({ orderBy: { group: 'asc' } });
       const settingsMap: Record<string, string> = {};
       settings.forEach(s => {
+        if (!isAdmin) {
+          const lowerKey = s.key.toLowerCase();
+          if (lowerKey.includes('secret') || lowerKey.includes('password')) {
+            return;
+          }
+        }
         settingsMap[s.key] = s.value;
       });
       return res.status(200).json({ settings: settingsMap });
