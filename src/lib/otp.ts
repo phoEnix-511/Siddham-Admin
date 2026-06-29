@@ -1,21 +1,9 @@
-import twilio from 'twilio';
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
-
-function getTwilioClient() {
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-
-  if (!accountSid || !authToken) {
-    throw new Error('Twilio credentials are not configured');
-  }
-
-  return twilio(accountSid, authToken);
-}
 
 /**
  * Normalise a phone number to E.164 format.
@@ -77,24 +65,49 @@ export async function sendWhatsAppOtp(
     return { success: false, message: 'Failed to store OTP. Please try again.' };
   }
 
-  const from = process.env.TWILIO_WHATSAPP_FROM;
-  if (!from) {
-    console.error('[otp] TWILIO_WHATSAPP_FROM is not set');
-    return { success: false, message: 'WhatsApp sender not configured' };
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  
+  if (!phoneNumberId || !accessToken) {
+    console.error('[otp] WhatsApp Cloud API credentials are not set');
+    return { success: false, message: 'WhatsApp Cloud API not configured' };
   }
 
   try {
-    const client = getTwilioClient();
+    const url = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
+    
+    // The WhatsApp Cloud API expects the "to" number without the '+' symbol
+    const to = e164Phone.startsWith('+') ? e164Phone.slice(1) : e164Phone;
 
-    await client.messages.create({
-      from,
-      to: `whatsapp:${e164Phone}`,
-      body: `Your Siddham Wellness verification code is: ${otp}. Valid for 10 minutes. 🌿`,
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'text',
+      text: {
+        preview_url: false,
+        body: `Your Siddham Wellness verification code is: ${otp}. Valid for 10 minutes. 🌿`
+      }
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Failed to send WhatsApp message via Cloud API');
+    }
 
     return { success: true, message: 'OTP sent to your WhatsApp' };
   } catch (err) {
-    console.error('[otp] Twilio send error:', err);
+    console.error('[otp] WhatsApp Cloud API send error:', err);
     // Clean up the stored OTP so a retry generates a fresh one
     try {
       await redis.del(redisKey(e164Phone));

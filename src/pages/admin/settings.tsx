@@ -38,9 +38,8 @@ interface Settings {
   rewards_point_value: string;
   rewards_welcome_bonus: string;
   // WhatsApp Notifications
-  twilio_account_sid: string;
-  twilio_auth_token: string;
-  twilio_whatsapp_from: string;
+  whatsapp_phone_number_id: string;
+  whatsapp_access_token: string;
 }
 
 const defaultSettings: Settings = {
@@ -66,9 +65,8 @@ const defaultSettings: Settings = {
   rewards_points_per_rupee: '1',
   rewards_point_value: '0.10',
   rewards_welcome_bonus: '500',
-  twilio_account_sid: '',
-  twilio_auth_token: '',
-  twilio_whatsapp_from: '',
+  whatsapp_phone_number_id: '',
+  whatsapp_access_token: '',
 };
 
 const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
@@ -393,21 +391,17 @@ export default function AdminSettingsPage() {
               </div>
             </SettingSection>
 
-            <SettingSection title="WhatsApp Automations (Twilio)" icon="💬">
+            <SettingSection title="WhatsApp Automations (Cloud API)" icon="💬">
               <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-3)' }}>
-                Configure Twilio credentials for sending automated WhatsApp order confirmations.
+                Configure official WhatsApp Business API credentials for sending automated WhatsApp order confirmations.
               </p>
               <div className="form-group">
-                <label className="form-label">Twilio Account SID</label>
-                <input type="password" placeholder="ACxxxxxxxxxxxxx" className="form-input" name="twilio_account_sid" value={settings.twilio_account_sid} onChange={handleChange} />
+                <label className="form-label">Phone Number ID</label>
+                <input type="text" placeholder="1234567890" className="form-input" name="whatsapp_phone_number_id" value={settings.whatsapp_phone_number_id} onChange={handleChange} />
               </div>
               <div className="form-group">
-                <label className="form-label">Twilio Auth Token</label>
-                <input type="password" placeholder="xxxxxxxxxxxxxxx" className="form-input" name="twilio_auth_token" value={settings.twilio_auth_token} onChange={handleChange} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Twilio WhatsApp From Number</label>
-                <input type="text" placeholder="whatsapp:+14155238886" className="form-input" name="twilio_whatsapp_from" value={settings.twilio_whatsapp_from} onChange={handleChange} />
+                <label className="form-label">Access Token</label>
+                <input type="password" placeholder="EAxxxxxxxxxxxxx" className="form-input" name="whatsapp_access_token" value={settings.whatsapp_access_token} onChange={handleChange} />
               </div>
             </SettingSection>
 
