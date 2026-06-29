@@ -26,10 +26,10 @@ export default function ProductCard({ product }: { product: any }) {
       </Link>
       <div className="product-card-body">
         <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <h3 className="product-title">{product.name}</h3>
+          <h3 className="product-name" style={{ fontSize: '1.25rem', marginBottom: 'var(--space-2)' }}>{product.name}</h3>
         </Link>
-        <div className="product-price-row">
-          <span className="price-main">₹{product.price}</span>
+        <div className="product-price-row" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <span className="price-current">₹{product.price}</span>
           {product.comparePrice && (
             <span className="price-compare">₹{product.comparePrice}</span>
           )}
