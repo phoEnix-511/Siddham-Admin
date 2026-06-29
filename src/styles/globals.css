@@ -2985,7 +2985,8 @@ p {
 }
 .multi-list-scroll {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-2);
+  justify-content: space-evenly;
   overflow-x: auto;
   padding: 0 var(--space-4);
   scrollbar-width: none;
@@ -2998,6 +2999,8 @@ p {
   text-decoration: none;
   color: var(--color-forest-dark);
   min-width: 80px;
+  flex: 1;
+  max-width: 120px;
 }
 .multi-list-image-wrap {
   width: 70px;

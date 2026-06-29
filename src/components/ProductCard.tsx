@@ -26,17 +26,39 @@ export default function ProductCard({ product }: { product: any }) {
       </Link>
       <div className="product-card-body">
         <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <h3 className="product-name" style={{ fontSize: '1.25rem', marginBottom: 'var(--space-2)' }}>{product.name}</h3>
+          <h3 className="product-name" style={{ 
+            fontFamily: 'var(--font-sans)', 
+            fontSize: '1.1rem', 
+            fontWeight: 800, 
+            letterSpacing: '-0.02em',
+            marginBottom: 'var(--space-1)',
+            color: 'var(--color-forest-dark)'
+          }}>
+            {product.name}
+          </h3>
+          {product.description && (
+            <p style={{ 
+              fontSize: '0.85rem', 
+              color: 'var(--color-gray-500)', 
+              display: '-webkit-box', 
+              WebkitLineClamp: 2, 
+              WebkitBoxOrient: 'vertical', 
+              overflow: 'hidden',
+              marginBottom: 'var(--space-3)'
+            }}>
+              {product.description}
+            </p>
+          )}
         </Link>
         <div className="product-price-row" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <span className="price-current">₹{product.price}</span>
+          <span className="price-current" style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '1.25rem' }}>₹{product.price}</span>
           {product.comparePrice && (
-            <span className="price-compare">₹{product.comparePrice}</span>
+            <span className="price-compare" style={{ textDecoration: 'line-through', color: 'var(--color-gray-400)', fontSize: '0.9rem' }}>₹{product.comparePrice}</span>
           )}
         </div>
         <button 
-          className="btn btn-primary" 
-          style={{ width: '100%' }}
+          className="btn btn-gold" 
+          style={{ width: '100%', borderRadius: '9999px', fontSize: '0.9rem', padding: '12px 24px', fontWeight: 700, letterSpacing: '0.05em' }}
           disabled={!product.isActive}
           onClick={(e) => {
             e.preventDefault();
