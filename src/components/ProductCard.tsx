@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: any }) {
           {!product.isActive && <div className="product-badge out-of-stock">Unavailable</div>}
         </div>
       </Link>
-      <div className="product-card-content">
+      <div className="product-card-body">
         <Link href={`/products/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <h3 className="product-title">{product.name}</h3>
         </Link>
