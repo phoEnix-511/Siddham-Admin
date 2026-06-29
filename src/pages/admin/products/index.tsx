@@ -23,6 +23,17 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.admin) {
+          setAdminRole(data.admin.role);
+        }
+      });
+  }, []);
 
   // Pagination & Filters State
   const [page, setPage] = useState(1);
@@ -65,6 +76,7 @@ export default function AdminProductsPage() {
   };
 
   const handleToggleActive = async (id: string, isActive: boolean) => {
+    if (adminRole === 'viewer') return;
     const res = await fetch(`/api/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -116,7 +128,9 @@ export default function AdminProductsPage() {
               Show Inactive
             </label>
           </div>
-          <Link href="/admin/products/new" id="add-product-btn" className="btn btn-primary">+ Add Product</Link>
+          {adminRole !== 'viewer' && (
+            <Link href="/admin/products/new" id="add-product-btn" className="btn btn-primary">+ Add Product</Link>
+          )}
         </div>
         {loading ? (
           <div className="loading-page"><div className="spinner" /></div>
@@ -157,22 +171,27 @@ export default function AdminProductsPage() {
                           <button
                             onClick={() => handleToggleActive(p.id, p.isActive)}
                             className={`badge ${p.isActive ? 'badge-green' : 'badge-gray'}`}
-                            style={{ cursor: 'pointer', border: 'none', padding: '3px 10px' }}
-                            title="Toggle active status"
+                            style={{ cursor: adminRole === 'viewer' ? 'default' : 'pointer', border: 'none', padding: '3px 10px' }}
+                            title={adminRole === 'viewer' ? 'Read-only status' : 'Toggle active status'}
+                            disabled={adminRole === 'viewer'}
                           >
                             {p.isActive ? '● Active' : '○ Inactive'}
                           </button>
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                            <Link href={`/admin/products/${p.id}`} className="btn btn-ghost btn-sm">Edit</Link>
-                            <button
-                              className="btn btn-sm"
-                              style={{ color: 'var(--color-error)', background: 'var(--color-error-bg)' }}
-                              onClick={() => setDeleteId(p.id)}
-                            >
-                              Delete
-                            </button>
+                            <Link href={`/admin/products/${p.id}`} className="btn btn-ghost btn-sm">
+                              {adminRole === 'viewer' ? 'View' : 'Edit'}
+                            </Link>
+                            {adminRole !== 'viewer' && (
+                              <button
+                                className="btn btn-sm"
+                                style={{ color: 'var(--color-error)', background: 'var(--color-error-bg)' }}
+                                onClick={() => setDeleteId(p.id)}
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

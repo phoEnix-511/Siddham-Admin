@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (adminRole === 'viewer') {
         order.shippingAddress = '*** MASKED ***';
         if (order.customer) {
-          order.customer.name = order.customer.name.substring(0, 1) + '***';
+          order.customer.name = order.customer.name?.substring(0, 1) + '***';
           order.customer.email = '***@***.com';
           order.customer.phone = order.customer.phone ? '***' + order.customer.phone.slice(-4) : '***';
         }

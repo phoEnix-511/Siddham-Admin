@@ -37,17 +37,26 @@ export default function AccountPage() {
       <div className="account-page">
         <div className="account-container">
           {/* Header */}
-          <div className="account-header">
-            <div className="account-avatar">
-              {session?.user?.image
-                ? <img src={session.user.image} alt={session.user.name || ''} />
-                : <span>{(session?.user?.name || session?.user?.email || 'U')[0].toUpperCase()}</span>
-              }
+          <div className="account-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div className="account-avatar">
+                {session?.user?.image
+                  ? <img src={session.user.image} alt={session.user.name || ''} />
+                  : <span>{(session?.user?.name || session?.user?.email || 'U')[0].toUpperCase()}</span>
+                }
+              </div>
+              <div>
+                <h1 className="account-name">{session?.user?.name || 'Welcome!'}</h1>
+                <p className="account-email">{session?.user?.email}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="account-name">{session?.user?.name || 'Welcome!'}</h1>
-              <p className="account-email">{session?.user?.email}</p>
-            </div>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => signOut({ callbackUrl: '/' })}
+              style={{ borderColor: 'rgba(255,255,255,0.3)', color: 'white', padding: '8px 16px', fontSize: '0.8rem', borderRadius: 'var(--radius-md)' }}
+            >
+              Sign Out 👋
+            </button>
           </div>
 
           {/* Nav cards */}
@@ -72,13 +81,6 @@ export default function AccountPage() {
               <p>Browse Ayurvedic products</p>
               <span className="card-arrow">→</span>
             </Link>
-
-            <button className="account-card signout-card" onClick={() => signOut({ callbackUrl: '/' })}>
-              <span className="card-icon">👋</span>
-              <h3>Sign Out</h3>
-              <p>Sign out of your account</p>
-              <span className="card-arrow">→</span>
-            </button>
           </div>
         </div>
       </div>

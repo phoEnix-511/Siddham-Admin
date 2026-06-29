@@ -43,6 +43,8 @@ interface Settings {
   // Promotional
   show_featured_in: string;
   featured_in_brands: string;
+  trust_bar_rating: string;
+  trust_bar_count: string;
 }
 
 const defaultSettings: Settings = {
@@ -72,6 +74,8 @@ const defaultSettings: Settings = {
   whatsapp_access_token: '',
   show_featured_in: 'true',
   featured_in_brands: 'The Times, VOGUE, GQ, Wellness Daily',
+  trust_bar_rating: '4.8',
+  trust_bar_count: '50,000+',
 };
 
 const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
@@ -493,6 +497,16 @@ export default function AdminSettingsPage() {
                 <input type="text" className="form-input" name="featured_in_brands" value={settings.featured_in_brands} onChange={handleChange} placeholder="VOGUE, GQ, The Times" />
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: 4 }}>
                   Enter the names of the brands separated by commas.
+                </div>
+              </div>
+              <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
+                <div className="form-group">
+                  <label className="form-label">Homepage Trust Bar Rating</label>
+                  <input type="text" className="form-input" name="trust_bar_rating" value={settings.trust_bar_rating} onChange={handleChange} placeholder="e.g. 4.8" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Homepage Trust Bar Customers Count</label>
+                  <input type="text" className="form-input" name="trust_bar_count" value={settings.trust_bar_count} onChange={handleChange} placeholder="e.g. 50,000+" />
                 </div>
               </div>
             </SettingSection>

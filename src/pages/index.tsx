@@ -34,6 +34,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
         promotional: {
           showFeaturedIn: settings.show_featured_in !== 'false',
           featuredBrands: settings.featured_in_brands ? settings.featured_in_brands.split(',').map((b: string) => b.trim()).filter(Boolean) : ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
+          trustBarRating: settings.trust_bar_rating || '4.8',
+          trustBarCount: settings.trust_bar_count || '50,000+',
         }
       }
     };
@@ -51,6 +53,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
         promotional: {
           showFeaturedIn: true,
           featuredBrands: ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
+          trustBarRating: '4.8',
+          trustBarCount: '50,000+',
         }
       }
     };
@@ -139,7 +143,7 @@ export default function Home({ featuredProducts, categories, hero, promotional }
       {/* 4. Trust Bar */}
       <div className="trust-bar">
         <span className="trust-stars">★★★★★</span>
-        <span className="trust-bar-text">Rated 4.8 by 50,000+ Customers</span>
+        <span className="trust-bar-text">Rated {promotional.trustBarRating} by {promotional.trustBarCount} Customers</span>
         <span className="trust-stars">★★★★★</span>
       </div>
 

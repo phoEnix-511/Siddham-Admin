@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { requireAdminRole, requireViewerRole } from '@/lib/auth';
+import { getOrSet, del } from '@/lib/cache';
+
+const SETTINGS_CACHE_TTL = 60 * 10; // 10 minutes
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
@@ -13,17 +16,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const settings = await prisma.setting.findMany({ orderBy: { group: 'asc' } });
-      const settingsMap: Record<string, string> = {};
-      settings.forEach(s => {
-        if (!isAdmin) {
-          const lowerKey = s.key.toLowerCase();
-          if (lowerKey.includes('secret') || lowerKey.includes('password')) {
-            return;
+      const cacheKey = isAdmin ? 'settings:admin' : 'settings:public';
+      const settingsMap = await getOrSet(cacheKey, SETTINGS_CACHE_TTL, async () => {
+        const settings = await prisma.setting.findMany({ orderBy: { group: 'asc' } });
+        const map: Record<string, string> = {};
+        settings.forEach(s => {
+          if (!isAdmin) {
+            const lowerKey = s.key.toLowerCase();
+            if (lowerKey.includes('secret') || lowerKey.includes('password')) {
+              return;
+            }
           }
-        }
-        settingsMap[s.key] = s.value;
+          map[s.key] = s.value;
+        });
+        return map;
       });
+
+      res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
       return res.status(200).json({ settings: settingsMap });
     } catch (error) {
       console.error(error);
@@ -52,6 +61,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
       );
       await prisma.$transaction(updates);
+
+      // Invalidate settings cache
+      await Promise.all([
+        del('settings:admin'),
+        del('settings:public')
+      ]);
+
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error(error);

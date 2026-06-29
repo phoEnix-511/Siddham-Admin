@@ -3,7 +3,8 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useToast } from '@/context/ToastContext';
 import { signOut } from 'next-auth/react';
-import Layout from '@/components/Layout';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 export default function CustomerChangePasswordPage() {
   const router = useRouter();
@@ -43,7 +44,8 @@ export default function CustomerChangePasswordPage() {
   };
 
   return (
-    <Layout>
+    <>
+      <Navbar />
       <Head>
         <title>Change Password - Siddham Wellness</title>
       </Head>
@@ -88,6 +90,7 @@ export default function CustomerChangePasswordPage() {
           </form>
         </div>
       </div>
-    </Layout>
+      <Footer />
+    </>
   );
 }

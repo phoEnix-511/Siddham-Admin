@@ -44,6 +44,17 @@ export default function AdminOrderDetailPage() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [adminRole, setAdminRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.admin) {
+          setAdminRole(data.admin.role);
+        }
+      });
+  }, []);
 
   // Address edit states
   const [isEditingAddress, setIsEditingAddress] = useState(false);
@@ -297,7 +308,7 @@ export default function AdminOrderDetailPage() {
               <div className="card" style={{ padding: 'var(--space-4)' }}>
                 <div className="card-header" style={{ padding: 0, marginBottom: 'var(--space-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h4 style={{ color: 'var(--color-forest-dark)', margin: 0 }}>Shipping Address</h4>
-                  {!isEditingAddress && (
+                  {!isEditingAddress && adminRole !== 'viewer' && (
                     <button className="btn btn-outline btn-sm" style={{ padding: '2px 8px', fontSize: '0.75rem' }} onClick={() => setIsEditingAddress(true)}>Edit</button>
                   )}
                 </div>
@@ -459,7 +470,7 @@ export default function AdminOrderDetailPage() {
                     className="form-select"
                     value={order.status}
                     onChange={e => updateStatus(e.target.value)}
-                    disabled={updating}
+                    disabled={updating || adminRole === 'viewer'}
                     style={{ fontSize: '0.8rem', width: '100%' }}
                   >
                     {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(s => (
@@ -473,7 +484,7 @@ export default function AdminOrderDetailPage() {
                     className="form-select"
                     value={order.paymentStatus}
                     onChange={e => updateStatus(order.status, e.target.value)}
-                    disabled={updating}
+                    disabled={updating || adminRole === 'viewer'}
                     style={{ fontSize: '0.8rem', width: '100%' }}
                   >
                     {['PENDING', 'PAID', 'FAILED', 'REFUNDED'].map(s => (
@@ -493,7 +504,9 @@ export default function AdminOrderDetailPage() {
                   <div style={{ fontSize: '0.8rem', borderTop: '1px solid var(--color-gray-200)', paddingTop: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <span style={{ fontWeight: 600, color: 'var(--color-forest-dark)' }}>Fulfillment Details</span>
-                      <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => setIsEditingFulfillment(true)}>Edit</button>
+                      {adminRole !== 'viewer' && (
+                        <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => setIsEditingFulfillment(true)}>Edit</button>
+                      )}
                     </div>
                     <div style={{ color: 'var(--color-gray-600)' }}><strong>Carrier:</strong> {order.carrier}</div>
                     <div style={{ color: 'var(--color-gray-600)', wordBreak: 'break-all' }}><strong>Tracking:</strong> {order.trackingNumber}</div>
@@ -504,7 +517,9 @@ export default function AdminOrderDetailPage() {
                   <div style={{ fontSize: '0.8rem', borderTop: '1px solid var(--color-gray-200)', paddingTop: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <span style={{ fontWeight: 600, color: 'var(--color-error)' }}>Cancellation Reason</span>
-                      <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => setIsEditingCancellation(true)}>Edit</button>
+                      {adminRole !== 'viewer' && (
+                        <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => setIsEditingCancellation(true)}>Edit</button>
+                      )}
                     </div>
                     <div style={{ color: 'var(--color-gray-700)', fontStyle: 'italic' }}>{order.cancellationReason}</div>
                   </div>

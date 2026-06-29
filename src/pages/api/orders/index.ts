@@ -80,7 +80,7 @@ export default async function handler(
           shippingAddress: '*** MASKED ***',
           customer: order.customer ? {
             ...order.customer,
-            name: order.customer.name.substring(0, 1) + '***',
+            name: order.customer.name?.substring(0, 1) + '***',
             email: '***@***.com',
             phone: order.customer.phone ? '***' + order.customer.phone.slice(-4) : null,
           } : null
