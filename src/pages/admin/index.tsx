@@ -9,8 +9,14 @@ interface Stats {
   totalProducts: number;
   totalOrders: number;
   totalCustomers: number;
+  totalCustomers: number;
   totalRevenue: number;
   pendingOrders: number;
+}
+
+interface LiveMetrics {
+  activeUsers: number;
+  activeCarts: number;
 }
 
 interface Order {
@@ -32,6 +38,7 @@ interface Product {
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [liveMetrics, setLiveMetrics] = useState<LiveMetrics | null>(null);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +49,15 @@ export default function AdminDashboard() {
       if (res.status === 401) { router.push('/admin/login'); return; }
       const data = await res.json();
       setStats(data.stats);
+      setLiveMetrics(data.liveMetrics);
       setRecentOrders(data.recentOrders);
       setLowStockProducts(data.lowStockProducts);
       setLoading(false);
     };
     load();
+    // Refresh live metrics every 30 seconds
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
   }, [router]);
 
   const statusColors: Record<string, string> = {
@@ -86,8 +97,30 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Live Metrics */}
+            <div className="grid-2" style={{ alignItems: 'start', marginTop: 'var(--space-6)' }}>
+              <div className="card" style={{ background: 'linear-gradient(135deg, var(--color-forest-dark), var(--color-forest))', color: 'white' }}>
+                <div className="card-header">
+                  <h3 style={{ fontSize: '1rem', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e', animation: 'pulse 2s infinite' }}></span>
+                    Live Analytics
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', gap: '2rem', padding: 'var(--space-6)' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Active Users (Last 5m)</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-saffron)' }}>{liveMetrics?.activeUsers || 0}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Active Carts</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-saffron-light)' }}>{liveMetrics?.activeCarts || 0}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Two Column */}
-            <div className="grid-2" style={{ alignItems: 'start' }}>
+            <div className="grid-2" style={{ alignItems: 'start', marginTop: 'var(--space-6)' }}>
               {/* Recent Orders */}
               <div className="card">
                 <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

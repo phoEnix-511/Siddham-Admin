@@ -2,9 +2,20 @@
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { getOrSet } from "@/lib/cache";
+import { Redis } from "@upstash/redis";
 
 const STATS_CACHE_KEY = "admin:dashboard:stats:v1";
 const STATS_CACHE_TTL = 60 * 5; // 5 minutes
+
+let _redis: Redis | null = null;
+function getRedis(): Redis | null {
+  if (_redis) return _redis;
+  const url   = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  _redis = new Redis({ url, token });
+  return _redis;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -47,6 +58,8 @@ export default async function handler(
             orderNumber: true,
             createdAt: true,
             totalAmount: true,
+            status: true,
+            paymentStatus: true,
             customer: { select: { id: true, name: true, email: true } },
           },
         }),
@@ -81,8 +94,27 @@ export default async function handler(
       ? await fetchFresh()
       : await getOrSet(STATS_CACHE_KEY, STATS_CACHE_TTL, fetchFresh);
 
+    // Fetch real-time metrics directly (never cache these)
+    let activeUsers = 0;
+    let activeCarts = 0;
+    const redis = getRedis();
+    if (redis) {
+      const timestamp = Date.now();
+      const fiveMinutesAgo = timestamp - (5 * 60 * 1000);
+      try {
+        const [usersCount, cartsCount] = await Promise.all([
+          redis.zcount("analytics:active_users", fiveMinutesAgo, timestamp),
+          redis.zcount("analytics:active_carts", fiveMinutesAgo, timestamp)
+        ]);
+        activeUsers = usersCount;
+        activeCarts = cartsCount;
+      } catch (err) {
+        console.error("[stats] failed to fetch real-time metrics", err);
+      }
+    }
+
     res.setHeader("Cache-Control", "no-store");
-    return res.status(200).json(result);
+    return res.status(200).json({ ...result, liveMetrics: { activeUsers, activeCarts } });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Failed to fetch dashboard stats" });

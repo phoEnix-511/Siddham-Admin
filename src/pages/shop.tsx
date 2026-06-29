@@ -56,13 +56,15 @@ export default function ShopPage() {
   const [suggestions, setSuggestions] = useState<Product[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [sort, setSort] = useState('newest');
 
-  const fetchProducts = useCallback(async (cat = '', q = '', page = 1, maxP = 2000) => {
+  const fetchProducts = useCallback(async (cat = '', q = '', page = 1, maxP = 2000, sortOption = 'newest') => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '12' });
     if (cat) params.set('category', cat);
     if (q) params.set('search', q);
     if (maxP < 2000) params.set('maxPrice', String(maxP));
+    if (sortOption) params.set('sort', sortOption);
     const res = await fetch(`/api/products?${params}`);
     const data = await res.json();
     setProducts(data.products || []);
@@ -77,7 +79,7 @@ export default function ShopPage() {
   useEffect(() => {
     const cat = (router.query.category as string) || '';
     setActiveCategory(cat);
-    fetchProducts(cat, search, 1, priceLimit);
+    fetchProducts(cat, search, 1, priceLimit, sort);
   }, [router.query.category, fetchProducts]);
 
   // Handle auto-suggestions loading
@@ -103,20 +105,20 @@ export default function ShopPage() {
   // Handle price range update with debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchProducts(activeCategory, search, 1, priceLimit);
+      fetchProducts(activeCategory, search, 1, priceLimit, sort);
     }, 400);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [priceLimit, fetchProducts, activeCategory]);
+  }, [priceLimit, fetchProducts, activeCategory, sort]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchProducts(activeCategory, search, 1, priceLimit);
+    fetchProducts(activeCategory, search, 1, priceLimit, sort);
   };
 
   const handleCategoryFilter = (slug: string) => {
     setActiveCategory(slug);
-    fetchProducts(slug, search, 1, priceLimit);
+    fetchProducts(slug, search, 1, priceLimit, sort);
     router.push(slug ? `/shop?category=${slug}` : '/shop', undefined, { shallow: true });
   };
 
@@ -180,7 +182,7 @@ export default function ShopPage() {
                           onMouseDown={() => {
                             setSearch(p.name);
                             setShowSuggestions(false);
-                            fetchProducts(activeCategory, p.name, 1, priceLimit);
+                            fetchProducts(activeCategory, p.name, 1, priceLimit, sort);
                           }}
                         >
                           🌿 {p.name}
@@ -214,6 +216,26 @@ export default function ShopPage() {
                     cursor: 'pointer'
                   }}
                 />
+              </div>
+
+              {/* Sort Dropdown */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)' }} htmlFor="sort-select">
+                  Sort By:
+                </label>
+                <select
+                  id="sort-select"
+                  className="form-input"
+                  style={{ padding: '0.25rem 0.5rem', width: 'auto' }}
+                  value={sort}
+                  onChange={e => setSort(e.target.value)}
+                >
+                  <option value="popular">Popularity</option>
+                  <option value="newest">Newly Added</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="name_asc">Name</option>
+                </select>
               </div>
             </div>
 
@@ -261,6 +283,7 @@ export default function ShopPage() {
                           <img
                             src={product.images[0]}
                             alt={product.name}
+                            loading="lazy"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';

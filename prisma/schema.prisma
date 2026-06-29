@@ -22,17 +22,17 @@ model AdminUser {
 
 // ── NextAuth Models ───────────────────────────────────────────────────────
 model Account {
-  id                String  @id @default(cuid())
+  id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?  @db.Text
   session_state     String?
   user              Customer @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -57,20 +57,22 @@ model VerificationToken {
 
 // ── Customer ──────────────────────────────────────────────────────────────
 model Customer {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  emailVerified  DateTime?
-  name           String?
-  image          String?
-  phone          String?
-  phoneVerified  Boolean   @default(false)
-  hashedPassword String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  orders         Order[]
-  addresses      Address[]
-  accounts       Account[]
-  sessions       Session[]
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  emailVerified      DateTime?
+  name               String?
+  image              String?
+  phone              String?
+  phoneVerified      Boolean             @default(false)
+  hashedPassword     String?
+  points             Int                 @default(0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  orders             Order[]
+  addresses          Address[]
+  accounts           Account[]
+  sessions           Session[]
+  rewardTransactions RewardTransaction[]
 }
 
 model Address {
@@ -103,7 +105,7 @@ model Category {
 model Product {
   id           String           @id @default(uuid())
   name         String
-  caption      String?          // Short tagline/caption for display below name
+  caption      String? // Short tagline/caption for display below name
   slug         String           @unique
   description  String
   price        Float
@@ -129,26 +131,26 @@ model Product {
 
 // ── Orders ────────────────────────────────────────────────────────────────
 model Order {
-  id                String        @id @default(uuid())
-  orderNumber       String        @unique
-  customerId        String
-  customer          Customer      @relation(fields: [customerId], references: [id])
-  items             OrderItem[]
-  status            OrderStatus   @default(PENDING)
-  paymentStatus     PaymentStatus @default(PENDING)
-  paymentMethod     String?
-  razorpayOrderId   String?
-  razorpayPaymentId String?
-  totalAmount       Float
-  shippingAmount    Float         @default(0)
-  taxAmount         Float         @default(0)
-  shippingAddress   Json
-  notes             String?
-  carrier           String?
-  trackingNumber    String?
+  id                 String        @id @default(uuid())
+  orderNumber        String        @unique
+  customerId         String
+  customer           Customer      @relation(fields: [customerId], references: [id])
+  items              OrderItem[]
+  status             OrderStatus   @default(PENDING)
+  paymentStatus      PaymentStatus @default(PENDING)
+  paymentMethod      String?
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
+  totalAmount        Float
+  shippingAmount     Float         @default(0)
+  taxAmount          Float         @default(0)
+  shippingAddress    Json
+  notes              String?
+  carrier            String?
+  trackingNumber     String?
   cancellationReason String?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 }
 
 model OrderItem {
@@ -168,7 +170,7 @@ model ProductVariant {
   id           String      @id @default(uuid())
   productId    String
   product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name         String      // e.g. "200 ml", "60 Capsules"
+  name         String // e.g. "200 ml", "60 Capsules"
   price        Float
   comparePrice Float?
   stock        Int         @default(0)
@@ -214,4 +216,27 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+// -- Rewards ---------------------------------------------------------------
+model RewardTransaction {
+  id          String   @id @default(uuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  points      Int // Positive for earned, Negative for spent
+  type        String // e.g., "PURCHASE", "REDEEM", "REFERRAL", "SIGNUP"
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+// -- Bundles ---------------------------------------------------------------
+model BundleOffer {
+  id          String   @id @default(uuid())
+  title       String // e.g., "Buy Any 3 @ ?1799"
+  description String?
+  minItems    Int // e.g., 3
+  fixedPrice  Float // e.g., 1799
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

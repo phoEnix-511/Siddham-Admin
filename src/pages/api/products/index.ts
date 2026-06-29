@@ -7,7 +7,7 @@ import { getOrSet, delPattern } from "@/lib/cache";
 const LIST_CACHE_TTL = 60 * 5; // 5 minutes
 
 function buildListCacheKey(query: NextApiRequest["query"]): string {
-  const { category, featured, search, page, limit, minPrice, maxPrice } = query;
+  const { category, featured, search, page, limit, minPrice, maxPrice, sort } = query;
   const parts = [
     "cat=" + (category || ""),
     "feat=" + (featured || ""),
@@ -16,6 +16,7 @@ function buildListCacheKey(query: NextApiRequest["query"]): string {
     "l=" + (limit || "12"),
     "min=" + (minPrice || ""),
     "max=" + (maxPrice || ""),
+    "sort=" + (sort || "newest"),
   ];
   return "products:list:" + parts.join("|");
 }
@@ -43,6 +44,7 @@ export default async function handler(
         showInactive,
         minPrice,
         maxPrice,
+        sort = "newest",
       } = req.query;
       const pageNum  = parseInt(page  as string);
       const limitNum = parseInt(limit as string);
@@ -68,12 +70,18 @@ export default async function handler(
         ];
       }
 
+      let orderBy: any = { createdAt: "desc" };
+      if (sort === "price_asc") orderBy = { price: "asc" };
+      else if (sort === "price_desc") orderBy = { price: "desc" };
+      else if (sort === "name_asc") orderBy = { name: "asc" };
+      else if (sort === "popular") orderBy = { orderItems: { _count: "desc" } };
+
       const fetchFresh = async () => {
         const [products, total] = await Promise.all([
           prisma.product.findMany({
             where,
             include: { category: true, variants: true },
-            orderBy: { createdAt: "desc" },
+            orderBy,
             skip,
             take: limitNum,
           }),
@@ -112,58 +120,13 @@ export default async function handler(
   if (req.method === "POST") {
     try {
       requireAdmin(req);
-    } catch {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+      const data = req.body;
+      data.slug = data.slug || generateSlug(data.name);
 
-    const {
-      name, caption, description, price, comparePrice, images, stock, sku,
-      isActive, isFeatured, ingredients, benefits, usage, weight, videoUrl,
-      categoryId, variants,
-    } = req.body;
+      const product = await prisma.product.create({ data });
 
-    if (!name || !description || !price || !categoryId) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    try {
-      const slug = generateSlug(name);
-      const product = await prisma.product.create({
-        data: {
-          name,
-          caption:      caption      || null,
-          description,
-          slug,
-          price:        parseFloat(price),
-          comparePrice: comparePrice ? parseFloat(comparePrice) : null,
-          images:       images       || [],
-          stock:        parseInt(stock) || 0,
-          sku:          sku          || null,
-          isActive:     isActive     ?? true,
-          isFeatured:   isFeatured   ?? false,
-          ingredients:  ingredients  || null,
-          benefits:     benefits     || null,
-          usage:        usage        || null,
-          weight:       weight       || null,
-          videoUrl:     videoUrl     || null,
-          categoryId,
-          variants:
-            variants && variants.length > 0
-              ? {
-                  create: variants.map((v: any) => ({
-                    name:         v.name,
-                    price:        parseFloat(v.price),
-                    comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
-                    stock:        parseInt(v.stock) || 0,
-                    sku:          v.sku || null,
-                  })),
-                }
-              : undefined,
-        },
-        include: { category: true, variants: true },
-      });
-
-      await delPattern("products:list:");
+      // Invalidate all product list caches so new product shows up
+      await delPattern("products:list:*");
 
       return res.status(201).json({ product });
     } catch (error) {

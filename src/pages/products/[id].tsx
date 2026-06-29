@@ -245,6 +245,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
                         <img
                           src={item.src}
                           alt={`${product.name} — ${idx + 1}`}
+                          loading="lazy"
                           style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
