@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -73,17 +73,18 @@ export default function Home() {
               </div>
               <span className="multi-list-label">All<br/>Products</span>
             </Link>
-            {categories.map((cat, i) => (
-              <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="multi-list-item">
-                <div className="multi-list-image-wrap">
-                  {/* Fallback emojis since we don't have category images in DB yet */}
-                  <div style={{ fontSize: '2rem' }}>
-                    {i === 0 ? '💆' : i === 1 ? '💊' : i === 2 ? '✨' : '🧴'}
+            {categories.map((cat, i) => {
+              // Map index to a specific image
+              const imgSrc = i % 3 === 0 ? '/images/hair-oil.png' : i % 3 === 1 ? '/images/supplements.png' : '/images/skincare.png';
+              return (
+                <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="multi-list-item">
+                  <div className="multi-list-image-wrap">
+                    <img src={imgSrc} alt={cat.name} loading="lazy" />
                   </div>
-                </div>
-                <span className="multi-list-label">{cat.name.replace(' ', '\n')}</span>
-              </Link>
-            ))}
+                  <span className="multi-list-label">{cat.name.replace(' ', '\n')}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -138,13 +139,15 @@ export default function Home() {
         <div className="container">
           <h2 className="vasu-section-title" style={{ justifyContent: 'center' }}>Shop by Category</h2>
           <div className="category-grid">
-            {categories.slice(0, 4).map((cat, idx) => (
-              <Link href={`/shop?category=${cat.slug}`} key={cat.id} className="category-card">
-                {/* Fallback to random unsplash wellness images for categories */}
-                <img src={`https://images.unsplash.com/photo-${idx % 2 === 0 ? '1608248593855' : '1556228578'}-0d9d4c794270?w=500&q=80`} alt={cat.name} loading="lazy" />
-                <div className="category-card-overlay">{cat.name}</div>
-              </Link>
-            ))}
+            {categories.slice(0, 4).map((cat, idx) => {
+              const imgSrc = idx % 3 === 0 ? '/images/skincare.png' : idx % 3 === 1 ? '/images/supplements.png' : '/images/hair-oil.png';
+              return (
+                <Link href={`/shop?category=${cat.slug}`} key={cat.id} className="category-card">
+                  <img src={imgSrc} alt={cat.name} loading="lazy" />
+                  <div className="category-card-overlay">{cat.name}</div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
@@ -9,30 +9,17 @@ export default function ProductCard({ product }: { product: any }) {
   return (
     <div className="product-card" key={product.id}>
       <Link href={`/products/${product.id}`}>
-        <div className="product-card-image">
-          {product.images && product.images.length > 0 && product.images[0] ? (
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-                const parent = (e.target as HTMLImageElement).parentElement;
-                const fallback = parent?.querySelector('.fallback-placeholder');
-                if (fallback) (fallback as HTMLElement).style.display = 'flex';
-              }}
-            />
-          ) : null}
-          <div
-            className="img-placeholder fallback-placeholder"
-            style={{
-              display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex'
+        <div className="product-card-image" style={{ width: '100%', aspectRatio: '1', backgroundColor: '#faf8f4' }}>
+          <img
+            src={(product.images && product.images.length > 0 && product.images[0]) ? product.images[0] : '/images/hair-oil.png'}
+            alt={product.name}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            onError={(e) => {
+              // If the network image fails, fallback to a local image
+              (e.target as HTMLImageElement).src = '/images/supplements.png';
             }}
-          >
-            {/* Fallback emoji logic based on category slug if possible, or default */}
-            <span style={{ fontSize: '3rem' }}>🌿</span>
-          </div>
+          />
           {disc > 0 && <div className="product-badge discount">{disc}% OFF</div>}
           {!product.isActive && <div className="product-badge out-of-stock">Unavailable</div>}
         </div>
