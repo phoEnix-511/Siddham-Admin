@@ -1805,7 +1805,7 @@ p {
   inset: 0;
   background: rgba(15, 35, 24, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 500;
+  z-index: 999998;
   animation: fadeIn 0.2s ease;
 }
 
@@ -1817,7 +1817,7 @@ p {
   width: 420px;
   background: var(--color-white);
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.15);
-  z-index: 501;
+  z-index: 999999;
   display: flex;
   flex-direction: column;
   animation: slideInRight 0.3s ease;

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/router';
 
@@ -10,6 +11,12 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalAmount } = useCart();
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const shippingAmount = totalAmount >= 999 ? 0 : totalAmount > 0 ? 99 : 0;
   const grandTotal = totalAmount + shippingAmount;
 
@@ -18,7 +25,9 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
     router.push('/checkout');
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       <div className="cart-overlay" onClick={onClose} />
       <div className="cart-drawer" role="dialog" aria-label="Shopping Cart">
@@ -114,6 +123,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
