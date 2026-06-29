@@ -2964,6 +2964,7 @@ p {
   padding: var(--space-2) 0;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  align-items: stretch;
 }
 .vasu-slider::-webkit-scrollbar {
   display: none;
@@ -2972,6 +2973,7 @@ p {
   scroll-snap-align: start;
   flex: 0 0 auto;
   display: flex;
+  align-items: stretch;
 }
 .vasu-slide.product {
   width: 240px;
@@ -3060,7 +3062,9 @@ p {
   margin-bottom: var(--space-5);
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 .vasu-section-title a {
   font-size: 0.85rem;
