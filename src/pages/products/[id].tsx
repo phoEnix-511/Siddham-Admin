@@ -252,7 +252,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
                         />
                       ) : (
                         <iframe
-                          src={`https://www.youtube.com/embed/${item.embedId}?rel=0`}
+                          src={`https://www.youtube.com/embed/${item.embedId}?rel=0${idx === activeMediaIdx ? '&autoplay=1&mute=1' : ''}`}
                           title={`${product.name} — Video`}
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
