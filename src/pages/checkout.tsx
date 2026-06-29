@@ -61,43 +61,19 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
-      // 1. Create order in DB
-      const orderRes = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map(i => ({
-            productId: i.productId,
-            variantId: i.variantId || null,
-            quantity: i.quantity,
-          })),
-          customerName: form.name,
-          customerEmail: form.email,
-          customerPhone: form.phone,
-          shippingAddress: {
-            address: form.address,
-            city: form.city,
-            state: form.state,
-            pincode: form.pincode,
-          },
-          notes: form.notes,
-        }),
-      });
-      const orderData = await orderRes.json();
-      if (!orderRes.ok) throw new Error(orderData.error || 'Order creation failed');
-
-      const orderId = orderData.order.id;
-
-      // 2. Create Razorpay payment order
+      // 1. Create Razorpay payment order first
       const rzpRes = await fetch('/api/payment/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({
+          amount: grandTotal,
+          receipt: `rcpt_${Date.now()}`,
+        }),
       });
       const rzpData = await rzpRes.json();
       if (!rzpRes.ok) throw new Error(rzpData.error || 'Payment initialization failed');
 
-      // 3. Open Razorpay modal
+      // 2. Open Razorpay modal
       const options: RazorpayOptions = {
         key: rzpData.keyId,
         amount: rzpData.amount,
@@ -106,7 +82,7 @@ export default function CheckoutPage() {
         description: 'Ayurvedic Products',
         order_id: rzpData.razorpayOrderId,
         handler: async (response: RazorpayResponse) => {
-          // 4. Verify payment
+          // 3. Verify payment and create order
           const verifyRes = await fetch('/api/payment/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -114,16 +90,32 @@ export default function CheckoutPage() {
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
-              orderId,
+              items: items.map(i => ({
+                productId: i.productId,
+                variantId: i.variantId || null,
+                quantity: i.quantity,
+              })),
+              customerName: form.name,
+              customerEmail: form.email,
+              customerPhone: form.phone,
+              shippingAddress: {
+                address: form.address,
+                city: form.city,
+                state: form.state,
+                pincode: form.pincode,
+              },
+              notes: form.notes,
             }),
           });
 
           if (verifyRes.ok) {
+            const verifyData = await verifyRes.json();
             clearCart();
             addToast('Payment successful! Order confirmed 🎉', 'success');
-            router.push(`/order-success?id=${orderId}`);
+            router.push(`/order-success?id=${verifyData.order.id}`);
           } else {
-            addToast('Payment verification failed', 'error');
+            const verifyData = await verifyRes.json();
+            addToast(verifyData.error || 'Payment verification failed', 'error');
           }
         },
         prefill: { name: form.name, email: form.email, contact: form.phone },

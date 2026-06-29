@@ -19,7 +19,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https: lh3.googleusercontent.com",
       "connect-src 'self' https://api.razorpay.com https://accounts.google.com https://lumberjack.razorpay.com",
-      "frame-src https://api.razorpay.com https://accounts.google.com",
+      "frame-src https://api.razorpay.com https://accounts.google.com https://www.youtube.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -30,12 +30,21 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  // Enable gzip / brotli compression for all responses
+  compress: true,
+  // Remove the "X-Powered-By: Next.js" header (minor security + byte saving)
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: '*.googleusercontent.com' },
       { protocol: 'http', hostname: 'localhost' },
+      // YouTube video thumbnails
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
     ],
+    // Cache Next.js-optimised images for 24 h (default is 60 s — far too short)
+    minimumCacheTTL: 86400,
   },
   async headers() {
     return [
@@ -48,3 +57,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

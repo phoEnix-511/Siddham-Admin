@@ -13,38 +13,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { orderId } = req.body;
+  const { orderId, amount, receipt } = req.body;
 
-  if (!orderId) {
-    return res.status(400).json({ error: 'Order ID is required' });
+  if (!orderId && !amount) {
+    return res.status(400).json({ error: 'Either orderId or amount is required' });
   }
 
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
     const razorpay = await getRazorpayInstance();
+    let finalAmount = 0;
+    let finalReceipt = receipt || `rcpt_${Date.now()}`;
+    let notes: Record<string, string> | undefined = undefined;
 
-    const razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(order.totalAmount * 100), // in paise
-      currency: 'INR',
-      receipt: order.orderNumber,
-      notes: {
+    if (orderId) {
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+      });
+
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+      finalAmount = Math.round(order.totalAmount * 100);
+      finalReceipt = order.orderNumber;
+      notes = {
         orderId: order.id,
         orderNumber: order.orderNumber,
-      },
+      };
+    } else {
+      finalAmount = Math.round(amount * 100);
+    }
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: finalAmount,
+      currency: 'INR',
+      receipt: finalReceipt,
+      notes,
     });
 
-    // Save Razorpay order ID
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { razorpayOrderId: razorpayOrder.id },
-    });
+    if (orderId) {
+      // Save Razorpay order ID
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { razorpayOrderId: razorpayOrder.id },
+      });
+    }
 
     return res.status(200).json({
       razorpayOrderId: razorpayOrder.id,

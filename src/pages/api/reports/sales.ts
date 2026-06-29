@@ -1,25 +1,32 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  if (req.method !== "GET")
+    return res.status(405).json({ error: "Method not allowed" });
 
   try {
     requireAdmin(req);
   } catch {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   const { startDate, endDate } = req.query;
 
   const where: Record<string, unknown> = {
-    paymentStatus: 'PAID',
+    paymentStatus: "PAID",
   };
 
   if (startDate || endDate) {
     where.createdAt = {};
-    if (startDate) (where.createdAt as Record<string, Date>).gte = new Date(startDate as string);
+    if (startDate)
+      (where.createdAt as Record<string, Date>).gte = new Date(
+        startDate as string,
+      );
     if (endDate) {
       const end = new Date(endDate as string);
       end.setHours(23, 59, 59, 999);
@@ -28,62 +35,115 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const orders = await prisma.order.findMany({
+    // Database-side aggregation for daily summary
+    const dailyStatsRaw = await prisma.$queryRaw<any[]>`
+      SELECT 
+        DATE("createdAt") as date,
+        COUNT(*) as orders,
+        SUM("totalAmount") as revenue
+      FROM "Order"
+      WHERE "paymentStatus" = 'PAID'
+        ${startDate ? `AND "createdAt" >= '${new Date(startDate as string).toISOString()}'::timestamp` : ""}
+        ${endDate ? `AND "createdAt" <= '${new Date(endDate as string).toISOString()}'::timestamp` : ""}
+      GROUP BY DATE("createdAt")
+      ORDER BY date ASC
+    `;
+
+    const daily = dailyStatsRaw.map((row) => ({
+      date:
+        row.date instanceof Date
+          ? row.date.toISOString().split("T")[0]
+          : row.date,
+      orders: Number(row.orders),
+      revenue: Number(row.revenue),
+    }));
+
+    // Product-level breakdown using database aggregation
+    const productBreakdownRaw = await prisma.$queryRaw<any[]>`
+      SELECT 
+        p.id,
+        p.name,
+        SUM(oi.quantity) as quantity,
+        SUM(oi.quantity * oi.price) as revenue
+      FROM "OrderItem" oi
+      JOIN "Product" p ON oi."productId" = p.id
+      JOIN "Order" o ON oi."orderId" = o.id
+      WHERE o."paymentStatus" = 'PAID'
+        ${startDate ? `AND o."createdAt" >= '${new Date(startDate as string).toISOString()}'::timestamp` : ""}
+        ${endDate ? `AND o."createdAt" <= '${new Date(endDate as string).toISOString()}'::timestamp` : ""}
+      GROUP BY p.id, p.name
+      ORDER BY revenue DESC
+    `;
+
+    const productBreakdown = productBreakdownRaw.map((row) => ({
+      name: row.name,
+      quantity: Number(row.quantity),
+      revenue: Number(row.revenue),
+    }));
+
+    // Total revenue and order count
+    const totalStats = await prisma.order.aggregate({
       where,
-      include: {
-        customer: true,
-        items: { include: { product: true } },
-      },
-      orderBy: { createdAt: 'asc' },
+      _sum: { totalAmount: true },
+      _count: true,
     });
 
-    // Aggregate data
-    const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const totalOrders = orders.length;
+    const totalRevenue = totalStats._sum.totalAmount || 0;
+    const totalOrders = totalStats._count;
 
-    // Daily summary
-    const dailyMap: Record<string, { date: string; orders: number; revenue: number }> = {};
-    for (const order of orders) {
-      const date = order.createdAt.toISOString().split('T')[0];
-      if (!dailyMap[date]) dailyMap[date] = { date, orders: 0, revenue: 0 };
-      dailyMap[date].orders += 1;
-      dailyMap[date].revenue += order.totalAmount;
-    }
-    const daily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+    // Get orders for CSV export (paginated to avoid memory issues)
+    const orders = await prisma.order.findMany({
+      where,
+      select: {
+        orderNumber: true,
+        createdAt: true,
+        totalAmount: true,
+        paymentStatus: true,
+        status: true,
+        customer: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+        items: {
+          select: {
+            quantity: true,
+            price: true,
+            product: {
+              select: { name: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+      take: 1000, // Limit to 1000 for CSV export
+    });
 
-    // Product-level breakdown
-    const productMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
-    for (const order of orders) {
-      for (const item of order.items) {
-        const key = item.productId;
-        if (!productMap[key]) productMap[key] = { name: item.product.name, quantity: 0, revenue: 0 };
-        productMap[key].quantity += item.quantity;
-        productMap[key].revenue += item.price * item.quantity;
-      }
-    }
-    const productBreakdown = Object.values(productMap).sort((a, b) => b.revenue - a.revenue);
-
-    // Format for download
+    // Format for CSV download
     const csv = [
-      'Order Number,Date,Customer,Email,Phone,Products,Total (INR),Payment Status,Order Status',
-      ...orders.map(o =>
+      "Order Number,Date,Customer,Email,Phone,Products,Total (INR),Payment Status,Order Status",
+      ...orders.map((o) =>
         [
           o.orderNumber,
-          o.createdAt.toISOString().split('T')[0],
+          o.createdAt.toISOString().split("T")[0],
           o.customer.name,
           o.customer.email,
-          o.customer.phone || '',
-          o.items.map(i => `${i.product.name} x${i.quantity}`).join('; '),
+          o.customer.phone || "",
+          o.items.map((i) => `${i.product.name} x${i.quantity}`).join("; "),
           o.totalAmount.toFixed(2),
           o.paymentStatus,
           o.status,
-        ].join(',')
+        ].join(","),
       ),
-    ].join('\n');
+    ].join("\n");
 
-    return res.status(200).json({ totalRevenue, totalOrders, daily, productBreakdown, csv });
+    return res
+      .status(200)
+      .json({ totalRevenue, totalOrders, daily, productBreakdown, csv });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Failed to generate sales report' });
+    return res.status(500).json({ error: "Failed to generate sales report" });
   }
 }

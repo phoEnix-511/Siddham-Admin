@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { GetStaticProps, GetStaticPaths, GetStaticPropsContext } from 'next';
+import { prisma } from '@/lib/prisma';
 
 interface Product {
   id: string;
@@ -50,17 +52,16 @@ const CATEGORY_ICONS: Record<string, string> = {
   'ayurvedic-formulation': '🍯',
 };
 
-export default function ProductDetailPage() {
+export default function ProductDetailPage({ product: initialProduct }: { product: Product }) {
   const router = useRouter();
-  const { id } = router.query;
   const { addItem } = useCart();
   const { addToast } = useToast();
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState<Product>(initialProduct);
   const [qty, setQty] = useState(1);
-  const [activeImageIdx, setActiveImageIdx] = useState(0);
-  const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage' | 'video' | 'reviews'>('description');
+  const [activeMediaIdx, setActiveMediaIdx] = useState(0);
+  const [activeTab, setActiveTab] = useState<'description' | 'ingredients' | 'usage' | 'reviews'>('description');
+  const [touchStart, setTouchStart] = useState<number | null>(null);
   
   const [selectedVariant, setSelectedVariant] = useState<{
     id: string;
@@ -69,7 +70,7 @@ export default function ProductDetailPage() {
     comparePrice?: number;
     stock: number;
     sku?: string;
-  } | null>(null);
+  } | null>(initialProduct?.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null);
 
   // Review submission state
   const [reviewName, setReviewName] = useState('');
@@ -78,19 +79,43 @@ export default function ProductDetailPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-    fetch(`/api/products/${id}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.product) {
-          setProduct(d.product);
-          if (d.product.variants && d.product.variants.length > 0) {
-            setSelectedVariant(d.product.variants[0]);
-          }
-        }
-        setLoading(false);
-      });
-  }, [id]);
+    if (initialProduct) {
+      setProduct(initialProduct);
+      setActiveMediaIdx(0);
+      if (initialProduct.variants && initialProduct.variants.length > 0) {
+        setSelectedVariant(initialProduct.variants[0]);
+      } else {
+        setSelectedVariant(null);
+      }
+    }
+  }, [initialProduct]);
+
+  // Build unified media list: images first, then video
+  const getYouTubeEmbedId = (url?: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/ ;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const mediaItems: Array<{ type: 'image'; src: string } | { type: 'video'; embedId: string }> = [
+    ...(product.images || []).map(src => ({ type: 'image' as const, src })),
+    ...(product.videoUrl && getYouTubeEmbedId(product.videoUrl)
+      ? [{ type: 'video' as const, embedId: getYouTubeEmbedId(product.videoUrl)! }]
+      : []),
+  ];
+
+  const goToMedia = (idx: number) => {
+    setActiveMediaIdx(Math.max(0, Math.min(mediaItems.length - 1, idx)));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => setTouchStart(e.touches[0].clientX);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) goToMedia(activeMediaIdx + (diff > 0 ? 1 : -1));
+    setTouchStart(null);
+  };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +156,7 @@ export default function ProductDetailPage() {
     }
   };
 
-  if (loading) return (
+  if (router.isFallback) return (
     <>
       <Navbar />
       <div className="loading-page"><div className="spinner" /></div>
@@ -195,68 +220,106 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="product-detail-grid">
-            {/* Product Image Gallery */}
+            {/* Media Carousel — Images + Video together */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-              <div style={{
-                background: 'var(--color-parchment)',
-                borderRadius: 'var(--radius-2xl)',
-                aspectRatio: '1',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '1px solid var(--color-gray-100)',
-                overflow: 'hidden',
-                position: 'relative'
-              }}>
-                {product.images && product.images.length > 0 && product.images[activeImageIdx] ? (
-                  <img
-                    src={product.images[activeImageIdx]}
-                    alt={product.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      const parent = (e.target as HTMLImageElement).parentElement;
-                      const fallback = parent?.querySelector('.detail-fallback-placeholder');
-                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="detail-fallback-placeholder"
-                  style={{
-                    display: product.images && product.images.length > 0 && product.images[activeImageIdx] ? 'none' : 'flex',
-                    fontSize: '8rem'
-                  }}
-                >
-                  {CATEGORY_ICONS[product.category.slug] || '🌿'}
-                </div>
-              </div>
-
-              {/* Thumbnails */}
-              {product.images && product.images.length > 1 && (
-                <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-                  {product.images.map((img, idx) => (
-                    <button
+              {/* Main Carousel Viewer */}
+              <div
+                className="product-carousel-main"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                {/* Slides */}
+                {mediaItems.length > 0 ? (
+                  mediaItems.map((item, idx) => (
+                    <div
                       key={idx}
-                      onClick={() => setActiveImageIdx(idx)}
                       style={{
-                        width: 70, height: 70,
-                        border: activeImageIdx === idx ? '2.5px solid var(--color-saffron)' : '1px solid var(--color-gray-200)',
-                        borderRadius: 'var(--radius-md)',
-                        overflow: 'hidden',
-                        padding: 0,
-                        background: 'var(--color-parchment)',
-                        cursor: 'pointer',
-                        boxShadow: activeImageIdx === idx ? 'var(--shadow-glow)' : 'none',
-                        transition: 'all 0.2s'
+                        display: idx === activeMediaIdx ? 'flex' : 'none',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%',
                       }}
                     >
-                      <img
-                        src={img}
-                        alt={`Thumbnail ${idx + 1}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Crect x="3" y="3" width="18" height="18" rx="2" ry="2"%3E%3C/rect%3E%3Ccircle cx="8.5" cy="8.5" r="1.5"%3E%3C/circle%3E%3Cpolyline points="21 15 16 10 5 21"%3E%3C/polyline%3E%3C/svg%3E';
-                        }}
-                      />
+                      {item.type === 'image' ? (
+                        <img
+                          src={item.src}
+                          alt={`${product.name} — ${idx + 1}`}
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${item.embedId}?rel=0`}
+                          title={`${product.name} — Video`}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          style={{ width: '100%', height: '100%', border: 'none' }}
+                        />
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: '6rem' }}>
+                    {CATEGORY_ICONS[product.category.slug] || '🌿'}
+                  </div>
+                )}
+
+                {/* Prev/Next arrows — only show if >1 slide */}
+                {mediaItems.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => goToMedia(activeMediaIdx - 1)}
+                      disabled={activeMediaIdx === 0}
+                      className="carousel-arrow carousel-arrow-left"
+                      aria-label="Previous"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={() => goToMedia(activeMediaIdx + 1)}
+                      disabled={activeMediaIdx === mediaItems.length - 1}
+                      className="carousel-arrow carousel-arrow-right"
+                      aria-label="Next"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+
+                {/* Slide counter badge */}
+                {mediaItems.length > 1 && (
+                  <div className="carousel-counter">
+                    {activeMediaIdx + 1} / {mediaItems.length}
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnail Strip */}
+              {mediaItems.length > 1 && (
+                <div className="product-carousel-thumbs">
+                  {mediaItems.map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => goToMedia(idx)}
+                      className={`carousel-thumb${activeMediaIdx === idx ? ' carousel-thumb-active' : ''}`}
+                      aria-label={item.type === 'video' ? 'Video' : `Image ${idx + 1}`}
+                    >
+                      {item.type === 'image' ? (
+                        <img
+                          src={item.src}
+                          alt={`Thumb ${idx + 1}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', borderRadius: 'var(--radius-sm)' }}>
+                          <span style={{ fontSize: '1.4rem' }}>▶</span>
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -421,7 +484,7 @@ export default function ProductDetailPage() {
           {/* Tabs */}
           {(() => {
             const reviews = product.reviews || [];
-            const tabs: { id: 'description' | 'ingredients' | 'usage' | 'video' | 'reviews'; label: string }[] = [
+            const tabs: { id: 'description' | 'ingredients' | 'usage' | 'reviews'; label: string }[] = [
               { id: 'description', label: 'Description' }
             ];
             if (product.ingredients || product.benefits) {
@@ -430,14 +493,11 @@ export default function ProductDetailPage() {
             if (product.usage) {
               tabs.push({ id: 'usage', label: 'Usage Instructions' });
             }
-            if (product.videoUrl) {
-              tabs.push({ id: 'video', label: 'Video Demo' });
-            }
             tabs.push({ id: 'reviews', label: `Reviews (${reviews.length})` });
 
             return (
               <div style={{ marginTop: 'var(--space-12)' }}>
-                <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--color-gray-200)', marginBottom: 'var(--space-6)' }}>
+                <div className="product-tabs-strip">
                   {tabs.map(tab => (
                     <button
                       key={tab.id}
@@ -485,38 +545,8 @@ export default function ProductDetailPage() {
                   {activeTab === 'usage' && product.usage && (
                     <p style={{ lineHeight: 1.9, color: 'var(--color-gray-700)' }}>{product.usage}</p>
                   )}
-                  {activeTab === 'video' && product.videoUrl && (
-                    <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)', background: '#000' }}>
-                      {(() => {
-                        const getYouTubeEmbedId = (url?: string) => {
-                          if (!url) return null;
-                          const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                          const match = url.match(regExp);
-                          return (match && match[2].length === 11) ? match[2] : null;
-                        };
-                        const embedId = getYouTubeEmbedId(product.videoUrl);
-                        if (embedId) {
-                          return (
-                            <iframe
-                              src={`https://www.youtube.com/embed/${embedId}`}
-                              title={`${product.name} Video Demonstration`}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                            />
-                          );
-                        }
-                        return (
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-parchment-dark)', color: 'var(--color-gray-500)' }}>
-                            Invalid video link: {product.videoUrl}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
                   {activeTab === 'reviews' && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-8)', flexWrap: 'wrap' }} className="grid-2">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-8)', flexWrap: 'wrap' }} className="reviews-grid">
                       {/* Write a Review */}
                       <div>
                         <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)', marginTop: 0, marginBottom: 'var(--space-4)' }}>Write a Review</h3>
@@ -611,3 +641,90 @@ export default function ProductDetailPage() {
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async ({ params }: GetStaticPropsContext) => {
+  if (!params?.id) return { notFound: true };
+
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: params.id as string },
+      include: {
+        category: {
+          select: { name: true, slug: true }
+        },
+        variants: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            comparePrice: true,
+            stock: true,
+            sku: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        reviews: {
+          select: {
+            id: true,
+            name: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!product || !product.isActive) {
+      return { notFound: true };
+    }
+
+    // Convert Date objects to strings for Next.js static serialization
+    const serializedProduct = {
+      ...product,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+      reviews: product.reviews.map(r => ({
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+      })),
+    };
+
+    return {
+      props: {
+        product: serializedProduct,
+      },
+      revalidate: 3600, // Revalidate every 1 hour
+    };
+  } catch (error) {
+    console.error('getStaticProps error for product detail:', error);
+    return { notFound: true };
+  }
+};
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  try {
+    // Pre-generate featured products to speed up initial loads
+    const featuredProducts = await prisma.product.findMany({
+      where: { isFeatured: true, isActive: true },
+      select: { id: true },
+      take: 50,
+    });
+
+    const paths = featuredProducts.map((p) => ({
+      params: { id: p.id },
+    }));
+
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.error('getStaticPaths error for product detail:', error);
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
+};

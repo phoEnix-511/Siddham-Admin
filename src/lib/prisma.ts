@@ -12,6 +12,10 @@ function createPrismaClient() {
   const pool = new pg.Pool({
     connectionString,
     ssl: isSsl ? { rejectUnauthorized: false } : undefined,
+    // Explicit pool sizing to handle concurrent requests without exhausting DB connections
+    max: 20,
+    idleTimeoutMillis: 30_000,     // close idle connections after 30 s
+    connectionTimeoutMillis: 5_000, // fail fast if no connection available in 5 s
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
@@ -23,3 +27,4 @@ function createPrismaClient() {
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
