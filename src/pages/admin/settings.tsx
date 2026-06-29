@@ -33,6 +33,14 @@ interface Settings {
   privacy_policy_content: string;
   terms_conditions_content: string;
   shipping_returns_content: string;
+  // Gamified Rewards
+  rewards_points_per_rupee: string;
+  rewards_point_value: string;
+  rewards_welcome_bonus: string;
+  // WhatsApp Notifications
+  twilio_account_sid: string;
+  twilio_auth_token: string;
+  twilio_whatsapp_from: string;
 }
 
 const defaultSettings: Settings = {
@@ -55,6 +63,12 @@ const defaultSettings: Settings = {
   privacy_policy_content: '<h2>Privacy Policy</h2><p>Your privacy is important to us. This Privacy Policy explains how Siddham Wellness collects, uses, and protects your personal data when you visit our website or make a purchase.</p><p>We collect information such as your name, email address, phone number, shipping address, and payment details to process your orders and provide a personalized shopping experience.</p>',
   terms_conditions_content: '<h2>Terms and Conditions</h2><p>Welcome to Siddham Wellness. By accessing or using our website, you agree to comply with and be bound by the following terms and conditions of use.</p><p>All products, pricing, and availability are subject to change without notice. We reserve the right to cancel any order if we detect suspicious or fraudulent activity.</p>',
   shipping_returns_content: '<h2>Shipping & Returns</h2><h3>Shipping Policy</h3><p>We offer free standard shipping on all orders above ₹999. For orders below this threshold, a flat shipping fee of ₹99 is charged. Orders are typically processed within 24-48 hours and delivered in 3-5 business days.</p><h3>Returns & Exchange Policy</h3><p>Due to the personal and health nature of Ayurvedic products, we do not accept returns. However, if you receive a damaged or incorrect product, please contact us at support@siddhamwellness.com within 48 hours of delivery with photos of the package, and we will send a free replacement.</p>',
+  rewards_points_per_rupee: '1',
+  rewards_point_value: '0.10',
+  rewards_welcome_bonus: '500',
+  twilio_account_sid: '',
+  twilio_auth_token: '',
+  twilio_whatsapp_from: '',
 };
 
 const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
@@ -356,6 +370,44 @@ export default function AdminSettingsPage() {
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: 4 }}>
                   Products at or below this stock level will trigger a low stock alert
                 </div>
+                </div>
+            </SettingSection>
+
+            <SettingSection title="Gamified Rewards System" icon="🎁">
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-3)' }}>
+                Configure the Siddham Coins system. Users earn points for purchases which can be redeemed at checkout.
+              </p>
+              <div className="form-group-row">
+                <div className="form-group">
+                  <label className="form-label">Points Earned Per Rupee Spent</label>
+                  <input type="number" className="form-input" name="rewards_points_per_rupee" value={settings.rewards_points_per_rupee} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Rupee Value per Point (e.g. 0.10)</label>
+                  <input type="number" step="0.01" className="form-input" name="rewards_point_value" value={settings.rewards_point_value} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Welcome Bonus (Sign Up Points)</label>
+                  <input type="number" className="form-input" name="rewards_welcome_bonus" value={settings.rewards_welcome_bonus} onChange={handleChange} />
+                </div>
+              </div>
+            </SettingSection>
+
+            <SettingSection title="WhatsApp Automations (Twilio)" icon="💬">
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-3)' }}>
+                Configure Twilio credentials for sending automated WhatsApp order confirmations.
+              </p>
+              <div className="form-group">
+                <label className="form-label">Twilio Account SID</label>
+                <input type="password" placeholder="ACxxxxxxxxxxxxx" className="form-input" name="twilio_account_sid" value={settings.twilio_account_sid} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Twilio Auth Token</label>
+                <input type="password" placeholder="xxxxxxxxxxxxxxx" className="form-input" name="twilio_auth_token" value={settings.twilio_auth_token} onChange={handleChange} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Twilio WhatsApp From Number</label>
+                <input type="text" placeholder="whatsapp:+14155238886" className="form-input" name="twilio_whatsapp_from" value={settings.twilio_whatsapp_from} onChange={handleChange} />
               </div>
             </SettingSection>
 

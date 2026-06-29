@@ -42,6 +42,7 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const [pointsPerRupee, setPointsPerRupee] = useState(1);
   const [form, setForm] = useState({
     name: '', email: '', phone: '',
     address: '', city: '', state: '', pincode: '',
@@ -54,6 +55,17 @@ export default function CheckoutPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
+
+  React.useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings?.rewards_points_per_rupee) {
+          setPointsPerRupee(parseFloat(data.settings.rewards_points_per_rupee));
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,6 +272,15 @@ export default function CheckoutPage() {
                     </div>
                   );
                 })}
+              </div>
+              <div style={{ padding: 'var(--space-3) var(--space-5)', background: 'linear-gradient(135deg, var(--color-saffron-light), var(--color-parchment))', borderTop: '1px solid var(--color-gray-100)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                <span style={{ fontSize: '1.5rem' }}>✨</span>
+                <div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-forest-dark)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Siddham Rewards</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-600)', marginTop: '2px' }}>
+                    You will earn <strong>{Math.floor(grandTotal * pointsPerRupee)} Coins</strong> on this order!
+                  </div>
+                </div>
               </div>
               <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'var(--color-parchment)', borderTop: '1px solid var(--color-gray-100)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-2)' }}>

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
 export default function ProductCard({ product }: { product: any }) {
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const disc = product.comparePrice ? Math.round((1 - product.price / product.comparePrice) * 100) : 0;
 
   return (
@@ -69,6 +69,7 @@ export default function ProductCard({ product }: { product: any }) {
               image: product.images?.[0] || '',
               stock: product.stockQuantity || 10
             });
+            openCart();
           }}
         >
           Add to Cart

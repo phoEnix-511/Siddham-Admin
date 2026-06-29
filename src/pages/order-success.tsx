@@ -4,17 +4,40 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import dynamic from 'next/dynamic';
+
+const Confetti = dynamic(() => import('react-confetti'), { ssr: false });
 
 export default function OrderSuccessPage() {
   const router = useRouter();
   const { id } = router.query;
   const [order, setOrder] = useState<{ orderNumber: string; totalAmount: number } | null>(null);
+  const [pointsPerRupee, setPointsPerRupee] = useState(1);
+  const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
+    setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
+    
+    // Fetch global settings for points
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings?.rewards_points_per_rupee) {
+          setPointsPerRupee(parseFloat(data.settings.rewards_points_per_rupee));
+        }
+      })
+      .catch(console.error);
+
     if (!id) return;
     fetch(`/api/orders/${id}`)
       .then(r => r.json())
-      .then(d => setOrder(d.order));
+      .then(d => {
+        setOrder(d.order);
+        setShowConfetti(true);
+        // Stop confetti after 5 seconds
+        setTimeout(() => setShowConfetti(false), 5000);
+      });
   }, [id]);
 
   return (
@@ -22,6 +45,7 @@ export default function OrderSuccessPage() {
       <Head>
         <title>Order Confirmed – Siddham Wellness</title>
       </Head>
+      {showConfetti && <Confetti width={windowDimensions.width} height={windowDimensions.height} recycle={false} numberOfPieces={500} />}
       <Navbar />
 
       <section style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', background: 'var(--color-cream)', padding: 'var(--space-16) 0' }}>
@@ -51,6 +75,15 @@ export default function OrderSuccessPage() {
               </div>
               <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
                 Total: ₹{order.totalAmount}
+              </div>
+              <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px dashed var(--color-gray-200)' }}>
+                <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>✨</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                  Rewards Unlocked
+                </div>
+                <div style={{ fontSize: '1.1rem', color: 'var(--color-saffron-dark)', fontWeight: 800 }}>
+                  +{Math.floor(order.totalAmount * pointsPerRupee)} Siddham Coins
+                </div>
               </div>
             </div>
           )}
