@@ -2906,3 +2906,232 @@ p {
     scroll-snap-align: start;
   }
 }
+
+/* -- Vasu Store Restructure Styles -------------------------- */
+
+/* Marquee / Announcement Bar */
+.announcement-bar {
+  background-color: var(--color-forest-dark);
+  color: var(--color-saffron-light);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 0;
+  text-align: center;
+  position: relative;
+  z-index: 100;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+}
+.marquee-content {
+  display: flex;
+  animation: marquee 20s linear infinite;
+}
+.marquee-content span {
+  padding: 0 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Horizontal Sliders (Products / Categories) */
+.vasu-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.vasu-slider::-webkit-scrollbar {
+  display: none;
+}
+.vasu-slide {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+}
+.vasu-slide.product {
+  width: 240px;
+}
+@media (max-width: 768px) {
+  .vasu-slide.product {
+    width: 200px;
+  }
+}
+
+/* Multi-List Links (Quick Links circles) */
+.multi-list-links {
+  background-color: var(--color-parchment);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-parchment-dark);
+}
+.multi-list-scroll {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding: 0 var(--space-4);
+  scrollbar-width: none;
+}
+.multi-list-scroll::-webkit-scrollbar { display: none; }
+.multi-list-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-forest-dark);
+  min-width: 80px;
+}
+.multi-list-image-wrap {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid var(--color-parchment-dark);
+  padding: 5px;
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.multi-list-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.multi-list-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Trust Bar */
+.trust-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-cream);
+  border-bottom: 1px solid var(--color-parchment-dark);
+  border-top: 1px solid var(--color-parchment-dark);
+}
+.trust-bar-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-forest-dark);
+}
+.trust-stars {
+  color: var(--color-saffron);
+  font-size: 1.1rem;
+}
+
+/* Section Titles */
+.vasu-section-title {
+  text-align: left;
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  color: var(--color-forest-dark);
+  margin-bottom: var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.vasu-section-title a {
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  color: var(--color-saffron);
+  text-decoration: none;
+  font-weight: 600;
+}
+@media (max-width: 768px) {
+  .vasu-section-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* Category Grid */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+@media (min-width: 768px) {
+  .category-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.category-card {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-parchment);
+  aspect-ratio: 1;
+  display: block;
+  text-decoration: none;
+}
+.category-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.category-card:hover img {
+  transform: scale(1.05);
+}
+.category-card-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(6, 26, 17, 0.8));
+  padding: var(--space-3);
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  font-size: 1rem;
+}
+
+/* As Featured In */
+.featured-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  opacity: 0.6;
+  filter: grayscale(100%);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+.featured-logos:hover {
+  opacity: 1;
+  filter: grayscale(0%);
+}
+.featured-logos img {
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Vasu Banner */
+.vasu-promo-banner {
+  width: 100%;
+  background: var(--color-forest);
+  color: var(--color-saffron-pale);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  border-radius: var(--radius-lg);
+  margin: var(--space-6) 0;
+  position: relative;
+  overflow: hidden;
+}

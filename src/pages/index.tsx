@@ -1,482 +1,231 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useCart } from '@/context/CartContext';
-import { useToast } from '@/context/ToastContext';
-
-interface Product {
-  id: string;
-  name: string;
-  caption?: string;
-  price: number;
-  comparePrice?: number;
-  images: string[];
-  stock: number;
-  isFeatured: boolean;
-  category: { name: string; slug: string };
-  description: string;
-  variants?: Array<{
-    id: string;
-    name: string;
-    price: number;
-    stock: number;
-  }>;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  _count: { products: number };
-}
-
-const CATEGORY_ICONS: Record<string, string> = {
-  'hair-care': '💆',
-  'supplements': '💊',
-  'skin-care': '✨',
-  'oils-essentials': '🌿',
-  'ayurvedic-herbal-formulation': '🍶',
-  'ayurvedic-proprietary-medicine': '💊',
-  'ayurvedic-formulation': '🍯',
-};
-
-function ProductCard({ product }: { product: Product }) {
-  const { addItem } = useCart();
-  const { addToast } = useToast();
-
-  const discount = product.comparePrice
-    ? Math.round((1 - product.price / product.comparePrice) * 100)
-    : 0;
-
-  const handleAdd = () => {
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || '',
-      stock: product.stock,
-    });
-    addToast(`${product.name} added to cart`, 'success');
-  };
-
-  return (
-    <div className="product-card">
-      <Link href={`/products/${product.id}`}>
-        <div className="product-card-image">
-          {product.images && product.images.length > 0 && product.images[0] ? (
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-                const parent = (e.target as HTMLImageElement).parentElement;
-                const fallback = parent?.querySelector('.fallback-placeholder');
-                if (fallback) (fallback as HTMLElement).style.display = 'flex';
-              }}
-            />
-          ) : null}
-          <div
-            className="img-placeholder fallback-placeholder"
-            style={{
-              display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex'
-            }}
-          >
-            {CATEGORY_ICONS[product.category.slug] || '🌿'}
-          </div>
-          {discount > 0 && <span className="product-card-badge">{discount}% OFF</span>}
-          {product.stock <= 10 && product.stock > 0 && (
-            <span className="product-card-badge" style={{ left: 'auto', right: 'var(--space-3)', background: 'var(--color-bark)' }}>
-              Low Stock
-            </span>
-          )}
-          <div className="product-card-actions">
-            {product.variants && product.variants.length > 0 ? (
-              <span className="btn btn-gold" style={{ width: '100%', borderRadius: 8, display: 'inline-flex', justifyContent: 'center' }}>
-                🔍 View Options
-              </span>
-            ) : (
-              <button
-                className="btn btn-gold"
-                style={{ width: '100%', borderRadius: 8 }}
-                onClick={e => {
-                  e.preventDefault();
-                  handleAdd();
-                }}
-                disabled={product.stock === 0}
-              >
-                {product.stock === 0 ? 'Out of Stock' : '+ Add to Cart'}
-              </button>
-            )}
-          </div>
-        </div>
-      </Link>
-      <div className="product-card-body">
-        <div className="product-category-tag">{product.category.name}</div>
-        <Link href={`/products/${product.id}`}>
-          <div className="product-name">{product.name}</div>
-        </Link>
-        {product.caption && (
-          <div className="product-caption">{product.caption}</div>
-        )}
-        <div className="product-price">
-          <span className="price-current">₹{product.price}</span>
-          {product.comparePrice && <span className="price-compare">₹{product.comparePrice}</span>}
-          {discount > 0 && <span className="price-discount">Save {discount}%</span>}
-        </div>
-        {product.stock === 0 && (
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-error)', marginTop: 'var(--space-2)', fontWeight: 600 }}>
-            Out of Stock
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import ProductCard from '@/components/ProductCard';
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [hero, setHero] = useState({
-    title: 'Heal Naturally. Live Wholly.',
-    subtitle: "Discover our curated range of authentic Ayurvedic formulations, crafted from the finest herbs for your hair, skin, and inner wellbeing.",
-    image: '',
-  });
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [hero, setHero] = useState({ title: '', subtitle: '', image: '' });
 
   useEffect(() => {
-    fetch('/api/products?featured=true&limit=6')
+    fetch('/api/products?featured=true&limit=10')
       .then(r => r.json())
       .then(d => setFeaturedProducts(d.products || []));
+      
     fetch('/api/categories')
       .then(r => r.json())
       .then(d => setCategories(d.categories || []));
+      
     fetch('/api/settings')
       .then(r => r.json())
       .then(d => {
         if (d.settings) {
           setHero({
             title: d.settings.hero_title || 'Heal Naturally. Live Wholly.',
-            subtitle: d.settings.hero_subtitle || "Discover our curated range of authentic Ayurvedic formulations, crafted from the finest herbs for your hair, skin, and inner wellbeing.",
-            image: d.settings.hero_image || '',
+            subtitle: d.settings.hero_subtitle || 'Discover our curated range of authentic Ayurvedic formulations.',
+            image: d.settings.hero_image || 'https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?q=80&w=2070',
           });
         }
-      })
-      .catch(err => console.error('Error fetching settings for Home:', err));
+      });
   }, []);
+
+  // Mock Concerns
+  const concerns = [
+    { name: 'Hair Fall', icon: '💆‍♀️', slug: 'hair-care' },
+    { name: 'Dandruff', icon: '❄️', slug: 'hair-care' },
+    { name: 'Glowing Skin', icon: '✨', slug: 'skin-care' },
+    { name: 'Immunity', icon: '🛡️', slug: 'supplements' },
+    { name: 'Stress Relief', icon: '🧘', slug: 'oils-essentials' },
+  ];
 
   return (
     <>
       <Head>
-        <title>Siddham Wellness – Ancient Wisdom, Modern Wellness</title>
-        <meta name="description" content="Shop premium Ayurvedic products at Siddham Wellness. Herbal shampoos, supplements, skin care and more crafted from nature's finest ingredients." />
+        <title>Siddham Wellness – Authentic Ayurveda</title>
       </Head>
+
+      {/* 1. Announcement Bar */}
+      <div className="announcement-bar">
+        <div className="marquee-container">
+          <div className="marquee-content">
+            <span>Free Shipping on orders over ₹999</span>
+            <span>🌿 100% Natural Ayurvedic Ingredients</span>
+            <span>Free Shipping on orders over ₹999</span>
+            <span>🌿 100% Natural Ayurvedic Ingredients</span>
+            <span>Free Shipping on orders over ₹999</span>
+            <span>🌿 100% Natural Ayurvedic Ingredients</span>
+          </div>
+        </div>
+      </div>
 
       <Navbar />
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section 
-        className="hero" 
-        aria-label="Hero"
-        style={hero.image ? { 
-          backgroundImage: `linear-gradient(rgba(6, 26, 17, 0.75), rgba(6, 26, 17, 0.8)), url(${hero.image})`,
+      {/* 2. Multi-List Quick Links (Circular Categories) */}
+      <div className="multi-list-links">
+        <div className="container" style={{ padding: 0 }}>
+          <div className="multi-list-scroll">
+            <Link href="/shop" className="multi-list-item">
+              <div className="multi-list-image-wrap">
+                <div style={{ fontSize: '2rem' }}>🌿</div>
+              </div>
+              <span className="multi-list-label">All<br/>Products</span>
+            </Link>
+            {categories.map((cat, i) => (
+              <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="multi-list-item">
+                <div className="multi-list-image-wrap">
+                  {/* Fallback emojis since we don't have category images in DB yet */}
+                  <div style={{ fontSize: '2rem' }}>
+                    {i === 0 ? '💆' : i === 1 ? '💊' : i === 2 ? '✨' : '🧴'}
+                  </div>
+                </div>
+                <span className="multi-list-label">{cat.name.replace(' ', '\n')}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Hero Slideshow (Static full width for now, scroll snap if multiple) */}
+      <section className="hero-slideshow" style={{ width: '100%', overflowX: 'auto', display: 'flex', scrollSnapType: 'x mandatory' }}>
+        <div style={{ 
+          minWidth: '100%', 
+          height: '60vh', 
+          minHeight: '400px',
+          scrollSnapAlign: 'start',
+          backgroundImage: `linear-gradient(rgba(15,35,24,0.4), rgba(15,35,24,0.8)), url(${hero.image || 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?q=80&w=2053'})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          color: 'var(--color-parchment)',
-          position: 'relative'
-        } : undefined}
-      >
-        <div className="hero-content">
-          <div className="hero-text">
-            <div className="hero-eyebrow">
-              <span>🌿</span>
-              <span style={hero.image ? { color: 'var(--color-saffron-light)' } : undefined}>Ayurveda · Since Ancient Times</span>
-            </div>
-            <h1 style={hero.image ? { color: 'var(--color-cream)' } : undefined}>{hero.title}</h1>
-            <p className="hero-subtitle" style={hero.image ? { color: 'rgba(253, 251, 247, 0.85)' } : undefined}>
-              {hero.subtitle}
-            </p>
-            <div className="hero-actions">
-              <Link href="/shop" className="btn btn-gold btn-lg" id="hero-shop-btn">
-                Explore Products →
-              </Link>
-              <Link href="/about" className="btn btn-outline-gold btn-lg" style={hero.image ? { color: 'var(--color-cream)', borderColor: 'var(--color-saffron-light)' } : undefined}>
-                Our Story
-              </Link>
-            </div>
-          </div>
-          <div className="hero-visual" style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div className="hero-image-wrapper" style={{ position: 'relative', width: '100%', maxWidth: 450, height: 450, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{
-                position: 'absolute', width: 350, height: 350,
-                borderRadius: '50%', background: 'radial-gradient(circle, rgba(196,133,42,0.25) 0%, transparent 70%)',
-                filter: 'blur(30px)', animation: 'pulse 4s infinite'
-              }} />
-              <div style={{
-                position: 'relative', width: '85%', height: '85%',
-                background: 'rgba(24, 24, 27, 0.55)',
-                backdropFilter: 'blur(20px)',
-                border: '1.5px solid rgba(196, 133, 42, 0.25)',
-                borderRadius: 32,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: 'var(--space-6)',
-                boxShadow: 'var(--shadow-xl), 0 0 40px rgba(196,133,42,0.08)',
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '5rem', marginBottom: 'var(--space-4)', filter: 'drop-shadow(0 4px 12px rgba(196,133,42,0.3))' }}>
-                  🌿
-                </div>
-                <div style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: '1.4rem',
-                  fontWeight: 600,
-                  color: 'var(--color-saffron-light)',
-                  letterSpacing: '0.05em',
-                  marginBottom: 'var(--space-3)'
-                }}>
-                  SIDDHAM
-                </div>
-                <div style={{
-                  height: 1, width: 60,
-                  background: 'var(--color-saffron)',
-                  marginBottom: 'var(--space-4)'
-                }} />
-                <p style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontStyle: 'italic',
-                  fontSize: '0.9rem',
-                  color: 'rgba(248, 244, 238, 0.8)',
-                  lineHeight: 1.6,
-                  maxWidth: 280,
-                  margin: 0
-                }}>
-                  "स्वस्थस्य स्वास्थ्यरक्षणं, आतुरस्य विकारप्रशमनं च ।"
-                </p>
-                <span style={{
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  color: 'var(--color-gray-400)',
-                  marginTop: 'var(--space-3)',
-                  display: 'block'
-                }}>
-                  — Charak Samhita
-                </span>
-              </div>
-            </div>
+          display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+          padding: 'var(--space-6)'
+        }}>
+          <div>
+            <h1 style={{ color: 'var(--color-cream)', fontSize: 'clamp(2rem, 5vw, 4rem)', marginBottom: 'var(--space-3)' }}>{hero.title}</h1>
+            <p style={{ color: 'var(--color-saffron-pale)', fontSize: '1.1rem', maxWidth: 600, margin: '0 auto var(--space-5)' }}>{hero.subtitle}</p>
+            <Link href="/shop" className="btn btn-gold btn-lg">Explore Collection</Link>
           </div>
         </div>
       </section>
 
-      {/* ── Trust Bar / Badges ────────────────────────────────── */}
-      <section style={{ background: 'var(--color-cream)', padding: 'var(--space-2) 0' }}>
+      {/* 4. Trust Bar */}
+      <div className="trust-bar">
+        <span className="trust-stars">★★★★★</span>
+        <span className="trust-bar-text">Rated 4.8 by 50,000+ Customers</span>
+        <span className="trust-stars">★★★★★</span>
+      </div>
+
+      {/* 5. Curated Specially For You (Product Slider) */}
+      <section className="section">
         <div className="container">
-          <div className="trust-badges-container">
-            {[
-              { icon: '🌿', title: '100% Organic', desc: 'Sourced from organic forest farms' },
-              { icon: '🔬', title: 'Lab Tested', desc: 'Purity & potency certified' },
-              { icon: '🚚', title: 'Free Shipping', desc: 'On orders above ₹999' },
-              { icon: '🏆', title: 'GMP Certified', desc: 'Highest safety standards' },
-            ].map((item, i) => (
-              <div key={i} className="trust-badge">
-                <span className="trust-badge-icon">{item.icon}</span>
-                <h4 className="trust-badge-title">{item.title}</h4>
-                <p className="trust-badge-desc">{item.desc}</p>
+          <h2 className="vasu-section-title">
+            Curated Specially For You! 
+            <Link href="/shop">View all</Link>
+          </h2>
+          <div className="vasu-slider">
+            {featuredProducts.slice(0, 6).map(p => (
+              <div key={p.id} className="vasu-slide product">
+                <ProductCard product={p} />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Categories ────────────────────────────────────────── */}
+      {/* 6. Shop by Category (Grid) */}
       <section className="section" style={{ background: 'var(--color-cream)' }}>
         <div className="container">
-          <div className="section-heading">
-            <span className="section-eyebrow">Shop by Category</span>
-            <h2>What Are You Looking For?</h2>
-            <div className="divider-leaf"><span>✦</span></div>
-            <p>Explore our range of Ayurvedic solutions tailored for every wellness need.</p>
-          </div>
-          <div className="grid-4">
-            {categories.length > 0 ? categories.map(cat => (
-              <Link href={`/shop?category=${cat.slug}`} key={cat.id}>
-                <div className="category-card">
-                  <span className="category-icon">{CATEGORY_ICONS[cat.slug] || '🌿'}</span>
-                  <div className="category-name">{cat.name}</div>
-                  <div className="category-count">{cat._count.products} Products</div>
-                </div>
+          <h2 className="vasu-section-title" style={{ justifyContent: 'center' }}>Shop by Category</h2>
+          <div className="category-grid">
+            {categories.slice(0, 4).map((cat, idx) => (
+              <Link href={`/shop?category=${cat.slug}`} key={cat.id} className="category-card">
+                {/* Fallback to random unsplash wellness images for categories */}
+                <img src={`https://images.unsplash.com/photo-${idx % 2 === 0 ? '1608248593855' : '1556228578'}-0d9d4c794270?w=500&q=80`} alt={cat.name} loading="lazy" />
+                <div className="category-card-overlay">{cat.name}</div>
               </Link>
-            )) : [
-              { icon: '💆', name: 'Hair Care', count: '12+ Products' },
-              { icon: '💊', name: 'Supplements', count: '8+ Products' },
-              { icon: '✨', name: 'Skin Care', count: '6+ Products' },
-              { icon: '🌿', name: 'Oils', count: '5+ Products' },
-            ].map((c, i) => (
-              <div className="category-card" key={i}>
-                <span className="category-icon">{c.icon}</span>
-                <div className="category-name">{c.name}</div>
-                <div className="category-count">{c.count}</div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Featured Collections (Product Slider) */}
+      <section className="section">
+        <div className="container">
+          <h2 className="vasu-section-title">
+            Featured Collections
+            <Link href="/shop?featured=true">View all</Link>
+          </h2>
+          <div className="vasu-slider">
+            {featuredProducts.slice(2, 8).map(p => (
+              <div key={p.id} className="vasu-slide product">
+                <ProductCard product={p} />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Quick Links (Vasu Store Style) ─────────────────────── */}
-      <section className="section-sm" style={{ paddingBottom: 0 }}>
+      {/* 8. Promotional Banner Image */}
+      <section className="section-sm">
         <div className="container">
-          <div className="quick-links-scroll">
-            <Link href="/shop" className="quick-link-item">
-              <div className="quick-link-icon-wrap">🌿</div>
-              <span className="quick-link-label">All<br/>Products</span>
-            </Link>
-            {categories.map(cat => (
-              <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="quick-link-item">
-                <div className="quick-link-icon-wrap">{CATEGORY_ICONS[cat.slug] || '✨'}</div>
-                <span className="quick-link-label">{cat.name.replace(' ', '\n')}</span>
-              </Link>
-            ))}
+          <div className="vasu-promo-banner">
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <h2 style={{ color: 'white', marginBottom: 'var(--space-2)' }}>Build Your Own Wellness Bundle</h2>
+              <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-4)' }}>Pick any 3 products and save 25% instantly.</p>
+              <Link href="/bundles" className="btn btn-gold">Build Now</Link>
+            </div>
+            {/* Background design elements */}
+            <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '40%', height: '200%', background: 'rgba(196,133,42,0.1)', transform: 'rotate(15deg)' }} />
           </div>
         </div>
       </section>
 
-      {/* ── Featured Products ────────────────────────────────────── */}
-      <section className="section" style={{ background: 'var(--color-white)' }}>
-        <div className="container">
-          <div className="section-heading">
-            <span className="section-eyebrow">Bestsellers</span>
-            <h2>Our Signature Products</h2>
-            <div className="divider-leaf"><span>✦</span></div>
-            <p>Handcrafted formulations that embody the essence of Ayurvedic healing.</p>
-          </div>
-
-          {featuredProducts.length > 0 ? (
-            <div className="product-grid horizontal-scroll-mobile" style={{ marginTop: 'var(--space-6)' }}>
-            {featuredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>) : (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-gray-400)' }}>
-              Loading products...
-            </div>
-          )}
-
-          <div style={{ textAlign: 'center', marginTop: 'var(--space-10)' }}>
-            <Link href="/shop" className="btn btn-outline btn-lg">
-              View All Products
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Brand Story ───────────────────────────────────────── */}
-      <section className="section" style={{
-        background: 'linear-gradient(135deg, var(--color-forest-dark), var(--color-forest))',
-        color: 'var(--color-parchment)',
-      }}>
-        <div className="container">
-          <div className="brand-story-grid">
-            <div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-saffron-light)', display: 'block', marginBottom: '1rem' }}>
-                Our Philosophy
-              </span>
-              <h2 style={{ color: 'var(--color-parchment)', marginBottom: '1.5rem' }}>
-                Where Ancient Science Meets Modern Life
-              </h2>
-              <p style={{ color: 'rgba(248,244,238,0.75)', marginBottom: '1.5rem', lineHeight: 1.8 }}>
-                At Siddham Wellness, we believe that true health is a balance of mind, body, and spirit.
-                Our products are rooted in the 5,000-year tradition of Ayurveda — using herbs that have
-                been trusted for generations to heal and nourish.
-              </p>
-              <p style={{ color: 'rgba(248,244,238,0.75)', lineHeight: 1.8 }}>
-                Every formulation is carefully crafted with sustainably sourced ingredients,
-                lab-tested for purity, and free from harmful chemicals.
-              </p>
-              <Link href="/about" className="btn btn-gold" style={{ marginTop: '2rem' }}>
-                Discover Our Story →
-              </Link>
-            </div>
-            <div className="grid-2">
-              {[
-                { num: '5000+', label: 'Years of Wisdom' },
-                { num: '50+', label: 'Herbal Ingredients' },
-                { num: '10K+', label: 'Happy Customers' },
-                { num: '100%', label: 'Natural & Safe' },
-              ].map((s, i) => (
-                <div key={i} style={{
-                  background: 'rgba(248,244,238,0.07)',
-                  border: '1px solid rgba(196,133,42,0.2)',
-                  borderRadius: 12,
-                  padding: '1.5rem',
-                  textAlign: 'center',
-                }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: '2rem', fontWeight: 700, color: 'var(--color-saffron-light)' }}>
-                    {s.num}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'rgba(248,244,238,0.6)', marginTop: 4 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ──────────────────────────────────────── */}
+      {/* 9. Shop by Concern */}
       <section className="section" style={{ background: 'var(--color-parchment)' }}>
         <div className="container">
-          <div className="section-heading">
-            <span className="section-eyebrow">Testimonials</span>
-            <h2>Loved by Thousands</h2>
-            <div className="divider-leaf"><span>✦</span></div>
-          </div>
-          <div className="grid-3">
-            {[
-              {
-                name: 'Priya Sharma',
-                location: 'Mumbai',
-                text: 'The Brahmi Amla Shampoo has completely transformed my hair. Less fall, more shine. I\'ve been using it for 3 months and won\'t switch back!',
-                rating: 5,
-              },
-              {
-                name: 'Arjun Mehta',
-                location: 'Bengaluru',
-                text: 'The Ashwagandha capsules have been a game-changer for my stress levels and sleep quality. I feel more energized throughout the day.',
-                rating: 5,
-              },
-              {
-                name: 'Sunita Patel',
-                location: 'Ahmedabad',
-                text: 'Finally found skincare that works with my skin and not against it. The Kumkumadi oil is pure luxury — my skin has never looked better!',
-                rating: 5,
-              },
-            ].map((t, i) => (
-              <div key={i} className="card">
-                <div className="card-body">
-                  <div style={{ color: 'var(--color-saffron)', fontSize: '1.1rem', marginBottom: 'var(--space-3)' }}>
-                    {'⭐'.repeat(t.rating)}
-                  </div>
-                  <p style={{ fontStyle: 'italic', marginBottom: 'var(--space-4)', color: 'var(--color-gray-700)', lineHeight: 1.7 }}>
-                    &ldquo;{t.text}&rdquo;
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: '50%',
-                      background: 'linear-gradient(135deg, var(--color-forest), var(--color-sage))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontWeight: 700, fontSize: '0.9rem',
-                    }}>
-                      {t.name[0]}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--color-forest-dark)' }}>{t.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>{t.location}</div>
-                    </div>
-                  </div>
+          <h2 className="vasu-section-title" style={{ justifyContent: 'center' }}>Shop by Concern</h2>
+          <div className="multi-list-scroll" style={{ padding: '0', justifyContent: 'center' }}>
+            {concerns.map(c => (
+              <Link key={c.name} href={`/shop?category=${c.slug}`} className="multi-list-item" style={{ minWidth: 100 }}>
+                <div className="multi-list-image-wrap" style={{ width: 90, height: 90, borderRadius: 16 }}>
+                  <div style={{ fontSize: '2.5rem' }}>{c.icon}</div>
                 </div>
-              </div>
+                <span className="multi-list-label">{c.name}</span>
+              </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 10. Scrolling Text Marquee */}
+      <div className="announcement-bar" style={{ background: 'var(--color-saffron)', color: 'var(--color-forest-dark)', padding: '12px 0' }}>
+        <div className="marquee-container">
+          <div className="marquee-content">
+            <span>100% AYURVEDIC</span> <span>•</span>
+            <span>SCIENCE-BACKED</span> <span>•</span>
+            <span>CRUELTY-FREE</span> <span>•</span>
+            <span>NO HARSH CHEMICALS</span> <span>•</span>
+            <span>100% AYURVEDIC</span> <span>•</span>
+            <span>SCIENCE-BACKED</span> <span>•</span>
+            <span>CRUELTY-FREE</span> <span>•</span>
+            <span>NO HARSH CHEMICALS</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 11. As Featured In */}
+      <section className="section">
+        <div className="container">
+          <h3 style={{ textAlign: 'center', color: 'var(--color-gray-500)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: 'var(--space-5)' }}>
+            As Featured In
+          </h3>
+          <div className="featured-logos">
+            {/* Using mock text logos since we lack actual image assets */}
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'serif' }}>The Times</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'sans-serif', letterSpacing: -1 }}>VOGUE</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 300, fontFamily: 'serif' }}>GQ</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: 700, fontStyle: 'italic' }}>Wellness Daily</div>
           </div>
         </div>
       </section>
