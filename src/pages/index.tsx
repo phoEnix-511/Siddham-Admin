@@ -1,37 +1,63 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { GetServerSideProps } from 'next';
+import { prisma } from '@/lib/prisma';
 import Head from 'next/head';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 
-export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [hero, setHero] = useState({ title: '', subtitle: '', image: '' });
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const products = await prisma.product.findMany({
+      where: { isFeatured: true },
+      take: 10
+    });
 
-  useEffect(() => {
-    fetch('/api/products?featured=true&limit=10')
-      .then(r => r.json())
-      .then(d => setFeaturedProducts(d.products || []));
-      
-    fetch('/api/categories')
-      .then(r => r.json())
-      .then(d => setCategories(d.categories || []));
-      
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(d => {
-        if (d.settings) {
-          setHero({
-            title: d.settings.hero_title || 'Heal Naturally. Live Wholly.',
-            subtitle: d.settings.hero_subtitle || 'Discover our curated range of authentic Ayurvedic formulations.',
-            image: d.settings.hero_image || 'https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?q=80&w=2070',
-          });
+    const categories = await prisma.category.findMany();
+
+    const settingsRecords = await prisma.setting.findMany();
+    const settings = settingsRecords.reduce((acc, s) => {
+      acc[s.key] = s.value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      props: {
+        featuredProducts: JSON.parse(JSON.stringify(products)),
+        categories: JSON.parse(JSON.stringify(categories)),
+        hero: {
+          title: settings.hero_title || 'Heal Naturally. Live Wholly.',
+          subtitle: settings.hero_subtitle || 'Discover our curated range of authentic Ayurvedic formulations.',
+          image: settings.hero_image || 'https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?q=80&w=2070',
+        },
+        promotional: {
+          showFeaturedIn: settings.show_featured_in !== 'false',
+          featuredBrands: settings.featured_in_brands ? settings.featured_in_brands.split(',').map((b: string) => b.trim()).filter(Boolean) : ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
         }
-      });
-  }, []);
+      }
+    };
+  } catch (error) {
+    console.error('Error in index getServerSideProps:', error);
+    return {
+      props: {
+        featuredProducts: [],
+        categories: [],
+        hero: {
+          title: 'Heal Naturally. Live Wholly.',
+          subtitle: 'Discover our curated range of authentic Ayurvedic formulations.',
+          image: 'https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?q=80&w=2070',
+        },
+        promotional: {
+          showFeaturedIn: true,
+          featuredBrands: ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
+        }
+      }
+    };
+  }
+};
 
+export default function Home({ featuredProducts, categories, hero, promotional }: { featuredProducts: any[], categories: any[], hero: any, promotional: any }) {
   // Mock Concerns
   const concerns = [
     { name: 'Hair Fall', icon: '💆‍♀️', slug: 'hair-care' },
@@ -218,20 +244,22 @@ export default function Home() {
       </div>
 
       {/* 11. As Featured In */}
-      <section className="section">
-        <div className="container">
-          <h3 style={{ textAlign: 'center', color: 'var(--color-gray-500)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: 'var(--space-5)' }}>
-            As Featured In
-          </h3>
-          <div className="featured-logos">
-            {/* Using mock text logos since we lack actual image assets */}
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'serif' }}>The Times</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: 'sans-serif', letterSpacing: -1 }}>VOGUE</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 300, fontFamily: 'serif' }}>GQ</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 700, fontStyle: 'italic' }}>Wellness Daily</div>
+      {promotional.showFeaturedIn && promotional.featuredBrands.length > 0 && (
+        <section className="section">
+          <div className="container">
+            <h3 style={{ textAlign: 'center', color: 'var(--color-gray-500)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: 'var(--space-5)' }}>
+              As Featured In
+            </h3>
+            <div className="featured-logos">
+              {promotional.featuredBrands.map((brand: string, i: number) => (
+                <div key={i} style={{ fontSize: '1.5rem', fontWeight: 800, fontFamily: i % 2 === 0 ? 'serif' : 'sans-serif', letterSpacing: i % 2 !== 0 ? -1 : 0 }}>
+                  {brand}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <Footer />
     </>

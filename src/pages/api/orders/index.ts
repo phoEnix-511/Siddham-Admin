@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireViewerRole } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/utils";
 
 export default async function handler(
@@ -8,8 +8,10 @@ export default async function handler(
   res: NextApiResponse,
 ) {
   if (req.method === "GET") {
+    let adminRole = 'admin';
     try {
-      requireAdmin(req);
+      const adminPayload = requireViewerRole(req);
+      adminRole = adminPayload.role;
     } catch {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -71,8 +73,24 @@ export default async function handler(
       prisma.order.count({ where }),
     ]);
 
+    const maskedOrders = orders.map(order => {
+      if (adminRole === 'viewer') {
+        return {
+          ...order,
+          shippingAddress: '*** MASKED ***',
+          customer: order.customer ? {
+            ...order.customer,
+            name: order.customer.name.substring(0, 1) + '***',
+            email: '***@***.com',
+            phone: order.customer.phone ? '***' + order.customer.phone.slice(-4) : null,
+          } : null
+        };
+      }
+      return order;
+    });
+
     return res.status(200).json({
-      orders,
+      orders: maskedOrders,
       pagination: {
         page: pageNum,
         limit: limitNum,

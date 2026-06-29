@@ -64,14 +64,12 @@ export default function Footer() {
             <div className="footer-heading">Company</div>
             <div className="footer-links">
               <Link href="/about" className="footer-link">Our Story</Link>
-              <span className="footer-link" style={{ opacity: 0.5, cursor: 'default' }}>Ayurveda Blog</span>
-              <span className="footer-link" style={{ opacity: 0.5, cursor: 'default' }}>Sustainability</span>
             </div>
           </div>
 
           <div>
-            <div className="footer-heading">Support & Info</div>
-            <div className="footer-links">
+            <div className="footer-heading">Quick Links</div>
+            <div className="footer-links quick-links">
               <a href={`tel:${contacts.phone}`} className="footer-link">📞 {contacts.phone}</a>
               <a href={`mailto:${contacts.email}`} className="footer-link">✉️ {contacts.email}</a>
               <Link href="/shipping-returns" className="footer-link">Shipping Policy</Link>

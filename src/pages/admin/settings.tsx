@@ -40,6 +40,9 @@ interface Settings {
   // WhatsApp Notifications
   whatsapp_phone_number_id: string;
   whatsapp_access_token: string;
+  // Promotional
+  show_featured_in: string;
+  featured_in_brands: string;
 }
 
 const defaultSettings: Settings = {
@@ -67,6 +70,8 @@ const defaultSettings: Settings = {
   rewards_welcome_bonus: '500',
   whatsapp_phone_number_id: '',
   whatsapp_access_token: '',
+  show_featured_in: 'true',
+  featured_in_brands: 'The Times, VOGUE, GQ, Wellness Daily',
 };
 
 const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
@@ -90,6 +95,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [downloadingBackup, setDownloadingBackup] = useState(false);
+  const [restoringBackup, setRestoringBackup] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -129,6 +135,45 @@ export default function AdminSettingsPage() {
       addToast('Failed to download backup', 'error');
     } finally {
       setDownloadingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!window.confirm("WARNING: This will completely WIPE the current database and replace it with the uploaded backup. A local safety backup will be taken first. Are you absolutely sure?")) {
+      e.target.value = '';
+      return;
+    }
+
+    setRestoringBackup(true);
+    try {
+      const text = await file.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error('Invalid JSON file');
+      }
+
+      const res = await fetch('/api/admin/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: data.data || data }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Restore failed');
+
+      addToast('Database restored successfully! Reloading...', 'success');
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || 'Failed to restore backup', 'error');
+    } finally {
+      setRestoringBackup(false);
+      e.target.value = '';
     }
   };
 
@@ -211,6 +256,35 @@ export default function AdminSettingsPage() {
               </div>
             </SettingSection>
 
+            {/* Database Management */}
+            <SettingSection title="Database Management" icon="💾">
+              <div className="form-group">
+                <p style={{ color: 'var(--color-gray-500)', fontSize: '0.9rem', marginBottom: 'var(--space-2)' }}>
+                  Download a full JSON backup of your database, or restore from a previous backup.
+                </p>
+                <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={handleDownloadBackup}
+                    disabled={downloadingBackup}
+                  >
+                    {downloadingBackup ? 'Exporting...' : 'Export Backup'}
+                  </button>
+                  <label className="btn btn-outline" style={{ cursor: 'pointer', opacity: restoringBackup ? 0.5 : 1 }}>
+                    {restoringBackup ? 'Restoring...' : 'Restore Backup'}
+                    <input 
+                      type="file" 
+                      accept=".json,application/json" 
+                      style={{ display: 'none' }} 
+                      onChange={handleRestoreBackup}
+                      disabled={restoringBackup}
+                    />
+                  </label>
+                </div>
+              </div>
+            </SettingSection>
+
             {/* Storefront Hero Management */}
             <SettingSection title="Hero Banner Management" icon="🖼️">
               <div className="form-group">
@@ -237,7 +311,7 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label" htmlFor="hero-img-upload">Hero Background Image</label>
+                <label className="form-label" htmlFor="hero-img-upload">Hero Background Image <span style={{fontSize: '0.8rem', color: 'var(--color-gray-500)', fontWeight: 'normal'}}>(Recommended: 1920x1080px)</span></label>
                 <input
                   id="hero-img-upload"
                   type="file"
@@ -402,6 +476,24 @@ export default function AdminSettingsPage() {
               <div className="form-group">
                 <label className="form-label">Access Token</label>
                 <input type="password" placeholder="EAxxxxxxxxxxxxx" className="form-input" name="whatsapp_access_token" value={settings.whatsapp_access_token} onChange={handleChange} />
+              </div>
+            </SettingSection>
+
+            {/* Promotional Sections */}
+            <SettingSection title="Promotional Sections" icon="📢">
+              <div className="form-group">
+                <label className="form-label">Show "As Featured In" Section on Homepage</label>
+                <select className="form-input" name="show_featured_in" value={settings.show_featured_in} onChange={handleChange}>
+                  <option value="true">Yes, Show It</option>
+                  <option value="false">No, Hide It</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Featured Brands (Comma Separated)</label>
+                <input type="text" className="form-input" name="featured_in_brands" value={settings.featured_in_brands} onChange={handleChange} placeholder="VOGUE, GQ, The Times" />
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: 4 }}>
+                  Enter the names of the brands separated by commas.
+                </div>
               </div>
             </SettingSection>
 

@@ -1,6 +1,6 @@
-﻿import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdminRole } from '@/lib/auth';
 import { generateSlug } from '@/lib/utils';
 import { getOrSet, del } from '@/lib/cache';
 
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      requireAdmin(req);
+      requireAdminRole(req);
     } catch {
       return res.status(401).json({ error: 'Unauthorized' });
     }

@@ -1,6 +1,6 @@
-﻿import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminRole } from "@/lib/auth";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "POST") {
     try {
-      requireAdmin(req);
+      requireAdminRole(req);
       const { title, description, minItems, fixedPrice, isActive } = req.body;
       const bundle = await prisma.bundleOffer.create({
         data: { title, description, minItems: parseInt(minItems), fixedPrice: parseFloat(fixedPrice), isActive }

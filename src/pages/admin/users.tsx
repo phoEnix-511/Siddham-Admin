@@ -9,6 +9,7 @@ interface AdminUser {
   name: string;
   email: string;
   role: string;
+  lastLogin?: string;
   createdAt: string;
 }
 
@@ -22,6 +23,18 @@ export default function AdminUsersPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'admin' });
   const [submitting, setSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [currentAdmin, setCurrentAdmin] = useState<{ id: string; role: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.admin) {
+          setCurrentAdmin(data.admin);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const fetchAdmins = useCallback(async () => {
     setLoading(true);
@@ -107,6 +120,51 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleUpdateRole = async (id: string, role: string) => {
+    try {
+      const res = await fetch(`/api/admin/users`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'update_role', role })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        addToast('Role updated successfully', 'success');
+        fetchAdmins();
+      } else {
+        addToast(data.error || 'Failed to update role', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('Error updating role', 'error');
+    }
+  };
+
+  const handleResetPassword = async (id: string) => {
+    if (!window.confirm("Are you sure you want to reset this user's password?")) return;
+    
+    try {
+      const res = await fetch(`/api/admin/users`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'reset_password' })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        addToast(`Password reset. Temp password: ${data.tempPassword} (Copy this now!)`, 'success');
+        // Let it remain on screen a bit longer, maybe alert it so they don't miss it
+        window.alert(`Temporary Password for user is: ${data.tempPassword}\n\nPlease copy this immediately and share it with the user. They will be forced to change it on their next login.`);
+      } else {
+        addToast(data.error || 'Failed to reset password', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      addToast('Error resetting password', 'error');
+    }
+  };
+
   return (
     <>
       <Head>
@@ -175,8 +233,10 @@ export default function AdminUsersPage() {
                   value={form.role}
                   onChange={handleInputChange}
                 >
+                  <option value="super_admin">Super Administrator</option>
                   <option value="admin">Administrator</option>
-                  <option value="superadmin">Super Administrator</option>
+                  <option value="editor">Editor</option>
+                  <option value="viewer">Viewer</option>
                 </select>
               </div>
 
@@ -203,14 +263,15 @@ export default function AdminUsersPage() {
                       <th>Name</th>
                       <th>Email</th>
                       <th>Role</th>
-                      <th>Created At</th>
+                      <th>Last Login</th>
+                      <th>Created</th>
                       <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {admins.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--color-gray-400)' }}>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--color-gray-400)' }}>
                           No admin users found
                         </td>
                       </tr>
@@ -219,24 +280,35 @@ export default function AdminUsersPage() {
                         <tr key={admin.id}>
                           <td style={{ fontWeight: 600, color: 'var(--color-forest-dark)' }}>{admin.name}</td>
                           <td>{admin.email}</td>
-                          <td>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '2px 8px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              borderRadius: 'var(--radius-sm)',
-                              backgroundColor: admin.role === 'superadmin' ? '#fef3c7' : '#f3f4f6',
-                              color: admin.role === 'superadmin' ? '#d97706' : '#4b5563'
-                            }}>
-                              {admin.role.toUpperCase()}
-                            </span>
+                           <td>
+                            {currentAdmin && admin.id !== currentAdmin.id ? (
+                              <select
+                                className="form-input"
+                                style={{ padding: '0.25rem 0.5rem', width: 'auto', fontSize: '0.85rem' }}
+                                value={admin.role}
+                                onChange={(e) => handleUpdateRole(admin.id, e.target.value)}
+                              >
+                                <option value="super_admin">Super Admin</option>
+                                <option value="admin">Admin</option>
+                                <option value="editor">Editor</option>
+                                <option value="viewer">Viewer</option>
+                              </select>
+                            ) : (
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '2px 8px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                borderRadius: 'var(--radius-sm)',
+                                backgroundColor: admin.role === 'super_admin' ? '#fef3c7' : '#f3f4f6',
+                                color: admin.role === 'super_admin' ? '#d97706' : '#4b5563'
+                              }}>
+                                {admin.role.toUpperCase()} (You)
+                              </span>
+                            )}
                           </td>
-                          <td>{new Date(admin.createdAt).toLocaleDateString('en-IN', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}</td>
+                          <td>{admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : 'Never'}</td>
+                          <td>{new Date(admin.createdAt).toLocaleDateString()}</td>
                           <td style={{ textAlign: 'right' }}>
                             {deleteId === admin.id ? (
                               <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -257,17 +329,27 @@ export default function AdminUsersPage() {
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                className="btn btn-outline btn-sm"
-                                style={{
-                                  padding: '4px 8px',
-                                  color: 'var(--color-error)',
-                                  borderColor: 'rgba(239, 68, 68, 0.2)',
-                                }}
-                                onClick={() => setDeleteId(admin.id)}
-                              >
-                                Delete
-                              </button>
+                              <>
+                                <button
+                                  className="btn btn-outline"
+                                  onClick={() => handleResetPassword(admin.id)}
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', marginRight: '0.5rem' }}
+                                >
+                                  Reset Password
+                                </button>
+                                <button
+                                  className="btn btn-outline"
+                                  style={{
+                                    padding: '4px 8px',
+                                    color: 'var(--color-error)',
+                                    borderColor: 'rgba(239, 68, 68, 0.2)',
+                                    fontSize: '0.8rem'
+                                  }}
+                                  onClick={() => setDeleteId(admin.id)}
+                                >
+                                  Delete
+                                </button>
+                              </>
                             )}
                           </td>
                         </tr>

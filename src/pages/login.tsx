@@ -107,18 +107,18 @@ export default function LoginPage() {
             {mode === 'register' && (
               <div className="form-group">
                 <label htmlFor="name">Full Name</label>
-                <input id="name" type="text" placeholder="Raj Kumar" required
+                <input id="name" type="text" className="form-input" placeholder="Raj Kumar" required
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
             )}
             <div className="form-group">
               <label htmlFor="email">Email</label>
-              <input id="email" type="email" placeholder="raj@example.com" required
+              <input id="email" type="email" className="form-input" placeholder="raj@example.com" required
                 value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
             </div>
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <input id="password" type="password" placeholder={mode === 'register' ? 'Min 8 chars, 1 uppercase, 1 number' : '••••••••'} required
+              <input id="password" type="password" className="form-input" placeholder={mode === 'register' ? 'Min 8 chars, 1 uppercase, 1 number' : '••••••••'} required
                 value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
             </div>
             <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
@@ -157,8 +157,6 @@ export default function LoginPage() {
         .auth-form { display: flex; flex-direction: column; gap: 1rem; }
         .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
         .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--gray-700); }
-        .form-group input { padding: 0.75rem 1rem; border: 1.5px solid #e0e0e0; border-radius: 0.65rem; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
-        .form-group input:focus { border-color: var(--forest); }
         .btn-full { width: 100%; margin-top: 0.5rem; }
         .auth-guest { text-align: center; margin-top: 1.5rem; font-size: 0.82rem; color: var(--gray-500); }
         .auth-guest a { color: var(--forest); font-weight: 600; }

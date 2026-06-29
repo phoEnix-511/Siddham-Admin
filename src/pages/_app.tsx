@@ -1,5 +1,5 @@
 import type { AppProps } from 'next/app';
-import { SessionProvider } from 'next-auth/react';
+import { SessionProvider, useSession } from 'next-auth/react';
 import { CartProvider, useCart } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useEffect } from 'react';
@@ -46,13 +46,34 @@ function AnalyticsTracker() {
   return null;
 }
 
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession() as any;
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.forcePasswordReset) {
+      if (router.pathname !== '/change-password') {
+        router.replace('/change-password');
+      }
+    }
+  }, [session, status, router]);
+
+  if (status === 'authenticated' && session?.user?.forcePasswordReset && router.pathname !== '/change-password') {
+    return null; // Don't render protected app content while redirecting
+  }
+
+  return <>{children}</>;
+}
+
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
     <SessionProvider session={session}>
       <ToastProvider>
         <CartProvider>
           <AnalyticsTracker />
-          <Component {...pageProps} />
+          <AuthGuard>
+            <Component {...pageProps} />
+          </AuthGuard>
           <MobileBottomNav />
         </CartProvider>
       </ToastProvider>

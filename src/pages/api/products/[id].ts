@@ -1,6 +1,6 @@
-﻿import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireEditorRole } from "@/lib/auth";
 import { generateSlug } from "@/lib/utils";
 import { getOrSet, del, delPattern } from "@/lib/cache";
 
@@ -49,7 +49,7 @@ export default async function handler(
 
   if (req.method === "PUT") {
     try {
-      requireAdmin(req);
+      requireEditorRole(req);
     } catch {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -132,7 +132,7 @@ export default async function handler(
 
   if (req.method === "DELETE") {
     try {
-      requireAdmin(req);
+      requireEditorRole(req);
     } catch {
       return res.status(401).json({ error: "Unauthorized" });
     }

@@ -27,11 +27,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    await prisma.adminUser.update({
+      where: { id: admin.id },
+      data: { lastLogin: new Date() },
+    });
+
     const token = signToken({
       id: admin.id,
       email: admin.email,
       name: admin.name,
       role: admin.role,
+      forcePasswordReset: admin.forcePasswordReset,
     });
 
     res.setHeader(
@@ -52,6 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email: admin.email,
         name: admin.name,
         role: admin.role,
+        forcePasswordReset: admin.forcePasswordReset,
       },
     });
   } catch (error) {

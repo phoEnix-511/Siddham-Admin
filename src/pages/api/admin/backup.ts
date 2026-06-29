@@ -1,10 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireSuperAdmin } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    requireAdmin(req);
+    requireSuperAdmin(req);
   } catch {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -19,16 +19,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         customers,
         orders,
         orderItems,
+        addresses,
+        accounts,
+        sessions,
+        reviews,
+        productVariants,
+        rewardTransactions,
+        bundleOffers
       ] = await Promise.all([
         prisma.category.findMany(),
         prisma.product.findMany(),
         prisma.setting.findMany(),
-        prisma.adminUser.findMany({
-          select: { id: true, email: true, name: true, role: true, createdAt: true },
-        }),
+        prisma.adminUser.findMany(),
         prisma.customer.findMany(),
         prisma.order.findMany(),
         prisma.orderItem.findMany(),
+        prisma.address.findMany(),
+        prisma.account.findMany(),
+        prisma.session.findMany(),
+        prisma.review.findMany(),
+        prisma.productVariant.findMany(),
+        prisma.rewardTransaction.findMany(),
+        prisma.bundleOffer.findMany()
       ]);
 
       const backup = {
@@ -42,6 +54,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           customers,
           orders,
           orderItems,
+          addresses,
+          accounts,
+          sessions,
+          reviews,
+          productVariants,
+          rewardTransactions,
+          bundleOffers
         },
       };
 

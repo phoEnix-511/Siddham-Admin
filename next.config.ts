@@ -8,7 +8,7 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), payment=(self)',
+    value: 'camera=(), microphone=(), geolocation=(self), payment=(self)',
   },
   {
     key: 'Content-Security-Policy',
@@ -17,8 +17,8 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://accounts.google.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https: lh3.googleusercontent.com",
-      "connect-src 'self' https://api.razorpay.com https://accounts.google.com https://lumberjack.razorpay.com",
+      "img-src 'self' data: blob: https: lh3.googleusercontent.com https://*.tile.openstreetmap.org",
+      "connect-src 'self' https://api.razorpay.com https://accounts.google.com https://lumberjack.razorpay.com https://nominatim.openstreetmap.org",
       "frame-src https://api.razorpay.com https://accounts.google.com https://www.youtube.com",
       "object-src 'none'",
       "base-uri 'self'",

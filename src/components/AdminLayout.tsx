@@ -14,18 +14,39 @@ const navItems = [
   { href: '/admin/orders', label: 'Orders', icon: '🛒' },
   { href: '/admin/reports', label: 'Reports', icon: '📈' },
   { href: '/admin/users', label: 'Admins', icon: '👥' },
+  { href: '/admin/customers', label: 'Customers', icon: '👤' },
   { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
 ];
 
 export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps) {
   const router = useRouter();
   const { addToast } = useToast();
+  const [adminRole, setAdminRole] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/auth/me').then(async res => {
+      if (res.ok) {
+        const data = await res.json();
+        setAdminRole(data.admin.role);
+        if (data.admin.forcePasswordReset && router.pathname !== '/admin/change-password') {
+          router.replace('/admin/change-password');
+        }
+      }
+    });
+  }, [router]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     addToast('Logged out successfully', 'info');
     router.push('/admin/login');
   };
+
+  const filteredNavItems = navItems.filter(item => {
+    if (item.href === '/admin/users' && adminRole !== 'super_admin') return false;
+    if (item.href === '/admin/customers' && adminRole !== 'super_admin') return false;
+    if (item.href === '/admin/settings' && !['super_admin', 'admin'].includes(adminRole || '')) return false;
+    return true;
+  });
 
   return (
     <div className="admin-layout">
@@ -38,7 +59,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
         <nav className="admin-sidebar-nav">
           <div className="admin-nav-section">
             <div className="admin-nav-section-label">Main</div>
-            {navItems.slice(0, 3).map(item => (
+            {filteredNavItems.slice(0, 3).map(item => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -52,7 +73,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
 
           <div className="admin-nav-section">
             <div className="admin-nav-section-label">Management</div>
-            {navItems.slice(3).map(item => (
+            {filteredNavItems.slice(3).map(item => (
               <Link
                 key={item.href}
                 href={item.href}

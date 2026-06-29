@@ -44,6 +44,7 @@ export const authOptions: NextAuthOptions = {
             email: true,
             image: true,
             hashedPassword: true,
+            forcePasswordReset: true,
           },
         });
 
@@ -62,6 +63,7 @@ export const authOptions: NextAuthOptions = {
           name: customer.name,
           email: customer.email,
           image: customer.image,
+          forcePasswordReset: customer.forcePasswordReset,
         };
       },
     }),
@@ -71,15 +73,28 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.forcePasswordReset = (user as any).forcePasswordReset;
       }
       return token;
     },
 
     async session({ session, token }) {
       if (session.user && token.id) {
-        (session.user as typeof session.user & { id: string }).id = token.id as string;
+        (session.user as typeof session.user & { id: string, forcePasswordReset?: boolean }).id = token.id as string;
+        (session.user as typeof session.user & { forcePasswordReset?: boolean }).forcePasswordReset = token.forcePasswordReset as boolean;
       }
       return session;
+    },
+  },
+
+  events: {
+    async signIn({ user }) {
+      if (user?.id) {
+        await prisma.customer.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date() },
+        }).catch(err => console.error('Failed to update lastLogin:', err));
+      }
     },
   },
 };

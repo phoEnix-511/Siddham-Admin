@@ -1,6 +1,6 @@
-﻿import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireViewerRole } from "@/lib/auth";
 import { getOrSet } from "@/lib/cache";
 import { Redis } from "@upstash/redis";
 
@@ -25,7 +25,7 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    requireAdmin(req);
+    requireViewerRole(req);
   } catch {
     return res.status(401).json({ error: "Unauthorized" });
   }

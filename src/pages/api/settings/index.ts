@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdminRole, requireViewerRole } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     let isAdmin = false;
     try {
-      requireAdmin(req);
+      requireViewerRole(req);
       isAdmin = true;
     } catch {
       // not admin
@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PUT') {
     try {
-      requireAdmin(req);
+      requireAdminRole(req);
     } catch {
       return res.status(401).json({ error: 'Unauthorized' });
     }

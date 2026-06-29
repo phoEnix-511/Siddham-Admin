@@ -1,12 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireEditorRole, requireViewerRole } from '@/lib/auth';
 import { sendOrderShippedEmail, sendOrderCancelledEmail } from '@/lib/email';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
 
   if (req.method === 'GET') {
+    let adminRole = 'admin';
+    try {
+      const adminPayload = requireViewerRole(req);
+      adminRole = adminPayload.role;
+    } catch {
+      // Also allow if the user is the customer themselves
+      // But for admin API we expect viewer role.
+    }
     try {
       const order = await prisma.order.findUnique({
         where: { id: id as string },
@@ -16,6 +24,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
       if (!order) return res.status(404).json({ error: 'Order not found' });
+      
+      if (adminRole === 'viewer') {
+        order.shippingAddress = '*** MASKED ***';
+        if (order.customer) {
+          order.customer.name = order.customer.name.substring(0, 1) + '***';
+          order.customer.email = '***@***.com';
+          order.customer.phone = order.customer.phone ? '***' + order.customer.phone.slice(-4) : '***';
+        }
+      }
+
       return res.status(200).json({ order });
     } catch (error) {
       console.error(error);
@@ -25,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PUT') {
     try {
-      requireAdmin(req);
+      requireEditorRole(req);
     } catch {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -43,6 +61,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (!existingOrder) {
         return res.status(404).json({ error: 'Order not found' });
+      }
+
+      // State machine logic
+      if (status && status !== existingOrder.status) {
+        const current = existingOrder.status;
+        const terminalStates = ['DELIVERED', 'CANCELLED', 'REFUNDED'];
+        if (terminalStates.includes(current)) {
+          return res.status(400).json({ error: `Cannot change status of a ${current} order.` });
+        }
+        
+        if (status === 'CANCELLED' && ['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(current)) {
+          return res.status(400).json({ error: 'Order cannot be cancelled after it has been shipped or delivered.' });
+        }
+        
+        const validNextStates: Record<string, string[]> = {
+          PENDING: ['CONFIRMED', 'CANCELLED'],
+          CONFIRMED: ['PROCESSING', 'CANCELLED'],
+          PROCESSING: ['SHIPPED', 'CANCELLED'],
+          SHIPPED: ['OUT_FOR_DELIVERY', 'DELIVERED'],
+          OUT_FOR_DELIVERY: ['DELIVERED']
+        };
+
+        if (validNextStates[current] && !validNextStates[current].includes(status)) {
+          return res.status(400).json({ error: `Invalid status transition from ${current} to ${status}. Expected one of: ${validNextStates[current].join(', ')}` });
+        }
       }
 
       // 2. Perform the update

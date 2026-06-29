@@ -1,6 +1,6 @@
-﻿import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireEditorRole } from "@/lib/auth";
 import { generateSlug } from "@/lib/utils";
 import { getOrSet, delPattern } from "@/lib/cache";
 
@@ -29,7 +29,7 @@ export default async function handler(
     try {
       let isAdmin = false;
       try {
-        requireAdmin(req);
+        requireEditorRole(req);
         isAdmin = true;
       } catch {
         // Not admin - public request
@@ -119,7 +119,7 @@ export default async function handler(
 
   if (req.method === "POST") {
     try {
-      requireAdmin(req);
+      requireEditorRole(req);
       const data = req.body;
       data.slug = data.slug || generateSlug(data.name);
 

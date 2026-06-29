@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -6,6 +6,10 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import dynamic from 'next/dynamic';
+import type { LocationData } from '@/components/MapPicker';
+
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 declare global {
   interface Window {
@@ -36,39 +40,112 @@ interface RazorpayInstance {
   open: () => void;
 }
 
+type CheckoutStep = 'ADDRESS' | 'REVIEW';
+
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
   const { addToast } = useToast();
   const router = useRouter();
 
+  const [step, setStep] = useState<CheckoutStep>('ADDRESS');
   const [loading, setLoading] = useState(false);
-  const [pointsPerRupee, setPointsPerRupee] = useState(1);
+  
+  // Form State
   const [form, setForm] = useState({
     name: '', email: '', phone: '',
+    flatHouseBuilding: '',
     address: '', city: '', state: '', pincode: '',
     notes: '',
   });
 
-  const shippingAmount = totalAmount >= 999 ? 0 : 99;
+  // OTP State
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  const shippingAmount = totalAmount >= 999 ? 0 : totalAmount > 0 ? 99 : 0;
   const grandTotal = totalAmount + shippingAmount;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    if (e.target.name === 'phone' && isPhoneVerified) {
+      // If they change phone after verified, unverify them
+      setIsPhoneVerified(false);
+      setOtpSent(false);
+      setOtp('');
+    }
   };
 
-  React.useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.settings?.rewards_points_per_rupee) {
-          setPointsPerRupee(parseFloat(data.settings.rewards_points_per_rupee));
-        }
-      })
-      .catch(console.error);
-  }, []);
+  const handleLocationSelect = (loc: LocationData) => {
+    setForm(prev => ({
+      ...prev,
+      address: loc.address || prev.address,
+      city: loc.city || prev.city,
+      state: loc.state || prev.state,
+      pincode: loc.pincode || prev.pincode,
+    }));
+  };
 
-  const handlePlaceOrder = async (e: React.FormEvent) => {
+  const handleSendOtp = async () => {
+    if (!form.phone.match(/^[6-9]\d{9}$/)) {
+      addToast('Please enter a valid 10-digit mobile number', 'error');
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: form.phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send OTP');
+      
+      setOtpSent(true);
+      addToast('OTP sent to your WhatsApp', 'success');
+    } catch (err: any) {
+      addToast(err.message, 'error');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      addToast('OTP must be 6 digits', 'error');
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: form.phone, otp }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Invalid OTP');
+      
+      setIsPhoneVerified(true);
+      addToast('Phone number verified!', 'success');
+    } catch (err: any) {
+      addToast(err.message, 'error');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const proceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPhoneVerified) {
+      addToast('Please verify your phone number to continue', 'error');
+      return;
+    }
+    setStep('REVIEW');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePlaceOrder = async () => {
     if (items.length === 0) { addToast('Your cart is empty', 'error'); return; }
 
     setLoading(true);
@@ -111,7 +188,7 @@ export default function CheckoutPage() {
               customerEmail: form.email,
               customerPhone: form.phone,
               shippingAddress: {
-                address: form.address,
+                address: form.flatHouseBuilding ? `${form.flatHouseBuilding}, ${form.address}` : form.address,
                 city: form.city,
                 state: form.state,
                 pincode: form.pincode,
@@ -181,133 +258,215 @@ export default function CheckoutPage() {
       </Head>
       <Navbar />
 
-      <section style={{ background: 'var(--color-cream)', padding: 'var(--space-10) 0', minHeight: '80vh' }}>
-        <div className="checkout-layout">
-          {/* Left - Form */}
-          <div>
-            <form onSubmit={handlePlaceOrder}>
-              <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
-                <div className="card-body">
-                  <div className="checkout-section-title">📦 Contact Information</div>
-                  <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="checkout-name">Full Name *</label>
-                      <input id="checkout-name" className="form-input" name="name" required value={form.name} onChange={handleChange} placeholder="Your full name" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="checkout-email">Email *</label>
-                      <input id="checkout-email" className="form-input" name="email" type="email" required value={form.email} onChange={handleChange} placeholder="your@email.com" />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="checkout-phone">Phone *</label>
-                      <input id="checkout-phone" className="form-input" name="phone" required value={form.phone} onChange={handleChange} placeholder="+91 98765 43210" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
-                <div className="card-body">
-                  <div className="checkout-section-title">🏠 Shipping Address</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="checkout-address">Street Address *</label>
-                      <input id="checkout-address" className="form-input" name="address" required value={form.address} onChange={handleChange} placeholder="House no., Street, Area" />
-                    </div>
-                    <div className="grid-3" style={{ gap: 'var(--space-4)' }}>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="checkout-city">City *</label>
-                        <input id="checkout-city" className="form-input" name="city" required value={form.city} onChange={handleChange} placeholder="City" />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="checkout-state">State *</label>
-                        <input id="checkout-state" className="form-input" name="state" required value={form.state} onChange={handleChange} placeholder="State" />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="checkout-pincode">Pincode *</label>
-                        <input id="checkout-pincode" className="form-input" name="pincode" required value={form.pincode} onChange={handleChange} placeholder="400001" />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label" htmlFor="checkout-notes">Order Notes</label>
-                      <textarea id="checkout-notes" className="form-textarea" name="notes" value={form.notes} onChange={handleChange} placeholder="Any special instructions?" rows={3} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button id="place-order-btn" type="submit" className="btn btn-gold btn-lg" disabled={loading} style={{ width: '100%' }}>
-                {loading ? '⏳ Processing...' : '🔒 Pay with Razorpay →'}
-              </button>
-            </form>
+      <section style={{ background: 'var(--color-cream)', padding: 'var(--space-8) 0', minHeight: '80vh' }}>
+        <div className="container" style={{ maxWidth: 800 }}>
+          
+          {/* Step Indicator */}
+          <div className="step-indicator">
+            <div className={`step-item ${step === 'ADDRESS' ? 'step-active' : 'step-completed'}`}>
+              <div className="step-circle">1</div>
+              <div className="step-label">Address</div>
+            </div>
+            <div className={`step-item ${step === 'REVIEW' ? 'step-active' : ''}`}>
+              <div className="step-circle">2</div>
+              <div className="step-label">Review & Pay</div>
+            </div>
           </div>
 
-          {/* Right - Order Summary */}
-          <div>
-            <div className="order-summary-card">
-              <div style={{ padding: 'var(--space-5)', borderBottom: '1px solid var(--color-gray-100)' }}>
-                <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)' }}>
-                  Order Summary
-                </h3>
-              </div>
-              <div style={{ padding: 'var(--space-4) var(--space-5)' }}>
-                {items.map(item => {
-                  const itemKey = item.productId + (item.variantId ? `-${item.variantId}` : '');
-                  return (
-                    <div key={itemKey} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-3) 0', borderBottom: '1px solid var(--color-gray-100)' }}>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-forest-dark)' }}>
-                          {item.name}
-                          {item.variantName && (
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '2px', fontWeight: 400 }}>
-                              Variant: {item.variantName}
-                            </span>
-                          )}
+          {step === 'ADDRESS' && (
+            <div className="card">
+              <div className="card-body">
+                <h2 className="checkout-section-title">📍 Pin Your Location</h2>
+                <p style={{ color: 'var(--color-gray-500)', fontSize: '0.85rem', marginBottom: 'var(--space-4)' }}>
+                  Tap the map or use the Current Location button to auto-fill your delivery details.
+                </p>
+                <div style={{ marginBottom: 'var(--space-6)' }}>
+                  <MapPicker onLocationSelect={handleLocationSelect} />
+                </div>
+
+                <form onSubmit={proceedToReview}>
+                  <div className="checkout-section-title">📦 Contact Details</div>
+                  
+                  <div className="grid-2" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+                    <div className="form-group">
+                      <label className="form-label">Full Name *</label>
+                      <input className="form-input" name="name" required value={form.name} onChange={handleChange} placeholder="Your full name" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Email *</label>
+                      <input className="form-input" name="email" type="email" required value={form.email} onChange={handleChange} placeholder="your@email.com" />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
+                    <label className="form-label">Mobile Number *</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        className="form-input" 
+                        name="phone" 
+                        required 
+                        value={form.phone} 
+                        onChange={handleChange} 
+                        placeholder="10-digit mobile number" 
+                        maxLength={10}
+                        style={{ flex: 1 }}
+                        readOnly={isPhoneVerified}
+                      />
+                      {!isPhoneVerified && (
+                        <button 
+                          type="button" 
+                          className="btn btn-outline" 
+                          onClick={handleSendOtp}
+                          disabled={otpLoading || form.phone.length !== 10}
+                        >
+                          {otpLoading ? 'Sending...' : otpSent ? 'Resend OTP' : 'Verify'}
+                        </button>
+                      )}
+                      {isPhoneVerified && (
+                        <div style={{ display: 'flex', alignItems: 'center', color: 'var(--color-success)', padding: '0 12px', background: 'var(--color-success-bg)', borderRadius: '6px', fontWeight: 600 }}>
+                          ✓ Verified
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>Qty: {item.quantity}</div>
-                      </div>
-                      <div style={{ fontWeight: 700, color: 'var(--color-forest)', fontSize: '0.875rem' }}>
-                        ₹{item.price * item.quantity}
+                      )}
+                    </div>
+                  </div>
+
+                  {otpSent && !isPhoneVerified && (
+                    <div className="form-group" style={{ background: 'var(--color-saffron-pale)', padding: 'var(--space-4)', borderRadius: '8px', marginBottom: 'var(--space-4)' }}>
+                      <label className="form-label">Enter 6-digit OTP sent to WhatsApp *</label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input 
+                          className="form-input" 
+                          type="text" 
+                          maxLength={6} 
+                          value={otp} 
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} 
+                          placeholder="••••••" 
+                          style={{ flex: 1, letterSpacing: '0.5em', fontSize: '1.2rem', textAlign: 'center' }}
+                        />
+                        <button 
+                          type="button" 
+                          className="btn btn-primary" 
+                          onClick={handleVerifyOtp}
+                          disabled={otpLoading || otp.length !== 6}
+                        >
+                          {otpLoading ? 'Verifying...' : 'Submit OTP'}
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
+                  )}
+
+                  <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
+                    <label className="form-label">Flat, House No., Building, Society *</label>
+                    <input className="form-input" name="flatHouseBuilding" required value={form.flatHouseBuilding} onChange={handleChange} placeholder="e.g. Flat 402, Block B, Sunshine Apartments" />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
+                    <label className="form-label">Area, Landmark & Street (from Map / Search) *</label>
+                    <textarea className="form-input" name="address" required value={form.address} onChange={handleChange} rows={2} placeholder="e.g. Near Apollo Pharmacy, Bannerghatta Road" />
+                  </div>
+
+                  <div className="grid-2" style={{ gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                    <div className="form-group">
+                      <label className="form-label">City *</label>
+                      <input className="form-input" name="city" required value={form.city} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">State *</label>
+                      <input className="form-input" name="state" required value={form.state} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Pincode *</label>
+                      <input className="form-input" name="pincode" required value={form.pincode} onChange={handleChange} />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', fontSize: '1.1rem', padding: '16px' }} disabled={!isPhoneVerified}>
+                    Proceed to Review {isPhoneVerified ? '→' : '(Verify Phone First)'}
+                  </button>
+                </form>
               </div>
-              <div style={{ padding: 'var(--space-3) var(--space-5)', background: 'linear-gradient(135deg, var(--color-saffron-light), var(--color-parchment))', borderTop: '1px solid var(--color-gray-100)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-                <span style={{ fontSize: '1.5rem' }}>✨</span>
-                <div>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-forest-dark)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Siddham Rewards</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-600)', marginTop: '2px' }}>
-                    You will earn <strong>{Math.floor(grandTotal * pointsPerRupee)} Coins</strong> on this order!
+            </div>
+          )}
+
+          {step === 'REVIEW' && (
+            <div className="grid-2" style={{ gap: 'var(--space-6)', alignItems: 'start', gridTemplateColumns: '1fr 350px' }}>
+              {/* Left Column: Review Details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                
+                <div className="card">
+                  <div className="card-body">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+                      <h2 className="checkout-section-title" style={{ margin: 0 }}>Delivery Details</h2>
+                      <button className="btn btn-sm btn-outline" onClick={() => setStep('ADDRESS')}>Edit</button>
+                    </div>
+                    <p style={{ margin: '0 0 4px', fontWeight: 600 }}>{form.name} • {form.phone}</p>
+                    <p style={{ margin: 0, color: 'var(--color-gray-600)', fontSize: '0.9rem' }}>
+                      {form.flatHouseBuilding && `${form.flatHouseBuilding}, `}{form.address}<br />
+                      {form.city}, {form.state} - {form.pincode}
+                    </p>
                   </div>
                 </div>
-              </div>
-              <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'var(--color-parchment)', borderTop: '1px solid var(--color-gray-100)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-2)' }}>
-                  <span>Subtotal</span><span>₹{totalAmount}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-4)' }}>
-                  <span>Shipping</span>
-                  <span style={{ color: shippingAmount === 0 ? 'var(--color-success)' : undefined }}>
-                    {shippingAmount === 0 ? 'FREE' : `₹${shippingAmount}`}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', color: 'var(--color-forest-dark)' }}>Total</span>
-                  <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', color: 'var(--color-forest)' }}>₹{grandTotal}</span>
-                </div>
-              </div>
-            </div>
 
-            <div style={{ marginTop: 'var(--space-4)', display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--color-gray-500)' }}>
-              <span>🔒 SSL Secured</span>
-              <span>🛡️ 100% Safe</span>
-              <span>✅ Verified by Razorpay</span>
+                <div className="card">
+                  <div className="card-body">
+                    <h2 className="checkout-section-title">Order Items</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                      {items.map((item, idx) => (
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 'var(--space-3)', borderBottom: idx !== items.length - 1 ? '1px solid var(--color-gray-100)' : 'none' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                            <div style={{ fontSize: '1.5rem' }}>🌿</div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.name}</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)' }}>Qty: {item.quantity} {item.variantName ? `| ${item.variantName}` : ''}</div>
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: 700 }}>₹{item.price * item.quantity}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Order Summary & Pay */}
+              <div className="card" style={{ position: 'sticky', top: '100px' }}>
+                <div className="card-body">
+                  <h2 className="checkout-section-title">Order Summary</h2>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                    <span style={{ color: 'var(--color-gray-600)' }}>Subtotal</span>
+                    <span style={{ fontWeight: 600 }}>₹{totalAmount}</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-4)', paddingBottom: 'var(--space-4)', borderBottom: '1px dashed var(--color-gray-200)' }}>
+                    <span style={{ color: 'var(--color-gray-600)' }}>Shipping</span>
+                    <span style={{ fontWeight: 600 }}>{shippingAmount === 0 ? 'FREE' : `₹${shippingAmount}`}</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-6)', fontSize: '1.25rem' }}>
+                    <span style={{ fontWeight: 800 }}>Total</span>
+                    <span style={{ fontWeight: 800, color: 'var(--color-forest)' }}>₹{grandTotal}</span>
+                  </div>
+
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={handlePlaceOrder} 
+                    disabled={loading}
+                    style={{ width: '100%', fontSize: '1.1rem', padding: '16px' }}
+                  >
+                    {loading ? 'Processing...' : `Pay ₹${grandTotal}`}
+                  </button>
+                  <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: 'var(--space-3)' }}>
+                    🔒 Secure payments powered by Razorpay
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
         </div>
       </section>
-
       <Footer />
     </>
   );

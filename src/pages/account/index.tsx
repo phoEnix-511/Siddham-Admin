@@ -92,14 +92,13 @@ export default function AccountPage() {
         .account-header { display: flex; align-items: center; gap: 1.25rem; background: var(--forest); color: white; border-radius: 1.25rem; padding: 1.75rem; margin-bottom: 2rem; }
         .account-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--saffron); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; overflow: hidden; flex-shrink: 0; }
         .account-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .account-name { font-family: var(--font-serif); font-size: 1.4rem; margin: 0 0 0.25rem; }
-        .account-email { font-size: 0.85rem; opacity: 0.75; margin: 0; }
+        .account-name { font-family: var(--font-serif); font-size: 1.4rem; margin: 0 0 0.25rem; color: white !important; }
+        .account-email { font-size: 0.85rem; color: rgba(255, 255, 255, 0.8) !important; margin: 0; }
         .account-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-        .account-card { background: white; border-radius: 1.1rem; padding: 1.5rem; text-decoration: none; color: inherit; border: 1.5px solid transparent; transition: all 0.2s; position: relative; display: block; text-align: left; cursor: pointer; width: 100%; font-family: inherit; }
+        .account-card { background: white; border-radius: 1.1rem; padding: 1.5rem; text-decoration: none; color: var(--color-forest); border: 1.5px solid transparent; transition: all 0.2s; position: relative; display: block; text-align: left; cursor: pointer; width: 100%; font-family: inherit; }
         .account-card:hover { border-color: var(--forest); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(15,35,24,0.1); }
         .signout-card:hover { border-color: #dc2626; }
         .card-icon { font-size: 2rem; display: block; margin-bottom: 0.75rem; }
-        .account-card h3 { font-size: 1.05rem; font-weight: 700; color: var(--forest-dark); margin: 0 0 0.3rem; }
         .account-card p { font-size: 0.82rem; color: var(--gray-500); margin: 0; }
         .card-arrow { position: absolute; top: 1.25rem; right: 1.25rem; color: var(--gray-400); font-size: 1.1rem; }
         @media (max-width: 480px) { .account-grid { grid-template-columns: 1fr; } }

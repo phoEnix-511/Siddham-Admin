@@ -57,6 +57,7 @@ export default function ShopPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [sort, setSort] = useState('newest');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fetchProducts = useCallback(async (cat = '', q = '', page = 1, maxP = 2000, sortOption = 'newest') => {
     setLoading(true);
@@ -194,10 +195,21 @@ export default function ShopPage() {
                 <button type="submit" className="btn btn-primary btn-sm">Search</button>
               </form>
 
-              {/* Price Range Slider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 250 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)', whiteSpace: 'nowrap' }} htmlFor="price-slider">
-                  Max Price: <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>₹{priceLimit}</span>
+              <button 
+                type="button" 
+                className="btn btn-outline mobile-filter-toggle" 
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+              >
+                ⚙️ Filters {showMobileFilters ? '▲' : '▼'}
+              </button>
+            </div>
+
+            <div className={`filter-options-container ${showMobileFilters ? 'mobile-visible' : 'mobile-hidden'}`}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 'var(--space-4)', alignItems: 'center' }}>
+                {/* Price Range Slider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 250 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)', whiteSpace: 'nowrap' }} htmlFor="price-slider">
+                    Max Price: <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>₹{priceLimit}</span>
                 </label>
                 <input
                   id="price-slider"
@@ -240,22 +252,23 @@ export default function ShopPage() {
             </div>
 
             {/* Category Filter Chips */}
-            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', borderTop: '1px solid rgba(13,44,29,0.06)', paddingTop: 'var(--space-3)' }}>
-              <button
-                className={`filter-chip ${activeCategory === '' ? 'active' : ''}`}
-                onClick={() => handleCategoryFilter('')}
-              >
-                All
-              </button>
-              {categories.map(cat => (
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', borderTop: '1px solid rgba(13,44,29,0.06)', paddingTop: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
                 <button
-                  key={cat.id}
-                  className={`filter-chip ${activeCategory === cat.slug ? 'active' : ''}`}
-                  onClick={() => handleCategoryFilter(cat.slug)}
+                  className={`filter-chip ${activeCategory === '' ? 'active' : ''}`}
+                  onClick={() => handleCategoryFilter('')}
                 >
-                  {CATEGORY_ICONS[cat.slug] || '🌿'} {cat.name}
+                  All
                 </button>
-              ))}
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    className={`filter-chip ${activeCategory === cat.slug ? 'active' : ''}`}
+                    onClick={() => handleCategoryFilter(cat.slug)}
+                  >
+                    {CATEGORY_ICONS[cat.slug] || '🌿'} {cat.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

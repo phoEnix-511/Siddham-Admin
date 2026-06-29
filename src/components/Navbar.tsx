@@ -116,7 +116,7 @@ export default function Navbar() {
               )}
               <button
                 id="cart-btn"
-                className="btn btn-gold"
+                className="btn btn-gold top-cart-btn"
                 onClick={openCart}
                 aria-label={`Open cart, ${totalItems} items`}
                 style={{ borderRadius: '9999px', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
