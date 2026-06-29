@@ -42,6 +42,19 @@ const CATEGORY_ICONS: Record<string, string> = {
   'ayurvedic-formulation': '🍯',
 };
 
+function SkeletonCard() {
+  return (
+    <div className="product-card-skeleton">
+      <div className="skeleton-image" />
+      <div className="skeleton-body">
+        <div className="skeleton-line short" />
+        <div className="skeleton-line medium" />
+        <div className="skeleton-line tall" />
+      </div>
+    </div>
+  );
+}
+
 export default function ShopPage() {
   const router = useRouter();
   const { addItem } = useCart();
@@ -51,6 +64,7 @@ export default function ShopPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // separate controlled input
   const [activeCategory, setActiveCategory] = useState('');
   const [priceLimit, setPriceLimit] = useState(2000);
   const [suggestions, setSuggestions] = useState<Product[]>([]);
@@ -58,6 +72,7 @@ export default function ShopPage() {
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [sort, setSort] = useState('newest');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async (cat = '', q = '', page = 1, maxP = 2000, sortOption = 'newest') => {
     setLoading(true);
@@ -66,11 +81,16 @@ export default function ShopPage() {
     if (q) params.set('search', q);
     if (maxP < 2000) params.set('maxPrice', String(maxP));
     if (sortOption) params.set('sort', sortOption);
-    const res = await fetch(`/api/products?${params}`);
-    const data = await res.json();
-    setProducts(data.products || []);
-    setPagination(data.pagination || { page: 1, pages: 1, total: 0 });
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/products?${params}`);
+      const data = await res.json();
+      setProducts(data.products || []);
+      setPagination(data.pagination || { page: 1, pages: 1, total: 0 });
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -78,43 +98,42 @@ export default function ShopPage() {
   }, []);
 
   useEffect(() => {
+    if (!router.isReady) return;
     const cat = (router.query.category as string) || '';
     setActiveCategory(cat);
     fetchProducts(cat, search, 1, priceLimit, sort);
-  }, [router.query.category, fetchProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, router.query.category]);
 
-  // Handle auto-suggestions loading
+  // Auto-suggestions with debounce
   useEffect(() => {
-    if (search.trim().length < 2) {
+    if (searchInput.trim().length < 2) {
       setSuggestions([]);
       return;
     }
-    const delayDebounceFn = setTimeout(() => {
-      fetch(`/api/products?search=${encodeURIComponent(search)}&limit=5`)
+    const timer = setTimeout(() => {
+      fetch(`/api/products?search=${encodeURIComponent(searchInput)}&limit=6`)
         .then(res => res.json())
-        .then(data => {
-          if (data.products) {
-            setSuggestions(data.products);
-          }
-        })
-        .catch(err => console.error('Error loading suggestions:', err));
+        .then(data => { if (data.products) setSuggestions(data.products); })
+        .catch(() => {});
     }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [search]);
-
-  // Handle price range update with debounce
+  // Price range update with debounce
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
+    const timer = setTimeout(() => {
       fetchProducts(activeCategory, search, 1, priceLimit, sort);
-    }, 400);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [priceLimit, fetchProducts, activeCategory, sort]);
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceLimit, sort]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchProducts(activeCategory, search, 1, priceLimit, sort);
+    setSearch(searchInput);
+    setShowSuggestions(false);
+    fetchProducts(activeCategory, searchInput, 1, priceLimit, sort);
   };
 
   const handleCategoryFilter = (slug: string) => {
@@ -123,12 +142,17 @@ export default function ShopPage() {
     router.push(slug ? `/shop?category=${slug}` : '/shop', undefined, { shallow: true });
   };
 
-  const handlePriceChange = (val: number) => {
-    setPriceLimit(val);
-  };
-
   const discount = (price: number, comparePrice?: number) =>
     comparePrice ? Math.round((1 - price / comparePrice) * 100) : 0;
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.preventDefault();
+    if (product.stock === 0 || addingToCart === product.id) return;
+    setAddingToCart(product.id);
+    addItem({ productId: product.id, name: product.name, price: product.price, image: product.images?.[0] || '', stock: product.stock });
+    addToast(`${product.name} added to cart ✓`, 'success');
+    setTimeout(() => setAddingToCart(null), 1000);
+  };
 
   return (
     <>
@@ -146,7 +170,7 @@ export default function ShopPage() {
             <Link href="/">Home</Link>
             <span className="breadcrumb-sep">/</span>
             <span>Shop</span>
-            {activeCategory && <><span className="breadcrumb-sep">/</span><span style={{ textTransform: 'capitalize' }}>{activeCategory.replace('-', ' ')}</span></>}
+            {activeCategory && <><span className="breadcrumb-sep">/</span><span style={{ textTransform: 'capitalize' }}>{activeCategory.replace(/-/g, ' ')}</span></>}
           </div>
         </div>
       </div>
@@ -155,24 +179,24 @@ export default function ShopPage() {
         <div className="container">
           {/* Search + Filter Panel */}
           <div className="filter-bar" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', alignItems: 'stretch' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Top row: search + mobile filter toggle */}
+            <div className="shop-top-row" style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
               {/* Search Form with Auto-Suggest */}
-              <form onSubmit={handleSearch} style={{ display: 'flex', gap: 'var(--space-2)', flex: 1, position: 'relative', minWidth: 280 }}>
+              <form onSubmit={handleSearch} className="search-form-wrapper" style={{ display: 'flex', gap: 'var(--space-2)', flex: 1, position: 'relative', minWidth: 280 }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <input
                     id="search-input"
                     className="form-input"
                     placeholder="Search products..."
-                    value={search}
+                    value={searchInput}
                     onChange={e => {
-                      setSearch(e.target.value);
+                      setSearchInput(e.target.value);
                       setShowSuggestions(true);
                     }}
-                    onBlur={() => {
-                      setTimeout(() => setShowSuggestions(false), 200);
-                    }}
-                    onFocus={() => setShowSuggestions(true)}
-                    style={{ width: '100%' }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onFocus={() => searchInput.length >= 2 && setShowSuggestions(true)}
+                    style={{ width: '100%', paddingRight: 'var(--space-3)' }}
+                    autoComplete="off"
                   />
                   {showSuggestions && suggestions.length > 0 && (
                     <div className="suggestions-dropdown">
@@ -181,6 +205,7 @@ export default function ShopPage() {
                           key={p.id}
                           className="suggestion-item"
                           onMouseDown={() => {
+                            setSearchInput(p.name);
                             setSearch(p.name);
                             setShowSuggestions(false);
                             fetchProducts(activeCategory, p.name, 1, priceLimit, sort);
@@ -192,12 +217,18 @@ export default function ShopPage() {
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn btn-primary btn-sm">Search</button>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ whiteSpace: 'nowrap', flexShrink: 0, padding: '0 var(--space-5)' }}
+                >
+                  🔍 Search
+                </button>
               </form>
 
-              <button 
-                type="button" 
-                className="btn btn-outline mobile-filter-toggle" 
+              <button
+                type="button"
+                className="btn btn-outline mobile-filter-toggle"
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
               >
                 ⚙️ Filters {showMobileFilters ? '▲' : '▼'}
@@ -207,87 +238,89 @@ export default function ShopPage() {
             <div className={`filter-options-container ${showMobileFilters ? 'mobile-visible' : 'mobile-hidden'}`}>
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 'var(--space-4)', alignItems: 'center' }}>
                 {/* Price Range Slider */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 250 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 250, flex: 1 }}>
                   <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)', whiteSpace: 'nowrap' }} htmlFor="price-slider">
                     Max Price: <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>₹{priceLimit}</span>
-                </label>
-                <input
-                  id="price-slider"
-                  type="range"
-                  min="0"
-                  max="2000"
-                  step="50"
-                  value={priceLimit}
-                  onChange={e => handlePriceChange(Number(e.target.value))}
-                  style={{
-                    flex: 1,
-                    accentColor: 'var(--color-forest)',
-                    height: 6,
-                    borderRadius: 3,
-                    background: 'var(--color-gray-200)',
-                    cursor: 'pointer'
-                  }}
-                />
-              </div>
+                  </label>
+                  <input
+                    id="price-slider"
+                    type="range"
+                    min="0"
+                    max="2000"
+                    step="50"
+                    value={priceLimit}
+                    onChange={e => setPriceLimit(Number(e.target.value))}
+                    style={{ flex: 1, accentColor: 'var(--color-forest)', height: 6, borderRadius: 3, cursor: 'pointer' }}
+                  />
+                </div>
 
-              {/* Sort Dropdown */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)' }} htmlFor="sort-select">
-                  Sort By:
-                </label>
-                <select
-                  id="sort-select"
-                  className="form-input"
-                  style={{ padding: '0.25rem 0.5rem', width: 'auto' }}
-                  value={sort}
-                  onChange={e => setSort(e.target.value)}
-                >
-                  <option value="popular">Popularity</option>
-                  <option value="newest">Newly Added</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                  <option value="name_asc">Name</option>
-                </select>
+                {/* Sort Dropdown */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)' }} htmlFor="sort-select">
+                    Sort By:
+                  </label>
+                  <select
+                    id="sort-select"
+                    className="form-input"
+                    style={{ padding: '0.25rem 0.5rem', width: 'auto' }}
+                    value={sort}
+                    onChange={e => setSort(e.target.value)}
+                  >
+                    <option value="popular">Popularity</option>
+                    <option value="newest">Newly Added</option>
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="name_asc">Name</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             {/* Category Filter Chips */}
-              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', borderTop: '1px solid rgba(13,44,29,0.06)', paddingTop: 'var(--space-3)', marginTop: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', borderTop: '1px solid rgba(13,44,29,0.06)', paddingTop: 'var(--space-3)' }}>
+              <button
+                className={`filter-chip ${activeCategory === '' ? 'active' : ''}`}
+                onClick={() => handleCategoryFilter('')}
+              >
+                All
+              </button>
+              {categories.map(cat => (
                 <button
-                  className={`filter-chip ${activeCategory === '' ? 'active' : ''}`}
-                  onClick={() => handleCategoryFilter('')}
+                  key={cat.id}
+                  className={`filter-chip ${activeCategory === cat.slug ? 'active' : ''}`}
+                  onClick={() => handleCategoryFilter(cat.slug)}
                 >
-                  All
+                  {CATEGORY_ICONS[cat.slug] || '🌿'} {cat.name}
                 </button>
-                {categories.map(cat => (
-                  <button
-                    key={cat.id}
-                    className={`filter-chip ${activeCategory === cat.slug ? 'active' : ''}`}
-                    onClick={() => handleCategoryFilter(cat.slug)}
-                  >
-                    {CATEGORY_ICONS[cat.slug] || '🌿'} {cat.name}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
-          <div style={{ marginBottom: 'var(--space-5)', color: 'var(--color-gray-500)', fontSize: '0.875rem' }}>
-            {!loading && `${pagination.total} products found`}
+          <div style={{ marginBottom: 'var(--space-5)', color: 'var(--color-gray-500)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            {!loading && (
+              <>
+                <span>{pagination.total} product{pagination.total !== 1 ? 's' : ''} found</span>
+                {search && <span style={{ background: 'var(--color-gray-100)', padding: '2px 10px', borderRadius: '99px', fontSize: '0.78rem' }}>for &ldquo;{search}&rdquo; <button onClick={() => { setSearch(''); setSearchInput(''); fetchProducts(activeCategory, '', 1, priceLimit, sort); }} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-error)', fontWeight: 700, marginLeft: 4 }}>✕</button></span>}
+              </>
+            )}
           </div>
 
           {loading ? (
-            <div className="loading-page"><div className="spinner" /></div>
+            <div className="product-grid">
+              {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
           ) : products.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🌿</div>
               <h3>No products found</h3>
               <p>Try a different search or category</p>
+              <button className="btn btn-outline" style={{ marginTop: 'var(--space-4)' }} onClick={() => { setSearch(''); setSearchInput(''); setActiveCategory(''); fetchProducts('', '', 1, 2000, sort); }}>Clear filters</button>
             </div>
           ) : (
             <div className="product-grid">
               {products.map(product => {
                 const disc = discount(product.price, product.comparePrice);
+                const isAdding = addingToCart === product.id;
                 return (
                   <div className="product-card" key={product.id}>
                     <Link href={`/products/${product.id}`}>
@@ -297,6 +330,7 @@ export default function ShopPage() {
                             src={product.images[0]}
                             alt={product.name}
                             loading="lazy"
+                            decoding="async"
                             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
@@ -308,9 +342,7 @@ export default function ShopPage() {
                         ) : null}
                         <div
                           className="img-placeholder fallback-placeholder"
-                          style={{
-                            display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex'
-                          }}
+                          style={{ display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex' }}
                         >
                           {CATEGORY_ICONS[product.category.slug] || '🌿'}
                         </div>
@@ -326,26 +358,18 @@ export default function ShopPage() {
                               type="button"
                               className="btn btn-gold"
                               style={{ width: '100%', borderRadius: 8 }}
-                              onClick={e => {
-                                e.preventDefault();
-                                router.push(`/products/${product.id}`);
-                              }}
+                              onClick={e => { e.preventDefault(); router.push(`/products/${product.id}`); }}
                             >
                               🔍 View Options
                             </button>
                           ) : (
                             <button
-                              className="btn btn-gold"
-                              style={{ width: '100%', borderRadius: 8 }}
-                              onClick={e => {
-                                e.preventDefault();
-                                if (product.stock === 0) return;
-                                addItem({ productId: product.id, name: product.name, price: product.price, image: '', stock: product.stock });
-                                addToast(`${product.name} added to cart`, 'success');
-                              }}
-                              disabled={product.stock === 0}
+                              className={`btn ${isAdding ? 'btn-outline' : 'btn-gold'}`}
+                              style={{ width: '100%', borderRadius: 8, transition: 'all 0.3s ease' }}
+                              onClick={e => handleAddToCart(e, product)}
+                              disabled={product.stock === 0 || isAdding}
                             >
-                              {product.stock === 0 ? 'Out of Stock' : '+ Add to Cart'}
+                              {product.stock === 0 ? 'Out of Stock' : isAdding ? '✓ Added!' : '+ Add to Cart'}
                             </button>
                           )}
                         </div>
@@ -370,16 +394,36 @@ export default function ShopPage() {
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-10)' }}>
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-10)', flexWrap: 'wrap' }}>
+              {pagination.page > 1 && (
                 <button
-                  key={p}
-                  className={`btn btn-sm ${p === pagination.page ? 'btn-primary' : 'btn-outline'}`}
-                  onClick={() => fetchProducts(activeCategory, search, p)}
+                  className="btn btn-outline btn-sm"
+                  onClick={() => fetchProducts(activeCategory, search, pagination.page - 1, priceLimit, sort)}
                 >
-                  {p}
+                  ← Prev
                 </button>
-              ))}
+              )}
+              {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                .filter(p => Math.abs(p - pagination.page) <= 2 || p === 1 || p === pagination.pages)
+                .map((p, idx, arr) => (
+                  <React.Fragment key={p}>
+                    {idx > 0 && arr[idx - 1] !== p - 1 && <span style={{ lineHeight: '2rem', color: 'var(--color-gray-400)' }}>…</span>}
+                    <button
+                      className={`btn btn-sm ${p === pagination.page ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => fetchProducts(activeCategory, search, p, priceLimit, sort)}
+                    >
+                      {p}
+                    </button>
+                  </React.Fragment>
+                ))}
+              {pagination.page < pagination.pages && (
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => fetchProducts(activeCategory, search, pagination.page + 1, priceLimit, sort)}
+                >
+                  Next →
+                </button>
+              )}
             </div>
           )}
         </div>

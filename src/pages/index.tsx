@@ -1,5 +1,5 @@
 import React from 'react';
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import { prisma } from '@/lib/prisma';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -7,16 +7,23 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
-    const products = await prisma.product.findMany({
-      where: { isFeatured: true },
-      take: 10
-    });
+    const [products, categories, settingsRecords] = await Promise.all([
+      prisma.product.findMany({
+        where: { isFeatured: true },
+        take: 10,
+        select: {
+          id: true, name: true, price: true, comparePrice: true,
+          images: true, stock: true, isFeatured: true,
+          category: { select: { name: true, slug: true } },
+          description: true, variants: { select: { id: true, name: true, price: true, stock: true } }
+        }
+      }),
+      prisma.category.findMany({ orderBy: { name: 'asc' } }),
+      prisma.setting.findMany(),
+    ]);
 
-    const categories = await prisma.category.findMany();
-
-    const settingsRecords = await prisma.setting.findMany();
     const settings = settingsRecords.reduce((acc, s) => {
       acc[s.key] = s.value;
       return acc;
@@ -37,10 +44,11 @@ export const getServerSideProps: GetServerSideProps = async () => {
           trustBarRating: settings.trust_bar_rating || '4.8',
           trustBarCount: settings.trust_bar_count || '50,000+',
         }
-      }
+      },
+      revalidate: 60, // ISR: regenerate at most once per minute
     };
   } catch (error) {
-    console.error('Error in index getServerSideProps:', error);
+    console.error('Error in index getStaticProps:', error);
     return {
       props: {
         featuredProducts: [],
@@ -56,7 +64,8 @@ export const getServerSideProps: GetServerSideProps = async () => {
           trustBarRating: '4.8',
           trustBarCount: '50,000+',
         }
-      }
+      },
+      revalidate: 30,
     };
   }
 };
