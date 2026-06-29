@@ -1,15 +1,16 @@
-﻿import type { AppProps } from 'next/app';
+import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import { CartProvider, useCart } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/router';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import '@/styles/globals.css';
 
 // Lightweight component to track active users without blocking rendering
 function AnalyticsTracker() {
-  const { count } = useCart();
+  const { totalItems } = useCart();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,7 +31,7 @@ function AnalyticsTracker() {
         body: JSON.stringify({
           sessionId,
           path: router.asPath,
-          cartCount: count
+          cartCount: totalItems
         }),
       }).catch(() => {}); // silent fail if network issue
     };
@@ -40,7 +41,7 @@ function AnalyticsTracker() {
     const interval = setInterval(ping, 60000);
 
     return () => clearInterval(interval);
-  }, [count, router.asPath, router.pathname]);
+  }, [totalItems, router.asPath, router.pathname]);
 
   return null;
 }
@@ -52,6 +53,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
         <CartProvider>
           <AnalyticsTracker />
           <Component {...pageProps} />
+          <MobileBottomNav />
         </CartProvider>
       </ToastProvider>
     </SessionProvider>

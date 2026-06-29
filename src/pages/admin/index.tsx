@@ -9,7 +9,6 @@ interface Stats {
   totalProducts: number;
   totalOrders: number;
   totalCustomers: number;
-  totalCustomers: number;
   totalRevenue: number;
   pendingOrders: number;
 }

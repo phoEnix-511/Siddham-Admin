@@ -324,7 +324,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Featured Products ──────────────────────────────────── */}
+      {/* ── Quick Links (Vasu Store Style) ─────────────────────── */}
+      <section className="section-sm" style={{ paddingBottom: 0 }}>
+        <div className="container">
+          <div className="quick-links-scroll">
+            <Link href="/shop" className="quick-link-item">
+              <div className="quick-link-icon-wrap">🌿</div>
+              <span className="quick-link-label">All<br/>Products</span>
+            </Link>
+            {categories.map(cat => (
+              <Link key={cat.id} href={`/shop?category=${cat.slug}`} className="quick-link-item">
+                <div className="quick-link-icon-wrap">{CATEGORY_ICONS[cat.slug] || '✨'}</div>
+                <span className="quick-link-label">{cat.name.replace(' ', '\n')}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Featured Products ────────────────────────────────────── */}
       <section className="section" style={{ background: 'var(--color-white)' }}>
         <div className="container">
           <div className="section-heading">
@@ -335,10 +353,11 @@ export default function Home() {
           </div>
 
           {featuredProducts.length > 0 ? (
-            <div className="product-grid">
-              {featuredProducts.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          ) : (
+            <div className="product-grid horizontal-scroll-mobile" style={{ marginTop: 'var(--space-6)' }}>
+            {featuredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>) : (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-gray-400)' }}>
               Loading products...
             </div>
