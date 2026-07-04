@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           create: { key, value, group: key.startsWith('razorpay') ? 'payment' : 'general' },
         })
       );
-      await prisma.$transaction(updates);
+      await Promise.all(updates);
 
       // Invalidate settings cache
       await Promise.all([
