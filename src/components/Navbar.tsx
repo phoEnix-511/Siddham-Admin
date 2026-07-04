@@ -17,10 +17,11 @@ export default function Navbar() {
   const { totalItems, isOpen, openCart, closeCart } = useCart();
   const [announcement, setAnnouncement] = useState({ active: false, text: '' });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catalogMode, setCatalogMode] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
-    // Load announcement settings
+    // Load announcement and catalog settings
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
@@ -29,6 +30,7 @@ export default function Navbar() {
             active: data.settings.announcement_bar_active === 'true',
             text: data.settings.announcement_bar_text || '',
           });
+          setCatalogMode(data.settings.catalog_mode === 'true');
         }
       })
       .catch(err => console.error('Error loading settings in Navbar:', err));
@@ -104,27 +106,29 @@ export default function Navbar() {
               </Link>
             </div>
 
-            <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-              {session ? (
-                <Link href="/account" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                  Account
-                </Link>
-              ) : (
-                <Link href="/login" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                  Login
-                </Link>
-              )}
-              <button
-                id="cart-btn"
-                className="btn btn-gold top-cart-btn"
-                onClick={openCart}
-                aria-label={`Open cart, ${totalItems} items`}
-                style={{ borderRadius: '9999px', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <span style={{ fontSize: '1.1rem' }}>🛍️</span>
-                <span>{totalItems}</span>
-              </button>
-            </div>
+            {!catalogMode && (
+              <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                {session ? (
+                  <Link href="/account" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
+                    Account
+                  </Link>
+                ) : (
+                  <Link href="/login" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
+                    Login
+                  </Link>
+                )}
+                <button
+                  id="cart-btn"
+                  className="btn btn-gold top-cart-btn"
+                  onClick={openCart}
+                  aria-label={`Open cart, ${totalItems} items`}
+                  style={{ borderRadius: '9999px', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>🛍️</span>
+                  <span>{totalItems}</span>
+                </button>
+              </div>
+            )}
           </div>
         </nav>
       </header>

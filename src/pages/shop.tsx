@@ -62,6 +62,7 @@ export default function ShopPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catalogMode, setCatalogMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState(''); // separate controlled input
@@ -95,6 +96,14 @@ export default function ShopPage() {
 
   useEffect(() => {
     fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || []));
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setCatalogMode(data.settings.catalog_mode === 'true');
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -353,7 +362,16 @@ export default function ShopPage() {
                           </span>
                         )}
                         <div className="product-card-actions">
-                          {product.variants && product.variants.length > 0 ? (
+                          {catalogMode ? (
+                             <button
+                               type="button"
+                               className="btn btn-gold"
+                               style={{ width: '100%', borderRadius: 8 }}
+                               onClick={e => { e.preventDefault(); router.push(`/products/${product.id}`); }}
+                             >
+                               🔍 View Details
+                             </button>
+                           ) : product.variants && product.variants.length > 0 ? (
                             <button
                               type="button"
                               className="btn btn-gold"

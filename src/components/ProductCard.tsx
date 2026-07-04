@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useRouter } from 'next/router';
 
 export default function ProductCard({ product }: { product: any }) {
   const { addItem, openCart } = useCart();
+  const router = useRouter();
+  const [catalogMode, setCatalogMode] = useState(false);
   const disc = product.comparePrice ? Math.round((1 - product.price / product.comparePrice) * 100) : 0;
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setCatalogMode(data.settings.catalog_mode === 'true');
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="product-card" key={product.id}>
@@ -56,24 +70,37 @@ export default function ProductCard({ product }: { product: any }) {
             <span className="price-compare" style={{ textDecoration: 'line-through', color: 'var(--color-gray-400)', fontSize: '0.9rem' }}>₹{product.comparePrice}</span>
           )}
         </div>
-        <button 
-          className="btn btn-gold" 
-          style={{ width: '100%', borderRadius: '9999px', fontSize: '0.9rem', padding: '12px 24px', fontWeight: 700, letterSpacing: '0.05em' }}
-          disabled={!product.isActive}
-          onClick={(e) => {
-            e.preventDefault();
-            addItem({
-              productId: product.id,
-              name: product.name,
-              price: product.price,
-              image: product.images?.[0] || '',
-              stock: product.stockQuantity || 10
-            });
-            openCart();
-          }}
-        >
-          Add to Cart
-        </button>
+        {catalogMode ? (
+          <button 
+            className="btn btn-gold" 
+            style={{ width: '100%', borderRadius: '9999px', fontSize: '0.9rem', padding: '12px 24px', fontWeight: 700, letterSpacing: '0.05em' }}
+            onClick={(e) => {
+              e.preventDefault();
+              router.push(`/products/${product.id}`);
+            }}
+          >
+            🔍 View Details
+          </button>
+        ) : (
+          <button 
+            className="btn btn-gold" 
+            style={{ width: '100%', borderRadius: '9999px', fontSize: '0.9rem', padding: '12px 24px', fontWeight: 700, letterSpacing: '0.05em' }}
+            disabled={!product.isActive}
+            onClick={(e) => {
+              e.preventDefault();
+              addItem({
+                productId: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.images?.[0] || '',
+                stock: product.stockQuantity || 10
+              });
+              openCart();
+            }}
+          >
+            Add to Cart
+          </button>
+        )}
       </div>
     </div>
   );

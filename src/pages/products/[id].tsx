@@ -72,11 +72,11 @@ export default function ProductDetailPage({ product: initialProduct }: { product
     sku?: string;
   } | null>(initialProduct?.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null);
 
-  // Review submission state
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [catalogMode, setCatalogMode] = useState(false);
 
   useEffect(() => {
     if (initialProduct) {
@@ -89,6 +89,17 @@ export default function ProductDetailPage({ product: initialProduct }: { product
       }
     }
   }, [initialProduct]);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          setCatalogMode(data.settings.catalog_mode === 'true');
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Build unified media list: images first, then video
   const getYouTubeEmbedId = (url?: string) => {
@@ -447,7 +458,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
                 {activeStock === 0 ? '❌ Out of Stock' : activeStock <= 10 ? `⚠️ Only ${activeStock} left` : '✅ In Stock'}
               </div>
 
-              {activeStock > 0 && (
+              {!catalogMode && activeStock > 0 && (
                 <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                     <button className="qty-btn" style={{ width: 36, height: 36 }} onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
@@ -467,16 +478,29 @@ export default function ProductDetailPage({ product: initialProduct }: { product
 
               <div style={{ background: 'var(--color-parchment)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
                 <div className="grid-2">
-                  {[
-                    { icon: '🚚', text: 'Free shipping on ₹999+' },
-                    { icon: '🔄', text: '30-day easy returns' },
-                    { icon: '🔒', text: 'Secure payments' },
-                    { icon: '🌿', text: '100% natural ingredients' },
-                  ].map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--color-forest)' }}>
-                      <span>{f.icon}</span>{f.text}
-                    </div>
-                  ))}
+                  {catalogMode ? (
+                    [
+                      { icon: '🌿', text: '100% organic herbs' },
+                      { icon: '🧪', text: 'Lab tested for purity' },
+                      { icon: '📜', text: 'Classical formulations' },
+                      { icon: '🏡', text: 'Ethically crafted' },
+                    ].map((f, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)' }}>
+                        <span>{f.icon}</span>{f.text}
+                      </div>
+                    ))
+                  ) : (
+                    [
+                      { icon: '🚚', text: 'Free shipping on ₹999+' },
+                      { icon: '🔄', text: '30-day easy returns' },
+                      { icon: '🔒', text: 'Secure payments' },
+                      { icon: '🌿', text: '100% natural ingredients' },
+                    ].map((f, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--color-forest)' }}>
+                        <span>{f.icon}</span>{f.text}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

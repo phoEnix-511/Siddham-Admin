@@ -43,7 +43,8 @@ export const getStaticProps: GetStaticProps = async () => {
           featuredBrands: settings.featured_in_brands ? settings.featured_in_brands.split(',').map((b: string) => b.trim()).filter(Boolean) : ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
           trustBarRating: settings.trust_bar_rating || '4.8',
           trustBarCount: settings.trust_bar_count || '50,000+',
-        }
+        },
+        catalogMode: settings.catalog_mode === 'true',
       },
       revalidate: 60, // ISR: regenerate at most once per minute
     };
@@ -63,14 +64,15 @@ export const getStaticProps: GetStaticProps = async () => {
           featuredBrands: ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
           trustBarRating: '4.8',
           trustBarCount: '50,000+',
-        }
+        },
+        catalogMode: false,
       },
       revalidate: 30,
     };
   }
 };
 
-export default function Home({ featuredProducts, categories, hero, promotional }: { featuredProducts: any[], categories: any[], hero: any, promotional: any }) {
+export default function Home({ featuredProducts, categories, hero, promotional, catalogMode }: { featuredProducts: any[], categories: any[], hero: any, promotional: any, catalogMode: boolean }) {
   // Mock Concerns
   const concerns = [
     { name: 'Hair Fall', icon: '💆‍♀️', slug: 'hair-care' },
@@ -90,12 +92,25 @@ export default function Home({ featuredProducts, categories, hero, promotional }
       <div className="announcement-bar">
         <div className="marquee-container">
           <div className="marquee-content">
-            <span>Free Shipping on orders over ₹999</span>
-            <span>🌿 100% Natural Ayurvedic Ingredients</span>
-            <span>Free Shipping on orders over ₹999</span>
-            <span>🌿 100% Natural Ayurvedic Ingredients</span>
-            <span>Free Shipping on orders over ₹999</span>
-            <span>🌿 100% Natural Ayurvedic Ingredients</span>
+            {catalogMode ? (
+              <>
+                <span>🌿 100% Natural Ayurvedic Ingredients</span>
+                <span>✨ Ancient Wisdom, Modern Wellness</span>
+                <span>🌿 100% Natural Ayurvedic Ingredients</span>
+                <span>✨ Ancient Wisdom, Modern Wellness</span>
+                <span>🌿 100% Natural Ayurvedic Ingredients</span>
+                <span>✨ Ancient Wisdom, Modern Wellness</span>
+              </>
+            ) : (
+              <>
+                <span>Free Shipping on orders over ₹999</span>
+                <span>🌿 100% Natural Ayurvedic Ingredients</span>
+                <span>Free Shipping on orders over ₹999</span>
+                <span>🌿 100% Natural Ayurvedic Ingredients</span>
+                <span>Free Shipping on orders over ₹999</span>
+                <span>🌿 100% Natural Ayurvedic Ingredients</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -208,20 +223,33 @@ export default function Home({ featuredProducts, categories, hero, promotional }
         </div>
       </section>
 
-      {/* 8. Promotional Banner Image */}
-      <section className="section-sm">
-        <div className="container">
-          <div className="vasu-promo-banner">
-            <div style={{ position: 'relative', zIndex: 2 }}>
-              <h2 style={{ color: 'white', marginBottom: 'var(--space-2)' }}>Build Your Own Wellness Bundle</h2>
-              <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-4)' }}>Pick any 3 products and save 25% instantly.</p>
-              <Link href="/bundles" className="btn btn-gold">Build Now</Link>
-            </div>
-            {/* Background design elements */}
-            <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '40%', height: '200%', background: 'rgba(196,133,42,0.1)', transform: 'rotate(15deg)' }} />
-          </div>
-        </div>
-      </section>
+       {/* 8. Promotional Banner Image */}
+       <section className="section-sm">
+         <div className="container">
+           {catalogMode ? (
+             <div className="vasu-promo-banner" style={{ background: 'var(--color-forest-light)' }}>
+               <div style={{ position: 'relative', zIndex: 2 }}>
+                 <h2 style={{ color: 'white', marginBottom: 'var(--space-2)' }}>Experience Authentic Ayurveda</h2>
+                 <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-4)', maxWidth: '650px', margin: '0 auto var(--space-4)' }}>
+                   Formulations rooted in ancient scriptures, prepared with organic forest herbs, and validated by modern science.
+                 </p>
+                 <Link href="/about" className="btn btn-gold">Our Philosophy</Link>
+               </div>
+               <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '40%', height: '200%', background: 'rgba(207,176,125,0.06)', transform: 'rotate(15deg)' }} />
+             </div>
+           ) : (
+             <div className="vasu-promo-banner">
+               <div style={{ position: 'relative', zIndex: 2 }}>
+                 <h2 style={{ color: 'white', marginBottom: 'var(--space-2)' }}>Build Your Own Wellness Bundle</h2>
+                 <p style={{ fontSize: '1.1rem', marginBottom: 'var(--space-4)' }}>Pick any 3 products and save 25% instantly.</p>
+                 <Link href="/bundles" className="btn btn-gold">Build Now</Link>
+               </div>
+               {/* Background design elements */}
+               <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '40%', height: '200%', background: 'rgba(196,133,42,0.1)', transform: 'rotate(15deg)' }} />
+             </div>
+           )}
+         </div>
+       </section>
 
       {/* 9. Shop by Concern */}
       <section className="section" style={{ background: 'var(--color-parchment)' }}>

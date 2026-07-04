@@ -45,6 +45,8 @@ interface Settings {
   featured_in_brands: string;
   trust_bar_rating: string;
   trust_bar_count: string;
+  // Catalog Mode
+  catalog_mode: string;
 }
 
 const defaultSettings: Settings = {
@@ -76,6 +78,7 @@ const defaultSettings: Settings = {
   featured_in_brands: 'The Times, VOGUE, GQ, Wellness Daily',
   trust_bar_rating: '4.8',
   trust_bar_count: '50,000+',
+  catalog_mode: 'false',
 };
 
 const SettingSection = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
@@ -397,6 +400,19 @@ export default function AdminSettingsPage() {
 
             {/* Store Info */}
             <SettingSection title="Store Information & Socials" icon="🏪">
+              <div className="form-group">
+                <label className="form-label" htmlFor="catalog-mode">Catalog Mode (Only show products, hide shopping cart/purchasing)</label>
+                <select
+                  id="catalog-mode"
+                  className="form-input"
+                  name="catalog_mode"
+                  value={settings.catalog_mode}
+                  onChange={handleChange}
+                >
+                  <option value="false">Disable Catalog Mode (Full E-Commerce Active)</option>
+                  <option value="true">Enable Catalog Mode (Showcase Only - No Buy/Cart/Checkout/Account)</option>
+                </select>
+              </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="store-name">Store Name</label>
                 <input id="store-name" className="form-input" name="store_name" value={settings.store_name} onChange={handleChange} />
