@@ -154,46 +154,93 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
 
       <Navbar />
 
-      {/* 2. Top Category Quick Links — using matching concern images */}
-      <div className="multi-list-links">
+      {/* 2. Top Category Quick Links — using matching concern images and scroll arrows */}
+      <div className="multi-list-links" style={{ position: 'relative' }}>
+        {/* Left Arrow Button for Desktop scrolling */}
+        <button
+          onClick={() => {
+            const el = document.getElementById('top-categories-scroll');
+            if (el) el.scrollBy({ left: -220, behavior: 'smooth' });
+          }}
+          className="slider-nav-btn slider-nav-left"
+          style={{ width: '36px', height: '36px', fontSize: '1.2rem', top: '50%' }}
+          aria-label="Scroll top categories left"
+        >&#8249;</button>
+
         <div className="container" style={{ padding: 0 }}>
-          <div className="multi-list-scroll">
-            {[
-              { label: 'All\nProducts',      href: '/shop',                             img: '/images/concerns/daily-wellness.png' },
-              { label: 'Single Herb\nPowders', href: '/shop?category=single-herb-powders', img: '/images/concerns/stamina-booster.png' },
-              { label: 'Single Herb\nTablets', href: '/shop?category=single-herb-tablets', img: '/images/concerns/daily-wellness.png' },
-              { label: 'Hair\nCare',          href: '/shop?category=hair-care',            img: '/images/concerns/hair-wellness.png' },
-              { label: 'Skin\nCare',          href: '/shop?category=skin-care',            img: '/images/concerns/skin-wellness.png' },
-              { label: 'Digestive\nWellness', href: '/shop?category=digestive-wellness',   img: '/images/concerns/digestive-wellness.png' },
-              { label: 'Combos',              href: '/shop?category=combos',               img: '/images/concerns/immunity-wellness.png' },
-            ].map((cat, i) => (
-              <Link key={i} href={cat.href} className="multi-list-item">
+          <div id="top-categories-scroll" className="multi-list-scroll" style={{ scrollBehavior: 'smooth' }}>
+            <Link href="/shop" className="multi-list-item">
+              <div className="multi-list-image-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                <img src="/images/concerns/daily-wellness.png" alt="All Products" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>All{"\n"}Products</span>
+            </Link>
+            {concernsList.map((concern, i) => (
+              <Link key={i} href={`/shop?category=${concern.slug}`} className="multi-list-item">
                 <div className="multi-list-image-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src={cat.img} alt={cat.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={`/images/concerns/${concern.slug}.png`} alt={concern.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>{cat.label}</span>
+                <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>{concern.name.replace(' ', '\n')}</span>
               </Link>
             ))}
           </div>
         </div>
+
+        {/* Right Arrow Button for Desktop scrolling */}
+        <button
+          onClick={() => {
+            const el = document.getElementById('top-categories-scroll');
+            if (el) el.scrollBy({ left: 220, behavior: 'smooth' });
+          }}
+          className="slider-nav-btn slider-nav-right"
+          style={{ width: '36px', height: '36px', fontSize: '1.2rem', top: '50%' }}
+          aria-label="Scroll top categories right"
+        >&#8250;</button>
       </div>
 
-      {/* 3. Hero Slideshow Banner — clean images, only CTA button at bottom */}
-      <section style={{ width: '100%', position: 'relative', height: '50vh', minHeight: '320px', maxHeight: '500px', overflow: 'hidden', background: '#f5f5f5' }}>
+      {/* 3. Hero Slideshow Banner — clean images with blurred full-bleed background on wide screens */}
+      <section style={{ width: '100%', position: 'relative', height: '50vh', minHeight: '320px', maxHeight: '500px', overflow: 'hidden', background: '#000' }}>
         {slideImages.map((img, idx) => (
           <div
             key={idx}
             style={{
               position: 'absolute',
               inset: 0,
-              backgroundImage: `url(${img})`,
-              backgroundSize: 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
               opacity: idx === activeSlide ? 1 : 0,
-              transition: 'opacity 1.2s ease-in-out'
+              transition: 'opacity 1.2s ease-in-out',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
-          />
+          >
+            {/* Blurred background backdrop (visible when screen aspect leaves gaps) */}
+            <div
+              className="hero-blur-backdrop"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: `url(${img})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'blur(16px) brightness(0.65)',
+                transform: 'scale(1.1)', // Prevents white borders from blur filter
+                zIndex: 1
+              }}
+            />
+            {/* Crisp centered main image */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                backgroundImage: `url(${img})`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                zIndex: 2
+              }}
+            />
+          </div>
         ))}
 
         {/* Explore button — glass pill floating at bottom center */}
