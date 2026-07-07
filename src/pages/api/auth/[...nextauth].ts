@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || 'fallback-local-siddham-secret-key-1234567890',
 
   pages: {
     signIn: '/login',

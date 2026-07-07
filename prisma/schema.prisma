@@ -216,6 +216,18 @@ model BundleOffer {
   updatedAt   DateTime @updatedAt
 }
 
+model CouponOffer {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  description  String
+  discountType String
+  value        Float
+  minCartValue Float    @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -233,16 +245,3 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
-
-model CouponOffer {
-  id           String   @id @default(uuid())
-  code         String   @unique
-  description  String
-  discountType String   // "PERCENTAGE" or "FIXED"
-  value        Float
-  minCartValue Float    @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
