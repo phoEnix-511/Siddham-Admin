@@ -2677,7 +2677,7 @@ p {
   border: none;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(6px);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.14);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.14);
   font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
@@ -2686,7 +2686,9 @@ p {
   align-items: center;
   justify-content: center;
   z-index: 10;
-  transition: background 0.18s, opacity 0.18s;
+  transition:
+    background 0.18s,
+    opacity 0.18s;
   padding: 0;
 }
 .carousel-arrow:disabled {
@@ -2696,8 +2698,12 @@ p {
 .carousel-arrow:not(:disabled):hover {
   background: var(--color-white);
 }
-.carousel-arrow-left  { left: 10px; }
-.carousel-arrow-right { right: 10px; }
+.carousel-arrow-left {
+  left: 10px;
+}
+.carousel-arrow-right {
+  right: 10px;
+}
 
 /* Slide counter badge */
 .carousel-counter {
@@ -2705,7 +2711,7 @@ p {
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.42);
+  background: rgba(0, 0, 0, 0.42);
   color: #fff;
   font-size: 0.72rem;
   font-weight: 600;
@@ -2732,7 +2738,9 @@ p {
   padding: 3px;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color 0.18s, box-shadow 0.18s;
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
   flex-shrink: 0;
 }
 .carousel-thumb:hover {
@@ -2753,7 +2761,9 @@ p {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.product-tabs-strip::-webkit-scrollbar { display: none; }
+.product-tabs-strip::-webkit-scrollbar {
+  display: none;
+}
 
 /* ── Mobile fixes for product detail page ────────────────────── */
 @media (max-width: 768px) {
@@ -2811,7 +2821,6 @@ p {
   }
 }
 
-
 /* -- Mobile Bottom Nav --------------------------------------------------- */
 .mobile-bottom-nav {
   display: none;
@@ -2820,7 +2829,7 @@ p {
   left: 0;
   right: 0;
   background: var(--color-white);
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   z-index: 1000;
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -2915,7 +2924,7 @@ p {
   .mobile-bottom-nav {
     display: flex;
   }
-  
+
   /* Add padding to body so bottom nav doesn't hide content */
   body {
     padding-bottom: 60px;
@@ -2970,8 +2979,12 @@ p {
   text-transform: uppercase;
 }
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 /* Horizontal Sliders (Products / Categories) */
@@ -3018,7 +3031,9 @@ p {
   padding: 0 var(--space-4);
   scrollbar-width: none;
 }
-.multi-list-scroll::-webkit-scrollbar { display: none; }
+.multi-list-scroll::-webkit-scrollbar {
+  display: none;
+}
 .multi-list-item {
   display: flex;
   flex-direction: column;
@@ -3133,7 +3148,9 @@ p {
 }
 .category-card-overlay {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: linear-gradient(transparent, rgba(6, 26, 17, 0.8));
   padding: var(--space-3);
   color: white;
@@ -3151,7 +3168,9 @@ p {
   flex-wrap: wrap;
   opacity: 0.6;
   filter: grayscale(100%);
-  transition: opacity 0.3s ease, filter 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 .featured-logos:hover {
   opacity: 1;
@@ -3218,7 +3237,7 @@ p {
 }
 
 .step-indicator::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 0;
@@ -3343,7 +3362,12 @@ p {
 
 .skeleton-image {
   aspect-ratio: 1;
-  background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-100) 25%,
+    var(--color-gray-200) 50%,
+    var(--color-gray-100) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease infinite;
 }
@@ -3358,18 +3382,34 @@ p {
 .skeleton-line {
   height: 12px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-gray-100) 25%,
+    var(--color-gray-200) 50%,
+    var(--color-gray-100) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease infinite;
 }
 
-.skeleton-line.short { width: 50%; }
-.skeleton-line.medium { width: 75%; }
-.skeleton-line.tall { height: 20px; width: 40%; }
+.skeleton-line.short {
+  width: 50%;
+}
+.skeleton-line.medium {
+  width: 75%;
+}
+.skeleton-line.tall {
+  height: 20px;
+  width: 40%;
+}
 
 @keyframes skeleton-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ── Concern Grid Responsive Layout ──────────────────────────── */
@@ -3403,19 +3443,28 @@ p {
   justify-content: center;
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.13);
   color: var(--color-forest-dark);
-  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
 }
 .slider-nav-btn:hover {
   background: #fff;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
   transform: translateY(-50%) scale(1.08);
 }
-.slider-nav-left  { left: 8px; }
-.slider-nav-right { right: 8px; }
+.slider-nav-left {
+  left: 8px;
+}
+.slider-nav-right {
+  right: 8px;
+}
 
 /* Hide arrows on mobile — swipe is used instead */
 @media (max-width: 640px) {
-  .slider-nav-btn { display: none; }
+  .slider-nav-btn {
+    display: none;
+  }
 }
 
 /* ── Slider Track ─────────────────────────────────────────────── */
