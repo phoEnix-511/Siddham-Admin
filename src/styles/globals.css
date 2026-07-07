@@ -3387,7 +3387,7 @@ p {
 /* ── Slider Nav Arrows ────────────────────────────────────────── */
 .slider-nav-btn {
   position: absolute;
-  top: 50%;
+  top: 40%;
   transform: translateY(-50%);
   z-index: 5;
   background: rgba(255, 255, 255, 0.96);
@@ -3424,17 +3424,45 @@ p {
   overflow-x: auto;
   gap: 20px;
   scroll-behavior: smooth;
-  padding: 4px 60px 16px;
+  padding: 4px 56px 20px;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  align-items: stretch;
+  /* Do NOT use align-items: stretch — it breaks card heights */
+  align-items: flex-start;
 }
 .slider-track::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Slider Card Wrapper ──────────────────────────────────────── */
+.slider-card-wrap {
+  flex: 0 0 auto;
+  width: 260px;
+  max-width: 260px;
+  box-sizing: border-box;
+  /* Prevent the card from stretching to fill sibling height */
+  align-self: flex-start;
+}
+
+.slider-card-wrap .product-card {
+  max-height: 420px;
+}
+
+.slider-card-wrap .product-card-image {
+  height: 240px;
+  width: 100%;
+}
+
 @media (max-width: 640px) {
   .slider-track {
     padding: 4px 16px 16px;
     gap: 14px;
+  }
+  .slider-card-wrap {
+    width: 200px;
+    max-width: 200px;
+  }
+  .slider-card-wrap .product-card-image {
+    height: 180px;
   }
 }

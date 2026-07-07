@@ -154,22 +154,24 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
 
       <Navbar />
 
-      {/* 2. Multi-List Quick Links (Circular Concerns Shortcut) */}
+      {/* 2. Top Category Quick Links — using matching concern images */}
       <div className="multi-list-links">
         <div className="container" style={{ padding: 0 }}>
           <div className="multi-list-scroll">
-            <Link href="/shop" className="multi-list-item">
-              <div className="multi-list-image-wrap">
-                <div style={{ fontSize: '2rem' }}>🌿</div>
-              </div>
-              <span className="multi-list-label">All<br/>Products</span>
-            </Link>
-            {concernsList.slice(0, 10).map((concern, i) => (
-              <Link key={i} href={`/shop?category=${concern.slug}`} className="multi-list-item">
-                <div className="multi-list-image-wrap">
-                  <div style={{ fontSize: '1.8rem' }}>{concern.icon}</div>
+            {[
+              { label: 'All\nProducts',      href: '/shop',                             img: '/images/concerns/daily-wellness.png' },
+              { label: 'Single Herb\nPowders', href: '/shop?category=single-herb-powders', img: '/images/concerns/stamina-booster.png' },
+              { label: 'Single Herb\nTablets', href: '/shop?category=single-herb-tablets', img: '/images/concerns/daily-wellness.png' },
+              { label: 'Hair\nCare',          href: '/shop?category=hair-care',            img: '/images/concerns/hair-wellness.png' },
+              { label: 'Skin\nCare',          href: '/shop?category=skin-care',            img: '/images/concerns/skin-wellness.png' },
+              { label: 'Digestive\nWellness', href: '/shop?category=digestive-wellness',   img: '/images/concerns/digestive-wellness.png' },
+              { label: 'Combos',              href: '/shop?category=combos',               img: '/images/concerns/immunity-wellness.png' },
+            ].map((cat, i) => (
+              <Link key={i} href={cat.href} className="multi-list-item">
+                <div className="multi-list-image-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  <img src={cat.img} alt={cat.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <span className="multi-list-label">{concern.name.replace(' ', '\n')}</span>
+                <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>{cat.label}</span>
               </Link>
             ))}
           </div>
@@ -177,7 +179,7 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
       </div>
 
       {/* 3. Hero Slideshow Banner — clean images, only CTA button at bottom */}
-      <section style={{ width: '100%', position: 'relative', height: '62vh', minHeight: '380px', overflow: 'hidden', background: '#000' }}>
+      <section style={{ width: '100%', position: 'relative', height: '50vh', minHeight: '320px', maxHeight: '500px', overflow: 'hidden', background: '#f5f5f5' }}>
         {slideImages.map((img, idx) => (
           <div
             key={idx}
@@ -185,8 +187,9 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
               position: 'absolute',
               inset: 0,
               backgroundImage: `url(${img})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center top',
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
               opacity: idx === activeSlide ? 1 : 0,
               transition: 'opacity 1.2s ease-in-out'
             }}
@@ -196,7 +199,7 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         {/* Explore button — glass pill floating at bottom center */}
         <div style={{
           position: 'absolute',
-          bottom: '48px',
+          bottom: '36px',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 10
@@ -270,28 +273,21 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         <div className="container">
           <h2 className="vasu-section-title">Curated Specially For You!</h2>
         </div>
-        {/* Slider wrapper — position relative so arrows overlay correctly */}
-        <div style={{ position: 'relative', margin: '0 0 8px' }}>
-          {/* Left arrow — hidden on mobile via CSS class */}
+        <div style={{ position: 'relative' }}>
           <button
             onClick={() => scrollSlider(curatedSliderRef, 'left')}
             aria-label="Scroll left"
             className="slider-nav-btn slider-nav-left"
           >&#8249;</button>
 
-          {/* Scrollable track */}
-          <div
-            ref={curatedSliderRef}
-            className="slider-track"
-          >
+          <div ref={curatedSliderRef} className="slider-track">
             {featuredProducts.slice(0, 8).map(p => (
-              <div key={p.id} style={{ minWidth: '270px', flex: '0 0 auto' }}>
+              <div key={p.id} className="slider-card-wrap">
                 <ProductCard product={p} />
               </div>
             ))}
           </div>
 
-          {/* Right arrow */}
           <button
             onClick={() => scrollSlider(curatedSliderRef, 'right')}
             aria-label="Scroll right"
@@ -371,26 +367,21 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         <div className="container">
           <h2 className="vasu-section-title">Featured Collections</h2>
         </div>
-        <div style={{ position: 'relative', margin: '0 0 8px' }}>
-          {/* Left arrow */}
+        <div style={{ position: 'relative' }}>
           <button
             onClick={() => scrollSlider(featuredSliderRef, 'left')}
             aria-label="Scroll featured left"
             className="slider-nav-btn slider-nav-left"
           >&#8249;</button>
 
-          <div
-            ref={featuredSliderRef}
-            className="slider-track"
-          >
+          <div ref={featuredSliderRef} className="slider-track">
             {featuredProducts.slice(2, 10).map(p => (
-              <div key={p.id} style={{ minWidth: '270px', flex: '0 0 auto' }}>
+              <div key={p.id} className="slider-card-wrap">
                 <ProductCard product={p} />
               </div>
             ))}
           </div>
 
-          {/* Right arrow */}
           <button
             onClick={() => scrollSlider(featuredSliderRef, 'right')}
             aria-label="Scroll featured right"
