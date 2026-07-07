@@ -149,7 +149,7 @@ export default function Navbar() {
         </nav>
 
         {/* Bottom TopNav Link Strip */}
-        <div style={{ borderTop: '1px solid rgba(13, 44, 29, 0.05)', backgroundColor: 'var(--color-cream)' }}>
+        {/* <div style={{ borderTop: '1px solid rgba(13, 44, 29, 0.05)', backgroundColor: 'var(--color-cream)' }}>
           <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '10px var(--space-6)', overflowX: 'auto', display: 'flex', gap: 'var(--space-6)', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
             {topNavLinks.map((link, idx) => (
               <Link
@@ -171,7 +171,7 @@ export default function Navbar() {
               </Link>
             ))}
           </div>
-        </div>
+        </div> */}
       </header>
 
       {isOpen && <CartDrawer onClose={closeCart} />}

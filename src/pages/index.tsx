@@ -9,7 +9,7 @@ import ProductCard from '@/components/ProductCard';
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const [products, categories, settingsRecords] = await Promise.all([
+    const [products, categories, settingsRecords, coupons] = await Promise.all([
       prisma.product.findMany({
         where: { isFeatured: true },
         take: 10,
@@ -22,6 +22,7 @@ export const getStaticProps: GetStaticProps = async () => {
       }),
       prisma.category.findMany({ orderBy: { name: 'asc' } }),
       prisma.setting.findMany(),
+      prisma.couponOffer.findMany({ where: { isActive: true }, take: 3 })
     ]);
 
     const settings = settingsRecords.reduce((acc, s) => {
@@ -33,6 +34,7 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         featuredProducts: JSON.parse(JSON.stringify(products)),
         categories: JSON.parse(JSON.stringify(categories)),
+        coupons: JSON.parse(JSON.stringify(coupons)),
         hero: {
           title: settings.hero_title || 'Heal Naturally. Live Wholly.',
           subtitle: settings.hero_subtitle || 'Discover our curated range of authentic Ayurvedic formulations.',
@@ -55,6 +57,7 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         featuredProducts: [],
         categories: [],
+        coupons: [],
         hero: {
           title: 'Heal Naturally. Live Wholly.',
           subtitle: 'Discover our curated range of authentic Ayurvedic formulations.',
@@ -74,7 +77,7 @@ export const getStaticProps: GetStaticProps = async () => {
   }
 };
 
-export default function Home({ featuredProducts, categories, hero, promotional, catalogMode }: { featuredProducts: any[], categories: any[], hero: any, promotional: any, catalogMode: boolean }) {
+export default function Home({ featuredProducts, categories, coupons = [], hero, promotional, catalogMode }: { featuredProducts: any[], categories: any[], coupons?: any[], hero: any, promotional: any, catalogMode: boolean }) {
   // Hook for slideshow
   const [activeSlide, setActiveSlide] = React.useState(0);
   const slideImages = [
@@ -474,26 +477,44 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
             🎁 Our Offers and Deals 🎁
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-6)' }}>
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-              <span style={{ fontSize: '2.5rem' }}>🎫</span>
-              <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Flat 10% OFF</h3>
-              <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Enjoy flat 10% off on your first order. Use code at signup.</p>
-              <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block', letterSpacing: '0.1em' }}>FIRST10</div>
-            </div>
+            {coupons && coupons.length > 0 ? (
+              coupons.map((c: any, i: number) => (
+                <div key={i} style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                  <span style={{ fontSize: '2.5rem' }}>🎫</span>
+                  <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>{c.discountType === 'PERCENTAGE' ? `${c.value}% OFF` : `₹${c.value} OFF`}</h3>
+                  <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>
+                    {c.description || `Get ${c.discountType === 'PERCENTAGE' ? `${c.value}%` : `₹${c.value}`} discount on orders.`} 
+                    {c.minCartValue > 0 && ` Applicable on minimum cart value of ₹${c.minCartValue}.`}
+                  </p>
+                  <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {c.code}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <>
+                <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                  <span style={{ fontSize: '2.5rem' }}>🎫</span>
+                  <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Flat 10% OFF</h3>
+                  <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Enjoy flat 10% off on your first order. Use code at signup.</p>
+                  <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block', letterSpacing: '0.1em' }}>FIRST10</div>
+                </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-              <span style={{ fontSize: '2.5rem' }}>📦</span>
-              <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Free Shipping</h3>
-              <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Get items delivered directly to your home for free on orders above ₹{promotional.freeShippingThreshold}.</p>
-              <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block' }}>AUTO APPLIED</div>
-            </div>
+                <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                  <span style={{ fontSize: '2.5rem' }}>📦</span>
+                  <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Free Shipping</h3>
+                  <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Get items delivered directly to your home for free on orders above ₹{promotional.freeShippingThreshold}.</p>
+                  <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block' }}>AUTO APPLIED</div>
+                </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-              <span style={{ fontSize: '2.5rem' }}>🍯</span>
-              <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Triphala Deal</h3>
-              <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Buy any organic single herb powders and get 15% off coupon automatically.</p>
-              <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block' }}>HERBAL15</div>
-            </div>
+                <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
+                  <span style={{ fontSize: '2.5rem' }}>🍯</span>
+                  <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Triphala Deal</h3>
+                  <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Buy any organic single herb powders and get 15% off coupon automatically.</p>
+                  <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block' }}>HERBAL15</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

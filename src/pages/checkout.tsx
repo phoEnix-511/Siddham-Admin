@@ -58,14 +58,77 @@ export default function CheckoutPage() {
     notes: '',
   });
 
+  // Settings states
+  const [shippingThreshold, setShippingThreshold] = useState(999);
+  const [shippingCharge, setShippingCharge] = useState(99);
+
   // OTP State
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
 
-  const shippingAmount = totalAmount >= 999 ? 0 : totalAmount > 0 ? 99 : 0;
-  const grandTotal = totalAmount + shippingAmount;
+  // Coupon states
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number; discountType: string; value: number } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings) {
+          if (data.settings.free_shipping_threshold) {
+            setShippingThreshold(parseFloat(data.settings.free_shipping_threshold));
+          }
+          if (data.settings.shipping_charge) {
+            setShippingCharge(parseFloat(data.settings.shipping_charge));
+          }
+        }
+      })
+      .catch(err => console.error('Error fetching settings on checkout:', err));
+  }, []);
+
+  const shippingAmount = totalAmount >= shippingThreshold ? 0 : totalAmount > 0 ? shippingCharge : 0;
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const grandTotal = Math.max(0, totalAmount + shippingAmount - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const res = await fetch('/api/payment/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, cartValue: totalAmount })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to validate coupon');
+      }
+      setAppliedCoupon({
+        code: data.code,
+        discountAmount: data.discountAmount,
+        discountType: data.discountType,
+        value: data.value
+      });
+      addToast(`Coupon "${data.code}" applied successfully!`, 'success');
+    } catch (err: any) {
+      setCouponError(err.message);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+    addToast('Coupon removed', 'info');
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -439,9 +502,62 @@ export default function CheckoutPage() {
                     <span style={{ fontWeight: 600 }}>₹{totalAmount}</span>
                   </div>
                   
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-4)', paddingBottom: 'var(--space-4)', borderBottom: '1px dashed var(--color-gray-200)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
                     <span style={{ color: 'var(--color-gray-600)' }}>Shipping</span>
                     <span style={{ fontWeight: 600 }}>{shippingAmount === 0 ? 'FREE' : `₹${shippingAmount}`}</span>
+                  </div>
+
+                  {/* Coupon Applied Row */}
+                  {appliedCoupon && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)', color: 'var(--color-success)' }}>
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span style={{ fontWeight: 700 }}>-₹{discountAmount}</span>
+                    </div>
+                  )}
+
+                  <div style={{ borderBottom: '1px dashed var(--color-gray-200)', marginBottom: 'var(--space-4)', paddingBottom: 'var(--space-2)' }} />
+
+                  {/* Promo Code Input Block */}
+                  <div style={{ marginBottom: 'var(--space-4)' }}>
+                    {!appliedCoupon ? (
+                      <>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            placeholder="PROMO CODE"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            className="form-input"
+                            style={{ padding: '8px 12px', fontSize: '0.85rem', flex: 1, textTransform: 'uppercase' }}
+                          />
+                          <button
+                            onClick={handleApplyCoupon}
+                            disabled={isValidatingCoupon || !couponCode.trim()}
+                            className="btn btn-outline"
+                            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                          >
+                            {isValidatingCoupon ? '...' : 'Apply'}
+                          </button>
+                        </div>
+                        {couponError && (
+                          <div style={{ color: 'red', fontSize: '0.75rem', marginTop: '4px', fontWeight: 600 }}>
+                            ⚠️ {couponError}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-parchment)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-success-light)' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-forest)' }}>
+                          🏷️ {appliedCoupon.code} Applied!
+                        </span>
+                        <button
+                          onClick={handleRemoveCoupon}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--color-gray-500)', cursor: 'pointer', fontSize: '0.8rem', textDecoration: 'underline' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-6)', fontSize: '1.25rem' }}>

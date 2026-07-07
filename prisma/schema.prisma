@@ -1,6 +1,3 @@
-// Prisma schema for Siddham Wellness E-Commerce
-// Note: Prisma 7+ requires database URL to be configured in prisma.config.ts
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,32 +6,30 @@ datasource db {
   provider = "postgresql"
 }
 
-// ── Admin ─────────────────────────────────────────────────────────────────
 model AdminUser {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String    @default("admin")
-  lastLogin DateTime?
-  forcePasswordReset Boolean @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  password           String
+  name               String
+  role               String    @default("admin")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  lastLogin          DateTime?
+  forcePasswordReset Boolean   @default(false)
 }
 
-// ── NextAuth Models ───────────────────────────────────────────────────────
 model Account {
   id                String   @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String?
   session_state     String?
   user              Customer @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -57,32 +52,30 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ── Customer ──────────────────────────────────────────────────────────────
 model Customer {
   id                 String              @id @default(cuid())
   email              String              @unique
-  emailVerified      DateTime?
   name               String?
-  image              String?
   phone              String?
-  phoneVerified      Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  emailVerified      DateTime?
   hashedPassword     String?
+  image              String?
+  phoneVerified      Boolean             @default(false)
   points             Int                 @default(0)
   lastLogin          DateTime?
   forcePasswordReset Boolean             @default(false)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  orders             Order[]
-  addresses          Address[]
   accounts           Account[]
-  sessions           Session[]
+  addresses          Address[]
+  orders             Order[]
   rewardTransactions RewardTransaction[]
+  sessions           Session[]
 }
 
 model Address {
   id         String   @id @default(cuid())
   customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   name       String
   phone      String
   address    String
@@ -92,24 +85,23 @@ model Address {
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 }
 
-// ── Catalogue ─────────────────────────────────────────────────────────────
 model Category {
   id          String    @id @default(uuid())
   name        String    @unique
   slug        String    @unique
   description String?
   imageUrl    String?
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
 model Product {
   id           String           @id @default(uuid())
   name         String
-  caption      String? // Short tagline/caption for display below name
   slug         String           @unique
   description  String
   price        Float
@@ -123,23 +115,21 @@ model Product {
   benefits     String?
   usage        String?
   weight       String?
-  videoUrl     String?
   categoryId   String
-  category     Category         @relation(fields: [categoryId], references: [id])
-  variants     ProductVariant[]
-  orderItems   OrderItem[]
-  reviews      Review[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  videoUrl     String?
+  caption      String?
+  orderItems   OrderItem[]
+  category     Category         @relation(fields: [categoryId], references: [id])
+  variants     ProductVariant[]
+  reviews      Review[]
 }
 
-// ── Orders ────────────────────────────────────────────────────────────────
 model Order {
   id                 String        @id @default(uuid())
   orderNumber        String        @unique
   customerId         String
-  customer           Customer      @relation(fields: [customerId], references: [id])
-  items              OrderItem[]
   status             OrderStatus   @default(PENDING)
   paymentStatus      PaymentStatus @default(PENDING)
   paymentMethod      String?
@@ -150,51 +140,52 @@ model Order {
   taxAmount          Float         @default(0)
   shippingAddress    Json
   notes              String?
-  carrier            String?
-  trackingNumber     String?
-  cancellationReason String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+  cancellationReason String?
+  carrier            String?
+  trackingNumber     String?
+  customer           Customer      @relation(fields: [customerId], references: [id])
+  items              OrderItem[]
 }
 
 model OrderItem {
   id        String          @id @default(uuid())
   orderId   String
-  order     Order           @relation(fields: [orderId], references: [id])
   productId String
-  product   Product         @relation(fields: [productId], references: [id])
-  variantId String?
-  variant   ProductVariant? @relation(fields: [variantId], references: [id])
   quantity  Int
   price     Float
   createdAt DateTime        @default(now())
+  variantId String?
+  order     Order           @relation(fields: [orderId], references: [id])
+  product   Product         @relation(fields: [productId], references: [id])
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
 }
 
 model ProductVariant {
   id           String      @id @default(uuid())
   productId    String
-  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name         String // e.g. "200 ml", "60 Capsules"
+  name         String
   price        Float
   comparePrice Float?
   stock        Int         @default(0)
   sku          String?     @unique
-  orderItems   OrderItem[]
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  orderItems   OrderItem[]
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Review {
   id        String   @id @default(uuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   name      String
   rating    Int
   comment   String
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-// ── Settings ──────────────────────────────────────────────────────────────
 model Setting {
   id        String   @id @default(uuid())
   key       String   @unique
@@ -204,16 +195,36 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
-// ── Enums ─────────────────────────────────────────────────────────────────
+model RewardTransaction {
+  id          String   @id @default(uuid())
+  customerId  String
+  points      Int
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model BundleOffer {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  minItems    Int
+  fixedPrice  Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
   PROCESSING
   SHIPPED
-  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
   REFUNDED
+  OUT_FOR_DELIVERY
 }
 
 enum PaymentStatus {
@@ -223,25 +234,15 @@ enum PaymentStatus {
   REFUNDED
 }
 
-// -- Rewards ---------------------------------------------------------------
-model RewardTransaction {
-  id          String   @id @default(uuid())
-  customerId  String
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  points      Int // Positive for earned, Negative for spent
-  type        String // e.g., "PURCHASE", "REDEEM", "REFERRAL", "SIGNUP"
-  description String?
-  createdAt   DateTime @default(now())
+model CouponOffer {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  description  String
+  discountType String   // "PERCENTAGE" or "FIXED"
+  value        Float
+  minCartValue Float    @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
-// -- Bundles ---------------------------------------------------------------
-model BundleOffer {
-  id          String   @id @default(uuid())
-  title       String // e.g., "Buy Any 3 @ ?1799"
-  description String?
-  minItems    Int // e.g., 3
-  fixedPrice  Float // e.g., 1799
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
