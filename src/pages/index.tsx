@@ -43,6 +43,7 @@ export const getStaticProps: GetStaticProps = async () => {
           featuredBrands: settings.featured_in_brands ? settings.featured_in_brands.split(',').map((b: string) => b.trim()).filter(Boolean) : ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
           trustBarRating: settings.trust_bar_rating || '4.8',
           trustBarCount: settings.trust_bar_count || '50,000+',
+          freeShippingThreshold: settings.free_shipping_threshold || '499',
         },
         catalogMode: settings.catalog_mode === 'true',
       },
@@ -64,6 +65,7 @@ export const getStaticProps: GetStaticProps = async () => {
           featuredBrands: ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
           trustBarRating: '4.8',
           trustBarCount: '50,000+',
+          freeShippingThreshold: '499',
         },
         catalogMode: false,
       },
@@ -140,11 +142,11 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
               </>
             ) : (
               <>
-                <span>Free Shipping on orders over ₹499</span>
+                <span>Free Shipping on orders over ₹{promotional.freeShippingThreshold}</span>
                 <span>🌿 100% Natural Ayurvedic Ingredients</span>
-                <span>Free Shipping on orders over ₹499</span>
+                <span>Free Shipping on orders over ₹{promotional.freeShippingThreshold}</span>
                 <span>🌿 100% Natural Ayurvedic Ingredients</span>
-                <span>Free Shipping on orders over ₹499</span>
+                <span>Free Shipping on orders over ₹{promotional.freeShippingThreshold}</span>
                 <span>🌿 100% Natural Ayurvedic Ingredients</span>
               </>
             )}
@@ -482,7 +484,7 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
             <div style={{ backgroundColor: '#ffffff', border: '1.5px dashed var(--color-saffron)', borderRadius: '12px', padding: 'var(--space-5)', textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
               <span style={{ fontSize: '2.5rem' }}>📦</span>
               <h3 style={{ color: 'var(--color-forest)', margin: '10px 0' }}>Free Shipping</h3>
-              <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Get items delivered directly to your home for free on orders above ₹499.</p>
+              <p style={{ fontSize: '0.88rem', margin: '0 0 var(--space-4)' }}>Get items delivered directly to your home for free on orders above ₹{promotional.freeShippingThreshold}.</p>
               <div style={{ background: 'var(--color-parchment)', padding: '8px', border: '1px solid var(--color-saffron-light)', borderRadius: '6px', fontWeight: 'bold', display: 'inline-block' }}>AUTO APPLIED</div>
             </div>
 
