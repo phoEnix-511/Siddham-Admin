@@ -325,6 +325,41 @@ async function main() {
   }
   console.log('✅ Default settings created');
 
+  // ── Default Coupons & Offers ─────────────────────────────────
+  const defaultCoupons = [
+    {
+      code: 'FIRST10',
+      description: 'Enjoy flat 10% off on your first order. Use code at signup.',
+      discountType: 'PERCENTAGE',
+      value: 10,
+      minCartValue: 0,
+      isActive: true
+    },
+    {
+      code: 'HERBAL15',
+      description: 'Buy any organic single herb powders and get 15% off coupon automatically.',
+      discountType: 'PERCENTAGE',
+      value: 15,
+      minCartValue: 499,
+      isActive: true
+    }
+  ];
+
+  for (const c of defaultCoupons) {
+    await prisma.couponOffer.upsert({
+      where: { code: c.code },
+      update: {
+        description: c.description,
+        discountType: c.discountType,
+        value: c.value,
+        minCartValue: c.minCartValue,
+        isActive: c.isActive
+      },
+      create: c
+    });
+  }
+  console.log('✅ Default coupons and offers seeded');
+
   await pool.end();
   console.log('🎉 Safe seeding complete!');
 }
