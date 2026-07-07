@@ -3427,8 +3427,8 @@ p {
   padding: 4px 56px 20px;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Do NOT use align-items: stretch — it breaks card heights */
-  align-items: flex-start;
+  /* Stretch elements to same height so align-self handles heights */
+  align-items: stretch;
 }
 .slider-track::-webkit-scrollbar {
   display: none;
@@ -3440,17 +3440,20 @@ p {
   width: 260px;
   max-width: 260px;
   box-sizing: border-box;
-  /* Prevent the card from stretching to fill sibling height */
-  align-self: flex-start;
+  display: flex;
 }
 
 .slider-card-wrap .product-card {
-  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  width: 100%;
 }
 
 .slider-card-wrap .product-card-image {
   height: 240px;
   width: 100%;
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
