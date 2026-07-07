@@ -159,17 +159,17 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         <div className="container" style={{ padding: 0 }}>
           <div className="multi-list-scroll">
             {[
-              { label: 'All\nProducts',      href: '/shop',                             img: '/images/logo.jpg' },
-              { label: 'Stamina\nBooster', href: '/shop?category=single-herb-powders', img: '/images/concerns/stamina-booster.png' },
-              { label: 'Daily\nWellness', href: '/shop?category=single-herb-tablets', img: '/images/concerns/daily-wellness.png' },
-              { label: 'Hair\nWellness',          href: '/shop?category=hair-care',            img: '/images/concerns/hair-wellness.png' },
-              { label: 'Skin\nWellness',          href: '/shop?category=skin-care',            img: '/images/concerns/skin-wellness.png' },
+              { label: 'All\nProducts',      href: '/shop',                             img: '/images/concerns/daily-wellness.png' },
+              { label: 'Single Herb\nPowders', href: '/shop?category=single-herb-powders', img: '/images/concerns/stamina-booster.png' },
+              { label: 'Single Herb\nTablets', href: '/shop?category=single-herb-tablets', img: '/images/concerns/daily-wellness.png' },
+              { label: 'Hair\nCare',          href: '/shop?category=hair-care',            img: '/images/concerns/hair-wellness.png' },
+              { label: 'Skin\nCare',          href: '/shop?category=skin-care',            img: '/images/concerns/skin-wellness.png' },
               { label: 'Digestive\nWellness', href: '/shop?category=digestive-wellness',   img: '/images/concerns/digestive-wellness.png' },
-              { label: 'Immunity\nWellness',              href: '/shop?category=combos',               img: '/images/concerns/immunity-wellness.png' },
+              { label: 'Combos',              href: '/shop?category=combos',               img: '/images/concerns/immunity-wellness.png' },
             ].map((cat, i) => (
               <Link key={i} href={cat.href} className="multi-list-item">
                 <div className="multi-list-image-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  <img src={cat.img} alt={cat.label} style={{ width: '100%', height: '100%' }} />
+                  <img src={cat.img} alt={cat.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
                 <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>{cat.label}</span>
               </Link>
@@ -341,14 +341,21 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
                     src={`/images/concerns/${concern.slug}.png`}
                     alt={concern.name}
                     loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     onError={(e) => {
                       // fallback to emoji if image missing
                       (e.currentTarget as HTMLImageElement).style.display = 'none';
                     }}
                   />
                 </div>
-                
+                <span style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: 'var(--color-forest-dark)',
+                  lineHeight: '1.25'
+                }}>
+                  {concern.name}
+                </span>
               </Link>
             ))}
           </div>
