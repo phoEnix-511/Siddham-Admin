@@ -82,7 +82,6 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
   // Hook for slideshow
   const [activeSlide, setActiveSlide] = React.useState(0);
   const slideImages = [
-    '/images/banner1.jpg',
     '/images/banner2.jpg',
     '/images/banner3.jpg',
     '/images/banner4.jpg'
