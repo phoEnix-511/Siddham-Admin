@@ -119,6 +119,7 @@ model Product {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   videoUrl     String?
+  videoUrls    String[]         @default([])
   caption      String?
   orderItems   OrderItem[]
   category     Category         @relation(fields: [categoryId], references: [id])

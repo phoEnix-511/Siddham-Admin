@@ -7,7 +7,8 @@ import { getOrSet, delPattern } from "@/lib/cache";
 const LIST_CACHE_TTL = 60 * 5; // 5 minutes
 
 function buildListCacheKey(query: NextApiRequest["query"]): string {
-  const { category, featured, search, page, limit, minPrice, maxPrice, sort } = query;
+  const { category, featured, search, page, limit, minPrice, maxPrice, sort } =
+    query;
   const parts = [
     "cat=" + (category || ""),
     "feat=" + (featured || ""),
@@ -46,9 +47,9 @@ export default async function handler(
         maxPrice,
         sort = "newest",
       } = req.query;
-      const pageNum  = parseInt(page  as string);
+      const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
-      const skip     = (pageNum - 1) * limitNum;
+      const skip = (pageNum - 1) * limitNum;
 
       const where: Record<string, any> = {};
       if (!isAdmin || showInactive !== "true") {
@@ -60,13 +61,13 @@ export default async function handler(
         if (maxPrice) priceQuery.lte = parseFloat(maxPrice as string);
         where.price = priceQuery;
       }
-      if (category)            where.category   = { slug: category };
-      if (featured === "true") where.isFeatured  = true;
+      if (category) where.category = { slug: category };
+      if (featured === "true") where.isFeatured = true;
       if (search) {
         where.OR = [
-          { name:        { contains: search as string, mode: "insensitive" } },
+          { name: { contains: search as string, mode: "insensitive" } },
           { description: { contains: search as string, mode: "insensitive" } },
-          { caption:     { contains: search as string, mode: "insensitive" } },
+          { caption: { contains: search as string, mode: "insensitive" } },
         ];
       }
 
@@ -90,7 +91,7 @@ export default async function handler(
         return {
           products,
           pagination: {
-            page:  pageNum,
+            page: pageNum,
             limit: limitNum,
             total,
             pages: Math.ceil(total / limitNum),
@@ -104,7 +105,10 @@ export default async function handler(
       if (shouldCache) {
         const cacheKey = buildListCacheKey(req.query);
         data = await getOrSet(cacheKey, LIST_CACHE_TTL, fetchFresh);
-        res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+        res.setHeader(
+          "Cache-Control",
+          "public, s-maxage=60, stale-while-revalidate=300",
+        );
       } else {
         data = await fetchFresh();
         res.setHeader("Cache-Control", "no-store");
@@ -121,12 +125,23 @@ export default async function handler(
     try {
       requireEditorRole(req);
       const data = req.body;
-      data.slug = data.slug || generateSlug(data.name);
+      const videoUrls = Array.isArray(data.videoUrls)
+        ? data.videoUrls.filter(Boolean)
+        : data.videoUrl
+          ? [data.videoUrl]
+          : [];
 
-      const product = await prisma.product.create({ data });
+      const productData = {
+        ...data,
+        slug: data.slug || generateSlug(data.name),
+        videoUrl: videoUrls[0] || null,
+        videoUrls,
+      };
+
+      const product = await prisma.product.create({ data: productData });
 
       // Invalidate all product list caches so new product shows up
-      await delPattern("products:list:*");
+      await delPattern("products:list:");
 
       return res.status(201).json({ product });
     } catch (error) {

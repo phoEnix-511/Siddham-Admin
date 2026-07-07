@@ -2,13 +2,16 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireViewerRole } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/utils";
+import { getOrSet, delPattern } from "@/lib/cache";
+
+const ORDER_LIST_CACHE_TTL = 30; // 30 seconds
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
   if (req.method === "GET") {
-    let adminRole = 'admin';
+    let adminRole = "admin";
     try {
       const adminPayload = requireViewerRole(req);
       adminRole = adminPayload.role;
@@ -24,80 +27,95 @@ export default async function handler(
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
 
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        select: {
-          id: true,
-          orderNumber: true,
-          createdAt: true,
-          updatedAt: true,
-          totalAmount: true,
-          status: true,
-          paymentStatus: true,
-          shippingAddress: true,
-          customer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-            },
-          },
-          items: {
-            select: {
-              id: true,
-              quantity: true,
-              price: true,
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  sku: true,
-                },
-              },
-              variant: {
-                select: {
-                  id: true,
-                  name: true,
-                  sku: true,
-                },
+    const cacheKey = `orders:list:${adminRole}:${status || "all"}:${pageNum}:${limitNum}`;
+    const fetchFresh = async () => {
+      const [orders, total] = await Promise.all([
+        prisma.order.findMany({
+          where,
+          select: {
+            id: true,
+            orderNumber: true,
+            createdAt: true,
+            updatedAt: true,
+            totalAmount: true,
+            status: true,
+            paymentStatus: true,
+            shippingAddress: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
               },
             },
+            items: {
+              select: {
+                id: true,
+                quantity: true,
+                price: true,
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    sku: true,
+                  },
+                },
+                variant: {
+                  select: {
+                    id: true,
+                    name: true,
+                    sku: true,
+                  },
+                },
+              },
+            },
           },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limitNum,
+        }),
+        prisma.order.count({ where }),
+      ]);
+
+      const maskedOrders = orders.map((order) => {
+        if (adminRole === "viewer") {
+          return {
+            ...order,
+            shippingAddress: "*** MASKED ***",
+            customer: order.customer
+              ? {
+                  ...order.customer,
+                  name: order.customer.name?.substring(0, 1) + "***",
+                  email: "***@***.com",
+                  phone: order.customer.phone
+                    ? "***" + order.customer.phone.slice(-4)
+                    : null,
+                }
+              : null,
+          };
+        }
+        return order;
+      });
+
+      return {
+        orders: maskedOrders,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          pages: Math.ceil(total / limitNum),
         },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limitNum,
-      }),
-      prisma.order.count({ where }),
-    ]);
+      };
+    };
 
-    const maskedOrders = orders.map(order => {
-      if (adminRole === 'viewer') {
-        return {
-          ...order,
-          shippingAddress: '*** MASKED ***',
-          customer: order.customer ? {
-            ...order.customer,
-            name: order.customer.name?.substring(0, 1) + '***',
-            email: '***@***.com',
-            phone: order.customer.phone ? '***' + order.customer.phone.slice(-4) : null,
-          } : null
-        };
-      }
-      return order;
-    });
+    const result = await getOrSet(cacheKey, ORDER_LIST_CACHE_TTL, fetchFresh);
+    res.setHeader(
+      "Cache-Control",
+      "private, max-age=30, stale-while-revalidate=120",
+    );
 
-    return res.status(200).json({
-      orders: maskedOrders,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
-      },
-    });
+    return res.status(200).json(result);
   }
 
   if (req.method === "POST") {
@@ -202,13 +220,17 @@ export default async function handler(
       });
 
       // Batch reduce stock
-      const variantUpdates: Array<{ id: string; quantity: number }> = (items as any[])
+      const variantUpdates: Array<{ id: string; quantity: number }> = (
+        items as any[]
+      )
         .filter((i: any) => i.variantId)
         .map((i: any) => ({
           id: i.variantId,
           quantity: i.quantity,
         }));
-      const productUpdates: Array<{ id: string; quantity: number }> = (items as any[])
+      const productUpdates: Array<{ id: string; quantity: number }> = (
+        items as any[]
+      )
         .filter((i: any) => !i.variantId)
         .map((i: any) => ({
           id: i.productId,
@@ -235,6 +257,14 @@ export default async function handler(
           ),
         );
       }
+
+      await Promise.all([
+        delPattern("orders:list:"),
+        delPattern("orders:detail:"),
+        delPattern("account:orders:"),
+        delPattern("reports:stock:"),
+        delPattern("reports:sales:"),
+      ]);
 
       // Send order confirmation email (non-blocking)
       import("@/lib/email")

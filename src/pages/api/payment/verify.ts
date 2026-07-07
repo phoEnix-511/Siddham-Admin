@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/utils";
+import { delPattern } from "@/lib/cache";
 
 export default async function handler(
   req: NextApiRequest,
@@ -52,6 +53,15 @@ export default async function handler(
           status: "CONFIRMED",
         },
       });
+
+      await Promise.all([
+        delPattern("orders:list:"),
+        delPattern("orders:detail:"),
+        delPattern("account:orders:"),
+        delPattern("reports:stock:"),
+        delPattern("reports:sales:"),
+      ]);
+
       return res.status(200).json({ success: true, order });
     }
 
@@ -151,13 +161,17 @@ export default async function handler(
     });
 
     // Now reduce stock (payment verified and order created)
-    const variantUpdates: Array<{ id: string; quantity: number }> = (items as any[])
+    const variantUpdates: Array<{ id: string; quantity: number }> = (
+      items as any[]
+    )
       .filter((i: any) => i.variantId)
       .map((i: any) => ({
         id: i.variantId,
         quantity: i.quantity,
       }));
-    const productUpdates: Array<{ id: string; quantity: number }> = (items as any[])
+    const productUpdates: Array<{ id: string; quantity: number }> = (
+      items as any[]
+    )
       .filter((i: any) => !i.variantId)
       .map((i: any) => ({
         id: i.productId,
@@ -184,6 +198,14 @@ export default async function handler(
         ),
       );
     }
+
+    await Promise.all([
+      delPattern("orders:list:"),
+      delPattern("orders:detail:"),
+      delPattern("account:orders:"),
+      delPattern("reports:stock:"),
+      delPattern("reports:sales:"),
+    ]);
 
     // Send order confirmation email (non-blocking)
     import("@/lib/email")

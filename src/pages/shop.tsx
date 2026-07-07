@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { CONCERN_ICONS } from '@/lib/concerns';
 
 interface Product {
   id: string;
@@ -32,15 +33,6 @@ interface Category {
   _count: { products: number };
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'hair-care': '💆',
-  'supplements': '💊',
-  'skin-care': '✨',
-  'oils-essentials': '🌿',
-  'ayurvedic-herbal-formulation': '🍶',
-  'ayurvedic-proprietary-medicine': '💊',
-  'ayurvedic-formulation': '🍯',
-};
 
 function SkeletonCard() {
   return (
@@ -299,7 +291,7 @@ export default function ShopPage() {
                   className={`filter-chip ${activeCategory === cat.slug ? 'active' : ''}`}
                   onClick={() => handleCategoryFilter(cat.slug)}
                 >
-                  {CATEGORY_ICONS[cat.slug] || '🌿'} {cat.name}
+                  {CONCERN_ICONS[cat.slug] || '🌿'} {cat.name}
                 </button>
               ))}
             </div>
@@ -353,7 +345,7 @@ export default function ShopPage() {
                           className="img-placeholder fallback-placeholder"
                           style={{ display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex' }}
                         >
-                          {CATEGORY_ICONS[product.category.slug] || '🌿'}
+                          {CONCERN_ICONS[product.category.slug] || '🌿'}
                         </div>
                         {disc > 0 && <span className="product-card-badge">{disc}% OFF</span>}
                         {product.stock <= 10 && product.stock > 0 && (

@@ -5,7 +5,7 @@ import { generateSlug } from "@/lib/utils";
 import { getOrSet, del, delPattern } from "@/lib/cache";
 
 const PRODUCT_CACHE_TTL = 60 * 10; // 10 minutes
-const REVIEWS_LIMIT     = 20;       // cap reviews to avoid over-fetching
+const REVIEWS_LIMIT = 20; // cap reviews to avoid over-fetching
 
 function productCacheKey(id: string) {
   return "product:" + id;
@@ -34,12 +34,15 @@ export default async function handler(
                 take: REVIEWS_LIMIT,
               },
             },
-          })
+          }),
       );
 
       if (!product) return res.status(404).json({ error: "Product not found" });
 
-      res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
+      res.setHeader(
+        "Cache-Control",
+        "public, s-maxage=120, stale-while-revalidate=600",
+      );
       return res.status(200).json({ product });
     } catch (error) {
       console.error(error);
@@ -55,33 +58,78 @@ export default async function handler(
     }
 
     const {
-      name, caption, description, price, comparePrice, images, stock, sku,
-      isActive, isFeatured, ingredients, benefits, usage, weight, videoUrl,
-      categoryId, variants,
+      name,
+      caption,
+      description,
+      price,
+      comparePrice,
+      images,
+      stock,
+      sku,
+      isActive,
+      isFeatured,
+      ingredients,
+      benefits,
+      usage,
+      weight,
+      videoUrl,
+      videoUrls,
+      categoryId,
+      variants,
     } = req.body;
 
     try {
       const updateData: Record<string, unknown> = {
-        description, images, isActive, isFeatured, ingredients,
-        benefits, usage, weight, categoryId,
-        videoUrl: videoUrl !== undefined ? videoUrl || null : undefined,
+        description,
+        images,
+        isActive,
+        isFeatured,
+        ingredients,
+        benefits,
+        usage,
+        weight,
+        categoryId,
       };
 
-      if (name)                      { updateData.name = name; updateData.slug = generateSlug(name); }
-      if (caption !== undefined)       updateData.caption      = caption      || null;
-      if (price !== undefined)         updateData.price        = parseFloat(price);
-      if (comparePrice !== undefined)  updateData.comparePrice = comparePrice ? parseFloat(comparePrice) : null;
-      if (stock !== undefined)         updateData.stock        = parseInt(stock);
-      if (sku !== undefined)           updateData.sku          = sku          || null;
+      if (name) {
+        updateData.name = name;
+        updateData.slug = generateSlug(name);
+      }
+      if (videoUrls !== undefined) {
+        const normalizedVideoUrls = Array.isArray(videoUrls)
+          ? videoUrls.filter(Boolean)
+          : [];
+        updateData.videoUrls = normalizedVideoUrls;
+        updateData.videoUrl = normalizedVideoUrls[0] || null;
+      } else if (videoUrl !== undefined) {
+        updateData.videoUrl = videoUrl || null;
+        updateData.videoUrls = videoUrl ? [videoUrl] : [];
+      }
+      if (caption !== undefined) updateData.caption = caption || null;
+      if (price !== undefined) updateData.price = parseFloat(price);
+      if (comparePrice !== undefined)
+        updateData.comparePrice = comparePrice
+          ? parseFloat(comparePrice)
+          : null;
+      if (stock !== undefined) updateData.stock = parseInt(stock);
+      if (sku !== undefined) updateData.sku = sku || null;
 
       if (variants !== undefined) {
-        const existingVariants = await prisma.productVariant.findMany({ where: { productId } });
+        const existingVariants = await prisma.productVariant.findMany({
+          where: { productId },
+        });
         const existingIds = existingVariants.map((v) => v.id);
-        const incomingIds = (variants as any[]).map((v) => v.id).filter(Boolean);
-        const idsToDelete = existingIds.filter((id) => !incomingIds.includes(id));
+        const incomingIds = (variants as any[])
+          .map((v) => v.id)
+          .filter(Boolean);
+        const idsToDelete = existingIds.filter(
+          (id) => !incomingIds.includes(id),
+        );
 
         if (idsToDelete.length > 0) {
-          await prisma.productVariant.deleteMany({ where: { id: { in: idsToDelete } } });
+          await prisma.productVariant.deleteMany({
+            where: { id: { in: idsToDelete } },
+          });
         }
 
         // Parallel upserts - fixes N+1 sequential loop bug
@@ -91,24 +139,28 @@ export default async function handler(
               ? prisma.productVariant.update({
                   where: { id: v.id },
                   data: {
-                    name:         v.name,
-                    price:        parseFloat(v.price),
-                    comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
-                    stock:        parseInt(v.stock) || 0,
-                    sku:          v.sku || null,
+                    name: v.name,
+                    price: parseFloat(v.price),
+                    comparePrice: v.comparePrice
+                      ? parseFloat(v.comparePrice)
+                      : null,
+                    stock: parseInt(v.stock) || 0,
+                    sku: v.sku || null,
                   },
                 })
               : prisma.productVariant.create({
                   data: {
                     productId,
-                    name:         v.name,
-                    price:        parseFloat(v.price),
-                    comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
-                    stock:        parseInt(v.stock) || 0,
-                    sku:          v.sku || null,
+                    name: v.name,
+                    price: parseFloat(v.price),
+                    comparePrice: v.comparePrice
+                      ? parseFloat(v.comparePrice)
+                      : null,
+                    stock: parseInt(v.stock) || 0,
+                    sku: v.sku || null,
                   },
-                })
-          )
+                }),
+          ),
         );
       }
 
@@ -138,10 +190,15 @@ export default async function handler(
     }
 
     try {
-      const orderItemCount = await prisma.orderItem.count({ where: { productId } });
+      const orderItemCount = await prisma.orderItem.count({
+        where: { productId },
+      });
 
       if (orderItemCount > 0) {
-        await prisma.product.update({ where: { id: productId }, data: { isActive: false } });
+        await prisma.product.update({
+          where: { id: productId },
+          data: { isActive: false },
+        });
       } else {
         await prisma.product.delete({ where: { id: productId } });
       }
@@ -153,9 +210,10 @@ export default async function handler(
 
       return res.status(200).json({
         success: true,
-        message: orderItemCount > 0
-          ? "Product soft-deleted (marked inactive) since it is referenced in orders."
-          : "Product deleted.",
+        message:
+          orderItemCount > 0
+            ? "Product soft-deleted (marked inactive) since it is referenced in orders."
+            : "Product deleted.",
       });
     } catch (error) {
       console.error(error);

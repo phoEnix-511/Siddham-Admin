@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { GetStaticProps, GetStaticPaths, GetStaticPropsContext } from 'next';
 import { prisma } from '@/lib/prisma';
+import { CONCERN_ICONS } from '@/lib/concerns';
 
 interface Product {
   id: string;
@@ -42,15 +43,6 @@ interface Product {
   }>;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  'hair-care': '💆',
-  'supplements': '💊',
-  'skin-care': '✨',
-  'oils-essentials': '🌿',
-  'ayurvedic-herbal-formulation': '🍶',
-  'ayurvedic-proprietary-medicine': '💊',
-  'ayurvedic-formulation': '🍯',
-};
 
 export default function ProductDetailPage({ product: initialProduct }: { product: Product }) {
   const router = useRouter();
@@ -276,7 +268,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
                   ))
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: '6rem' }}>
-                    {CATEGORY_ICONS[product.category.slug] || '🌿'}
+                    {CONCERN_ICONS[product.category.slug] || '🌿'}
                   </div>
                 )}
 

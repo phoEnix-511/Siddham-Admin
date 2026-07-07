@@ -3,10 +3,13 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/context/ToastContext';
+import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
 
 interface Category {
   id: string;
   name: string;
+  slug?: string;
+  isConcern?: boolean;
 }
 
 interface FormData {
@@ -26,13 +29,14 @@ interface FormData {
   isFeatured: boolean;
   images: string[];
   videoUrl: string;
+  videoUrls: string[];
 }
 
 const defaultForm: FormData = {
   name: '', caption: '', description: '', price: '', comparePrice: '', stock: '0',
   sku: '', categoryId: '', ingredients: '', benefits: '',
   usage: '', weight: '', isActive: true, isFeatured: false,
-  images: [], videoUrl: '',
+  images: [], videoUrl: '', videoUrls: [],
 };
 
 interface ProductVariantForm {
@@ -53,6 +57,9 @@ export default function ProductFormPage() {
   const [form, setForm] = useState<FormData>(defaultForm);
   const [variants, setVariants] = useState<ProductVariantForm[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -157,7 +164,7 @@ export default function ProductFormPage() {
   };
 
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || []));
+    loadCategories();
     if (!isNew && id) {
       fetch(`/api/products/${id}`).then(r => r.json()).then(d => {
         if (d.product) {
@@ -169,7 +176,7 @@ export default function ProductFormPage() {
             ingredients: p.ingredients || '', benefits: p.benefits || '',
             usage: p.usage || '', weight: p.weight || '',
             isActive: p.isActive, isFeatured: p.isFeatured,
-            images: p.images || [], videoUrl: p.videoUrl || '',
+            images: p.images || [], videoUrl: p.videoUrl || '', videoUrls: p.videoUrls || (p.videoUrl ? [p.videoUrl] : []),
           });
           if (p.variants) {
             setVariants(p.variants.map((v: any) => ({
@@ -189,10 +196,52 @@ export default function ProductFormPage() {
     }
   }, [id, isNew]);
 
+  const loadCategories = async () => {
+    const res = await fetch('/api/categories');
+    const data = await res.json();
+    setCategories(data.categories || []);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleVideoUrlChange = (value: string) => {
+    const urls = value
+      .split(/\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    setForm(prev => ({
+      ...prev,
+      videoUrl: urls[0] || '',
+      videoUrls: urls,
+    }));
+  };
+
+  const handleCreateCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed, description: newCategoryDescription.trim() || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create category');
+      setNewCategoryName('');
+      setNewCategoryDescription('');
+      setShowCategoryModal(false);
+      await loadCategories();
+      setForm(prev => ({ ...prev, categoryId: data.category.id }));
+      addToast('Category created successfully', 'success');
+    } catch (err: unknown) {
+      addToast(err instanceof Error ? err.message : 'Failed to create category', 'error');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,6 +253,8 @@ export default function ProductFormPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          videoUrl: form.videoUrls[0] || form.videoUrl || null,
+          videoUrls: form.videoUrls,
           price: parseFloat(form.price),
           comparePrice: form.comparePrice ? parseFloat(form.comparePrice) : null,
           stock: parseInt(form.stock),
@@ -233,6 +284,26 @@ export default function ProductFormPage() {
     <>
       <Head><title>{isNew ? 'New Product' : 'Edit Product'} – Siddham Wellness Admin</title></Head>
       <AdminLayout title={isNew ? 'Add Product' : 'Product Form'}>
+        {showCategoryModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}>
+            <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', width: 'min(100%, 460px)', boxShadow: 'var(--shadow-lg)' }}>
+              <h3 style={{ marginTop: 0, marginBottom: 'var(--space-3)', color: 'var(--color-forest-dark)' }}>Create Concern Category</h3>
+              <p style={{ marginTop: 0, marginBottom: 'var(--space-4)', color: 'var(--color-gray-500)', fontSize: '0.9rem' }}>Add a new concern-based category for the storefront and filters.</p>
+              <div className="form-group">
+                <label className="form-label" htmlFor="new-category-name">Category Name</label>
+                <input id="new-category-name" className="form-input" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="e.g. Sleep Wellness" />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="new-category-description">Description</label>
+                <textarea id="new-category-description" className="form-textarea" rows={3} value={newCategoryDescription} onChange={(e) => setNewCategoryDescription(e.target.value)} placeholder="Short description" />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowCategoryModal(false)}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={handleCreateCategory}>Create Category</button>
+              </div>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <fieldset disabled={adminRole === 'viewer'} style={{ border: 'none', padding: 0, margin: 0, display: 'contents' }}>
             <div className="product-form-grid">
@@ -255,11 +326,25 @@ export default function ProductFormPage() {
                       <textarea id="prod-desc" className="form-textarea" name="description" required value={form.description} onChange={handleChange} placeholder="Detailed product description..." rows={5} />
                     </div>
                     <div className="form-group">
-                      <label className="form-label" htmlFor="prod-category">Category *</label>
-                      <select id="prod-category" className="form-select" name="categoryId" required value={form.categoryId} onChange={handleChange}>
-                        <option value="">Select Category...</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
+                      <label className="form-label" htmlFor="prod-category">Concern Category *</label>
+                      <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                        <select id="prod-category" className="form-select" name="categoryId" required value={form.categoryId} onChange={handleChange} style={{ flex: 1 }}>
+                          <option value="">Select Concern...</option>
+                          {categories.map(c => (
+                            <option key={c.id} value={c.id}>
+                              {c.isConcern ? `${CONCERN_ICONS[c.slug || ''] || '🌿'} ` : ''}{c.name}
+                            </option>
+                          ))}
+                        </select>
+                        {adminRole !== 'viewer' && (
+                          <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowCategoryModal(true)}>
+                            + New
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+                        Categories are aligned with the storefront concern list.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -320,15 +405,18 @@ export default function ProductFormPage() {
                     )}
 
                     <div className="form-group" style={{ marginTop: 'var(--space-2)' }}>
-                      <label className="form-label" htmlFor="prod-video">YouTube Video URL</label>
-                      <input
+                      <label className="form-label" htmlFor="prod-video">YouTube Video URLs</label>
+                      <textarea
                         id="prod-video"
-                        className="form-input"
-                        name="videoUrl"
-                        placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                        value={form.videoUrl}
-                        onChange={handleChange}
+                        className="form-textarea"
+                        rows={3}
+                        placeholder="Add one video URL per line or separated by commas"
+                        value={form.videoUrls.join('\n')}
+                        onChange={(e) => handleVideoUrlChange(e.target.value)}
                       />
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+                        The first video will be used as the primary video.
+                      </div>
                     </div>
                   </div>
                 </div>

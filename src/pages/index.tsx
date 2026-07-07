@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
@@ -105,24 +106,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
     }
   };
 
-  // Dedicated concerns catalog
-  const concernsList = [
-    { name: 'Brain wellness', icon: '🧠', slug: 'brain-wellness' },
-    { name: 'Cardiac wellness', icon: '❤️', slug: 'cardiac-wellness' },
-    { name: 'Daily wellness', icon: '🌟', slug: 'daily-wellness' },
-    { name: 'Diabetic wellness', icon: '🩸', slug: 'diabetic-wellness' },
-    { name: 'Digestive wellness', icon: '🥣', slug: 'digestive-wellness' },
-    { name: 'Hair wellness', icon: '💆‍♀️', slug: 'hair-wellness' },
-    { name: 'Immunity wellness', icon: '🛡️', slug: 'immunity-wellness' },
-    { name: 'Kidney wellness', icon: '💧', slug: 'kidney-wellness' },
-    { name: 'liver wellness', icon: '🍃', slug: 'liver-wellness' },
-    { name: 'men\'s wellness', icon: '💪', slug: 'mens-wellness' },
-    { name: 'Pain reliever', icon: '🔥', slug: 'pain-reliever' },
-    { name: 'Skin wellness', icon: '✨', slug: 'skin-wellness' },
-    { name: 'Stamina Booster', icon: '⚡', slug: 'stamina-booster' },
-    { name: 'Women\'s wellness', icon: '🌺', slug: 'womens-wellness' },
-    { name: 'Blood purify', icon: '🍷', slug: 'blood-purify' }
-  ];
+  const concernsList = CONCERN_CATEGORIES;
 
   return (
     <>
@@ -185,7 +169,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
                 <div className="multi-list-image-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   <img src={`/images/concerns/${concern.slug}.png`} alt={concern.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>{concern.name.replace(' ', '\n')}</span>
+                <span className="multi-list-label" style={{ whiteSpace: 'pre-line' }}>{concern.name.replace(/ /g, '\n')}</span>
               </Link>
             ))}
           </div>
