@@ -3384,11 +3384,57 @@ p {
   }
 }
 
-/* ── Horizontal Scroll Containers (no scrollbar) ─────────────── */
-.inline-scroll::-webkit-scrollbar {
-  display: none;
+/* ── Slider Nav Arrows ────────────────────────────────────────── */
+.slider-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1.5px solid rgba(13, 44, 29, 0.12);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.13);
+  color: var(--color-forest-dark);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
 }
-.inline-scroll {
+.slider-nav-btn:hover {
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  transform: translateY(-50%) scale(1.08);
+}
+.slider-nav-left  { left: 8px; }
+.slider-nav-right { right: 8px; }
+
+/* Hide arrows on mobile — swipe is used instead */
+@media (max-width: 640px) {
+  .slider-nav-btn { display: none; }
+}
+
+/* ── Slider Track ─────────────────────────────────────────────── */
+.slider-track {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  scroll-behavior: smooth;
+  padding: 4px 60px 16px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  align-items: stretch;
+}
+.slider-track::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 640px) {
+  .slider-track {
+    padding: 4px 16px 16px;
+    gap: 14px;
+  }
 }

@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/router';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import { VercelToolbar } from '@vercel/toolbar/next';
 import '@/styles/globals.css';
 
 // Lightweight component to track active users without blocking rendering
@@ -66,6 +67,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+  const shouldShowToolbar = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
   return (
     <SessionProvider session={session}>
       <ToastProvider>
@@ -75,6 +77,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
             <Component {...pageProps} />
           </AuthGuard>
           <MobileBottomNav />
+          {shouldShowToolbar && <VercelToolbar />}
         </CartProvider>
       </ToastProvider>
     </SessionProvider>

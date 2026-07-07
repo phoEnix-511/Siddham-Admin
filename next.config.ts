@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createWithVercelToolbar from '@vercel/toolbar/plugins/next';
 
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
@@ -56,5 +57,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withVercelToolbar = createWithVercelToolbar();
+export default withVercelToolbar(nextConfig);
 

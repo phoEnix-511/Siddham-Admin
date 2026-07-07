@@ -266,30 +266,23 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
       </div>
 
       {/* 5. Curated Specially For You — side-arrow scrollable slider */}
-      <section className="section" style={{ position: 'relative', overflow: 'hidden' }}>
+      <section className="section" style={{ position: 'relative' }}>
         <div className="container">
           <h2 className="vasu-section-title">Curated Specially For You!</h2>
         </div>
-        {/* Slider wrapper with side arrows */}
-        <div style={{ position: 'relative', paddingLeft: '0', paddingRight: '0' }}>
-          {/* Left arrow */}
+        {/* Slider wrapper — position relative so arrows overlay correctly */}
+        <div style={{ position: 'relative', margin: '0 0 8px' }}>
+          {/* Left arrow — hidden on mobile via CSS class */}
           <button
             onClick={() => scrollSlider(curatedSliderRef, 'left')}
             aria-label="Scroll left"
-            style={{
-              position: 'absolute', left: '4px', top: '50%', transform: 'translateY(-60%)',
-              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
-              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
-            }}
-          >‹</button>
+            className="slider-nav-btn slider-nav-left"
+          >&#8249;</button>
+
+          {/* Scrollable track */}
           <div
             ref={curatedSliderRef}
-            style={{ display: 'flex', overflowX: 'auto', gap: '20px', scrollBehavior: 'smooth',
-              paddingBottom: '12px', paddingLeft: '60px', paddingRight: '60px',
-              scrollbarWidth: 'none', msOverflowStyle: 'none'
-            }}
+            className="slider-track"
           >
             {featuredProducts.slice(0, 8).map(p => (
               <div key={p.id} style={{ minWidth: '270px', flex: '0 0 auto' }}>
@@ -297,18 +290,13 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
               </div>
             ))}
           </div>
+
           {/* Right arrow */}
           <button
             onClick={() => scrollSlider(curatedSliderRef, 'right')}
             aria-label="Scroll right"
-            style={{
-              position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-60%)',
-              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
-              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
-            }}
-          >›</button>
+            className="slider-nav-btn slider-nav-right"
+          >&#8250;</button>
         </div>
       </section>
 
@@ -379,29 +367,21 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
       </section>
 
       {/* 7. Featured Collections — side-arrow scrollable slider */}
-      <section className="section" style={{ position: 'relative', overflow: 'hidden' }}>
+      <section className="section" style={{ position: 'relative' }}>
         <div className="container">
           <h2 className="vasu-section-title">Featured Collections</h2>
         </div>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', margin: '0 0 8px' }}>
           {/* Left arrow */}
           <button
             onClick={() => scrollSlider(featuredSliderRef, 'left')}
             aria-label="Scroll featured left"
-            style={{
-              position: 'absolute', left: '4px', top: '50%', transform: 'translateY(-60%)',
-              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
-              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
-            }}
-          >‹</button>
+            className="slider-nav-btn slider-nav-left"
+          >&#8249;</button>
+
           <div
             ref={featuredSliderRef}
-            style={{ display: 'flex', overflowX: 'auto', gap: '20px', scrollBehavior: 'smooth',
-              paddingBottom: '12px', paddingLeft: '60px', paddingRight: '60px',
-              scrollbarWidth: 'none', msOverflowStyle: 'none'
-            }}
+            className="slider-track"
           >
             {featuredProducts.slice(2, 10).map(p => (
               <div key={p.id} style={{ minWidth: '270px', flex: '0 0 auto' }}>
@@ -409,18 +389,13 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
               </div>
             ))}
           </div>
+
           {/* Right arrow */}
           <button
             onClick={() => scrollSlider(featuredSliderRef, 'right')}
             aria-label="Scroll featured right"
-            style={{
-              position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-60%)',
-              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
-              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
-            }}
-          >›</button>
+            className="slider-nav-btn slider-nav-right"
+          >&#8250;</button>
         </div>
       </section>
 
