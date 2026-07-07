@@ -27,6 +27,7 @@ interface Settings {
   hero_title: string;
   hero_subtitle: string;
   hero_image: string;
+  homepage_carousel_images: string;
   social_instagram: string;
   social_facebook: string;
   about_us_content: string;
@@ -63,6 +64,7 @@ const defaultSettings: Settings = {
   hero_title: 'Ancient Wisdom, Modern Wellness',
   hero_subtitle: '100% Pure, Organic Ayurvedic Tonics & Formulations for your daily care.',
   hero_image: '',
+  homepage_carousel_images: '/images/banner2.jpg\n/images/banner3.jpg\n/images/banner4.jpg',
   social_instagram: '',
   social_facebook: '',
   about_us_content: '<h2>Our Journey</h2><p>Welcome to Siddham Wellness, where ancient Ayurvedic traditions meet modern lifestyle needs. Our journey began with a simple mission: to make pure, authentic, and effective Ayurvedic remedies accessible to everyone.</p><h3>Why Choose Siddham?</h3><p>We source the finest organic herbs from sustainable farms across India. Each formulation is prepared following classical texts and manufactured in GMP-certified facilities to ensure the highest standards of safety and efficacy.</p>',
@@ -316,6 +318,21 @@ export default function AdminSettingsPage() {
                   rows={2}
                   placeholder="Tell customers about your Ayurvedic tonics & formulations"
                 />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="homepage-carousel-images">Homepage Carousel Images</label>
+                <textarea
+                  id="homepage-carousel-images"
+                  className="form-input"
+                  name="homepage_carousel_images"
+                  value={settings.homepage_carousel_images}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="One image URL per line"
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                  Enter one image URL per line for the homepage hero carousel. Leave blank to use the default banners.
+                </span>
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="hero-img-upload">Hero Background Image <span style={{fontSize: '0.8rem', color: 'var(--color-gray-500)', fontWeight: 'normal'}}>(Recommended: 1920x1080px)</span></label>

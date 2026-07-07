@@ -7,10 +7,20 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
+import { getOrSet } from '@/lib/cache';
+
+const DEFAULT_CAROUSEL_IMAGES = ['/images/banner2.jpg', '/images/banner3.jpg', '/images/banner4.jpg'];
+
+function parseCarouselImages(value?: string) {
+  return (value || '')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const [products, categories, settingsRecords, coupons] = await Promise.all([
+    const [products, categories, settingsMap, coupons] = await Promise.all([
       prisma.product.findMany({
         where: { isFeatured: true },
         take: 10,
@@ -22,14 +32,18 @@ export const getStaticProps: GetStaticProps = async () => {
         }
       }),
       prisma.category.findMany({ orderBy: { name: 'asc' } }),
-      prisma.setting.findMany(),
+      getOrSet('homepage:settings', 60 * 10, async () => {
+        const settingsRecords = await prisma.setting.findMany();
+        return settingsRecords.reduce((acc, s) => {
+          acc[s.key] = s.value;
+          return acc;
+        }, {} as Record<string, string>);
+      }),
       prisma.couponOffer.findMany({ where: { isActive: true }, take: 3 })
     ]);
 
-    const settings = settingsRecords.reduce((acc, s) => {
-      acc[s.key] = s.value;
-      return acc;
-    }, {} as Record<string, string>);
+    const settings = settingsMap as Record<string, string>;
+    const carouselImages = parseCarouselImages(settings.homepage_carousel_images);
 
     return {
       props: {
@@ -41,6 +55,7 @@ export const getStaticProps: GetStaticProps = async () => {
           subtitle: settings.hero_subtitle || 'Discover our curated range of authentic Ayurvedic formulations.',
           image: settings.hero_image || 'https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?q=80&w=2070',
         },
+        carouselImages: carouselImages.length > 0 ? carouselImages : DEFAULT_CAROUSEL_IMAGES,
         promotional: {
           showFeaturedIn: settings.show_featured_in !== 'false',
           featuredBrands: settings.featured_in_brands ? settings.featured_in_brands.split(',').map((b: string) => b.trim()).filter(Boolean) : ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
@@ -64,6 +79,7 @@ export const getStaticProps: GetStaticProps = async () => {
           subtitle: 'Discover our curated range of authentic Ayurvedic formulations.',
           image: 'https://images.unsplash.com/photo-1595981267035-7b04d84b4f1e?q=80&w=2070',
         },
+        carouselImages: DEFAULT_CAROUSEL_IMAGES,
         promotional: {
           showFeaturedIn: true,
           featuredBrands: ['The Times', 'VOGUE', 'GQ', 'Wellness Daily'],
@@ -78,21 +94,17 @@ export const getStaticProps: GetStaticProps = async () => {
   }
 };
 
-export default function Home({ featuredProducts, categories, coupons = [], hero, promotional, catalogMode }: { featuredProducts: any[], categories: any[], coupons?: any[], hero: any, promotional: any, catalogMode: boolean }) {
+export default function Home({ featuredProducts, categories, coupons = [], hero, promotional, catalogMode, carouselImages = DEFAULT_CAROUSEL_IMAGES }: { featuredProducts: any[], categories: any[], coupons?: any[], hero: any, promotional: any, catalogMode: boolean, carouselImages?: string[] }) {
   // Hook for slideshow
   const [activeSlide, setActiveSlide] = React.useState(0);
-  const slideImages = [
-    '/images/banner2.jpg',
-    '/images/banner3.jpg',
-    '/images/banner4.jpg'
-  ];
+  const slideImages = React.useMemo(() => (carouselImages && carouselImages.length > 0 ? carouselImages : DEFAULT_CAROUSEL_IMAGES), [carouselImages]);
 
   React.useEffect(() => {
     const timer = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % slideImages.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slideImages.length]);
 
   // References for slider elements to enable arrow scrolling
   const curatedSliderRef = React.useRef<HTMLDivElement>(null);

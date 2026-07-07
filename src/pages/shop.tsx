@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
-import { CONCERN_ICONS } from '@/lib/concerns';
+import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
 
 interface Product {
   id: string;
@@ -30,6 +30,7 @@ interface Category {
   id: string;
   name: string;
   slug: string;
+  isConcern?: boolean;
   _count: { products: number };
 }
 
@@ -87,7 +88,29 @@ export default function ShopPage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/categories').then(r => r.json()).then(d => setCategories(d.categories || []));
+    fetch('/api/categories')
+      .then(r => r.json())
+      .then(d => {
+        const concernCategories = (d.categories || []).filter((cat: Category) => {
+          const isConcern = cat.isConcern || CONCERN_CATEGORIES.some((concern) => concern.slug === cat.slug);
+          return isConcern;
+        });
+
+        if (concernCategories.length > 0) {
+          setCategories(concernCategories);
+        } else {
+          setCategories(
+            CONCERN_CATEGORIES.map((concern) => ({
+              id: concern.slug,
+              name: concern.name,
+              slug: concern.slug,
+              isConcern: true,
+              _count: { products: 0 },
+            })),
+          );
+        }
+      })
+      .catch(() => setCategories([]));
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
