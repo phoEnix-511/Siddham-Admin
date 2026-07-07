@@ -3371,3 +3371,24 @@ p {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ── Concern Grid Responsive Layout ──────────────────────────── */
+@media (max-width: 900px) {
+  .concern-grid-5col {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+@media (max-width: 600px) {
+  .concern-grid-5col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ── Horizontal Scroll Containers (no scrollbar) ─────────────── */
+.inline-scroll::-webkit-scrollbar {
+  display: none;
+}
+.inline-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

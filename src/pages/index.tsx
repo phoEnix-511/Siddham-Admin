@@ -176,63 +176,86 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         </div>
       </div>
 
-      {/* 3. Hero Slideshow Banner (4 images moving every 5 seconds) */}
-      <section className="hero-slideshow" style={{ width: '100%', position: 'relative', height: '62vh', minHeight: '420px', overflow: 'hidden' }}>
+      {/* 3. Hero Slideshow Banner — clean images, only CTA button at bottom */}
+      <section style={{ width: '100%', position: 'relative', height: '62vh', minHeight: '380px', overflow: 'hidden', background: '#000' }}>
         {slideImages.map((img, idx) => (
           <div
             key={idx}
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundImage: `linear-gradient(rgba(15,35,24,0.35), rgba(15,35,24,0.75)), url(${img})`,
+              inset: 0,
+              backgroundImage: `url(${img})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundPosition: 'center top',
               opacity: idx === activeSlide ? 1 : 0,
-              transition: 'opacity 1s ease-in-out',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              padding: 'var(--space-6)'
+              transition: 'opacity 1.2s ease-in-out'
+            }}
+          />
+        ))}
+
+        {/* Explore button — glass pill floating at bottom center */}
+        <div style={{
+          position: 'absolute',
+          bottom: '48px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10
+        }}>
+          <Link
+            href="/shop"
+            style={{
+              display: 'inline-block',
+              padding: '14px 40px',
+              borderRadius: '9999px',
+              background: 'rgba(196, 133, 42, 0.92)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '1rem',
+              letterSpacing: '0.06em',
+              textDecoration: 'none',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              transition: 'background 0.2s, transform 0.2s'
             }}
           >
-            {idx === activeSlide && (
-              <div style={{ maxWidth: '800px', transform: 'translateY(0)', transition: 'transform 0.8s ease' }}>
-                <h1 style={{ color: 'var(--color-cream)', fontSize: 'clamp(2.2rem, 5vw, 4.2rem)', marginBottom: 'var(--space-3)', fontFamily: 'var(--font-serif)', textShadow: '1px 1px 3px rgba(0,0,0,0.3)' }}>
-                  Heal Naturally. Live Wholly.
-                </h1>
-                <p style={{ color: 'var(--color-saffron-pale)', fontSize: 'clamp(1rem, 2vw, 1.25rem)', maxWidth: '650px', margin: '0 auto var(--space-6)', fontWeight: 500 }}>
-                  {hero.subtitle || 'Authentic Ayurvedic wellness for a healthier, more natural lifestyle'}
-                </p>
-                <Link href="/shop" className="btn btn-gold btn-lg" style={{ borderRadius: '9999px', padding: '15px 36px', fontWeight: 'bold' }}>
-                  Explore Collection
-                </Link>
-              </div>
-            )}
-          </div>
-        ))}
-        {/* Slideshow Dot Indicators */}
-        <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
+            Explore Collection →
+          </Link>
+        </div>
+
+        {/* Dot Indicators */}
+        <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
           {slideImages.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setActiveSlide(idx)}
+              aria-label={`Show slide ${idx + 1}`}
               style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: idx === activeSlide ? 'var(--color-saffron)' : 'rgba(255,255,255,0.4)',
+                width: idx === activeSlide ? '24px' : '8px',
+                height: '8px',
+                borderRadius: '9999px',
+                backgroundColor: idx === activeSlide ? 'var(--color-saffron)' : 'rgba(255,255,255,0.55)',
                 border: 'none',
                 cursor: 'pointer',
-                padding: 0
+                padding: 0,
+                transition: 'all 0.3s'
               }}
-              aria-label={`Show slide ${idx + 1}`}
             />
           ))}
         </div>
+
+        {/* Prev / Next arrows */}
+        <button
+          onClick={() => setActiveSlide((activeSlide - 1 + slideImages.length) % slideImages.length)}
+          aria-label="Previous slide"
+          style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.2rem', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >‹</button>
+        <button
+          onClick={() => setActiveSlide((activeSlide + 1) % slideImages.length)}
+          aria-label="Next slide"
+          style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.2rem', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >›</button>
       </section>
 
       {/* 4. Trust Bar */}
@@ -242,42 +265,67 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         <span className="trust-stars">★★★★★</span>
       </div>
 
-      {/* 5. Curated Specially For You (Product Slider with arrow controls in PC) */}
-      <section className="section" style={{ position: 'relative' }}>
+      {/* 5. Curated Specially For You — side-arrow scrollable slider */}
+      <section className="section" style={{ position: 'relative', overflow: 'hidden' }}>
         <div className="container">
-          <h2 className="vasu-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            Curated Specially For You!
-            <div className="slider-arrows-wrapper" style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => scrollSlider(curatedSliderRef, 'left')} className="btn btn-outline" style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>⟨</button>
-              <button onClick={() => scrollSlider(curatedSliderRef, 'right')} className="btn btn-outline" style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>⟩</button>
-            </div>
-          </h2>
-          <div className="vasu-slider" ref={curatedSliderRef} style={{ display: 'flex', overflowX: 'auto', gap: '20px', scrollBehavior: 'smooth', paddingBottom: '15px' }}>
+          <h2 className="vasu-section-title">Curated Specially For You!</h2>
+        </div>
+        {/* Slider wrapper with side arrows */}
+        <div style={{ position: 'relative', paddingLeft: '0', paddingRight: '0' }}>
+          {/* Left arrow */}
+          <button
+            onClick={() => scrollSlider(curatedSliderRef, 'left')}
+            aria-label="Scroll left"
+            style={{
+              position: 'absolute', left: '4px', top: '50%', transform: 'translateY(-60%)',
+              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
+              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
+            }}
+          >‹</button>
+          <div
+            ref={curatedSliderRef}
+            style={{ display: 'flex', overflowX: 'auto', gap: '20px', scrollBehavior: 'smooth',
+              paddingBottom: '12px', paddingLeft: '60px', paddingRight: '60px',
+              scrollbarWidth: 'none', msOverflowStyle: 'none'
+            }}
+          >
             {featuredProducts.slice(0, 8).map(p => (
-              <div key={p.id} className="vasu-slide product" style={{ minWidth: '280px', flex: '0 0 auto' }}>
+              <div key={p.id} style={{ minWidth: '270px', flex: '0 0 auto' }}>
                 <ProductCard product={p} />
               </div>
             ))}
           </div>
+          {/* Right arrow */}
+          <button
+            onClick={() => scrollSlider(curatedSliderRef, 'right')}
+            aria-label="Scroll right"
+            style={{
+              position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-60%)',
+              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
+              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
+            }}
+          >›</button>
         </div>
       </section>
 
-      {/* 6. Shop by Concern (Visual Circular Icons Grid Matching Spec) */}
+      {/* 6. Shop by Concern — real circle icon photos */}
       <section className="section" style={{ background: 'var(--color-cream)' }}>
         <div className="container">
-          <h2 className="vasu-section-title" style={{ justifyContent: 'center', fontSize: '1.8rem', letterSpacing: '0.05em' }}>
-            🌿 SHOP BY CONCERN 🌿
+          <h2 style={{ textAlign: 'center', fontFamily: 'var(--font-serif)', fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: 'var(--color-forest-dark)', marginBottom: '6px', letterSpacing: '0.04em' }}>
+            🌿 Shop by Concern
           </h2>
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--color-gray-500)', marginTop: '-10px', marginBottom: 'var(--space-8)' }}>
+          <p style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-8)' }}>
             Rooted in Ayurveda. Crafted for Wellness.
           </p>
 
-          <div style={{
+          <div className="concern-grid-5col" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-            gap: 'var(--space-6)',
-            justifyContent: 'center',
-            alignItems: 'start'
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: 'var(--space-5)',
           }}>
             {concernsList.map((concern, idx) => (
               <Link
@@ -289,32 +337,38 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
                   alignItems: 'center',
                   textDecoration: 'none',
                   textAlign: 'center',
-                  transition: 'transform 0.2s'
+                  transition: 'transform 0.25s'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
               >
+                {/* Real icon image from extracted PNGs */}
                 <div style={{
-                  width: '90px',
-                  height: '90px',
+                  width: '100px',
+                  height: '100px',
                   borderRadius: '50%',
-                  backgroundColor: '#ffffff',
-                  border: '1.5px solid var(--color-saffron)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2.4rem',
-                  boxShadow: 'var(--shadow-sm)',
-                  marginBottom: '10px'
+                  overflow: 'hidden',
+                  border: '2px solid rgba(13,44,29,0.12)',
+                  boxShadow: '0 2px 12px rgba(13,44,29,0.08)',
+                  marginBottom: '10px',
+                  backgroundColor: 'var(--color-parchment)'
                 }}>
-                  {concern.icon}
+                  <img
+                    src={`/images/concerns/${concern.slug}.png`}
+                    alt={concern.name}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      // fallback to emoji if image missing
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 </div>
                 <span style={{
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   fontWeight: 700,
                   color: 'var(--color-forest-dark)',
-                  textTransform: 'capitalize',
-                  lineHeight: '1.2'
+                  lineHeight: '1.25'
                 }}>
                   {concern.name}
                 </span>
@@ -324,23 +378,49 @@ export default function Home({ featuredProducts, categories, hero, promotional, 
         </div>
       </section>
 
-      {/* 7. Featured Collections (Product Slider with arrow controls in PC) */}
-      <section className="section" style={{ position: 'relative' }}>
+      {/* 7. Featured Collections — side-arrow scrollable slider */}
+      <section className="section" style={{ position: 'relative', overflow: 'hidden' }}>
         <div className="container">
-          <h2 className="vasu-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            Featured Collections
-            <div className="slider-arrows-wrapper" style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => scrollSlider(featuredSliderRef, 'left')} className="btn btn-outline" style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>⟨</button>
-              <button onClick={() => scrollSlider(featuredSliderRef, 'right')} className="btn btn-outline" style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>⟩</button>
-            </div>
-          </h2>
-          <div className="vasu-slider" ref={featuredSliderRef} style={{ display: 'flex', overflowX: 'auto', gap: '20px', scrollBehavior: 'smooth', paddingBottom: '15px' }}>
+          <h2 className="vasu-section-title">Featured Collections</h2>
+        </div>
+        <div style={{ position: 'relative' }}>
+          {/* Left arrow */}
+          <button
+            onClick={() => scrollSlider(featuredSliderRef, 'left')}
+            aria-label="Scroll featured left"
+            style={{
+              position: 'absolute', left: '4px', top: '50%', transform: 'translateY(-60%)',
+              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
+              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
+            }}
+          >‹</button>
+          <div
+            ref={featuredSliderRef}
+            style={{ display: 'flex', overflowX: 'auto', gap: '20px', scrollBehavior: 'smooth',
+              paddingBottom: '12px', paddingLeft: '60px', paddingRight: '60px',
+              scrollbarWidth: 'none', msOverflowStyle: 'none'
+            }}
+          >
             {featuredProducts.slice(2, 10).map(p => (
-              <div key={p.id} className="vasu-slide product" style={{ minWidth: '280px', flex: '0 0 auto' }}>
+              <div key={p.id} style={{ minWidth: '270px', flex: '0 0 auto' }}>
                 <ProductCard product={p} />
               </div>
             ))}
           </div>
+          {/* Right arrow */}
+          <button
+            onClick={() => scrollSlider(featuredSliderRef, 'right')}
+            aria-label="Scroll featured right"
+            style={{
+              position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-60%)',
+              zIndex: 5, background: 'rgba(255,255,255,0.95)', border: '1.5px solid rgba(13,44,29,0.12)',
+              borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.4rem',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.12)', color: 'var(--color-forest-dark)'
+            }}
+          >›</button>
         </div>
       </section>
 
