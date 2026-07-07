@@ -16,9 +16,11 @@ export default function Navbar() {
   const router = useRouter();
   const { totalItems, isOpen, openCart, closeCart } = useCart();
   const [announcement, setAnnouncement] = useState({ active: false, text: '' });
-  const [categories, setCategories] = useState<Category[]>([]);
   const [catalogMode, setCatalogMode] = useState(false);
   const { data: session } = useSession();
+
+  // Search input state
+  const [searchVal, setSearchVal] = useState('');
 
   useEffect(() => {
     // Load announcement and catalog settings
@@ -34,21 +36,29 @@ export default function Navbar() {
         }
       })
       .catch(err => console.error('Error loading settings in Navbar:', err));
-
-    // Load dynamic categories
-    fetch('/api/categories')
-      .then(res => res.json())
-      .then(data => {
-        if (data.categories) {
-          setCategories(data.categories);
-        }
-      })
-      .catch(err => console.error('Error loading categories in Navbar:', err));
   }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchVal.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(searchVal.trim())}`);
+    }
+  };
+
+  // Static navbar link definitions as requested
+  const topNavLinks = [
+    { label: "All products", href: "/shop" },
+    { label: "Single herb powders", href: "/shop?category=single-herb-powders" },
+    { label: "Single herb tablets", href: "/shop?category=single-herb-tablets" },
+    { label: "Hair Care", href: "/shop?category=hair-care" },
+    { label: "Skin Care", href: "/shop?category=skin-care" },
+    { label: "Digestive wellness", href: "/shop?category=digestive-wellness" },
+    { label: "Combos", href: "/shop?category=combos" }
+  ];
 
   return (
     <>
-      <header className="sticky-header" style={{ position: 'sticky', top: 0, zIndex: 1000, width: '100%', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.8)', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+      <header className="sticky-header" style={{ position: 'sticky', top: 0, zIndex: 1000, width: '100%', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottom: '1px solid rgba(13, 44, 29, 0.08)' }}>
         {/* Dynamic Announcement Bar */}
         {announcement.active && announcement.text && (
           <div className="announcement-bar" style={{ background: 'var(--color-saffron)', color: 'var(--color-forest-dark)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem', padding: '8px', textAlign: 'center' }}>
@@ -56,57 +66,60 @@ export default function Navbar() {
           </div>
         )}
 
+        {/* Top Header Row with Logo, Search Bar, and Actions */}
         <nav className="nav" role="navigation" aria-label="Main navigation" style={{ padding: '0 var(--space-6)', maxWidth: '1400px', margin: '0 auto' }}>
-          <div className="nav-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '80px' }}>
-            <Link href="/" className="nav-logo" aria-label="Siddham Wellness Home" style={{ textDecoration: 'none' }}>
-              <span className="nav-logo-name" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', fontWeight: 800, color: 'var(--color-forest-dark)', letterSpacing: '-0.02em' }}>Siddham.</span>
+          <div className="nav-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '85px', gap: 'var(--space-4)' }}>
+            
+            {/* Branded Logo Image - Clicking it leads to homepage */}
+            <Link href="/" className="nav-logo" aria-label="Siddham Wellness Home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <img 
+                src="/images/logo.jpg" 
+                alt="Siddham Logo" 
+                style={{ height: '55px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} 
+              />
+              <span className="nav-logo-name" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-forest-dark)', letterSpacing: '-0.02em', display: 'none' }}>Siddham.</span>
             </Link>
 
-            <div className="nav-links" style={{ display: 'flex', gap: 'var(--space-6)', alignItems: 'center' }}>
-              <Link href="/" className={`nav-link ${router.pathname === '/' ? 'active' : ''}`}>
-                Home
-              </Link>
+            {/* Central Search Bar */}
+            <form onSubmit={handleSearchSubmit} className="nav-search-form" style={{ flex: 1, maxWidth: '500px', position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder="What are you looking for?"
+                value={searchVal}
+                onChange={(e) => setSearchVal(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 45px 10px 18px',
+                  borderRadius: '9999px',
+                  border: '1.5px solid rgba(13, 44, 29, 0.15)',
+                  outline: 'none',
+                  fontSize: '0.9rem',
+                  fontFamily: 'var(--font-sans)',
+                  transition: 'border-color 0.2s',
+                  backgroundColor: 'rgba(13, 44, 29, 0.02)'
+                }}
+                onFocus={(e) => e.target.style.borderColor = 'var(--color-saffron)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(13, 44, 29, 0.15)'}
+              />
+              <button 
+                type="submit" 
+                style={{
+                  position: 'absolute',
+                  right: '15px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  padding: 0
+                }}
+                aria-label="Submit search query"
+              >
+                🔍
+              </button>
+            </form>
 
-              {/* Shop Mega Menu Link container */}
-              <div className="nav-link-container">
-                <Link href="/shop" className={`nav-link ${router.pathname.startsWith('/shop') ? 'active' : ''}`}>
-                  Shop <span style={{ fontSize: '0.7rem', marginLeft: 2 }}>▼</span>
-                </Link>
-                <div className="mega-menu">
-                  <div className="mega-menu-col">
-                    <h4 className="mega-menu-title">Product Categories</h4>
-                    <div className="mega-menu-list">
-                      <Link href="/shop" className="mega-menu-item">
-                        All Products
-                      </Link>
-                      {categories.map(c => (
-                        <Link key={c.id} href={`/shop?category=${c.slug}`} className="mega-menu-item">
-                          {c.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="mega-menu-col highlight-col">
-                    <h4 className="mega-menu-title">Siddham Philosophy</h4>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-600)', lineHeight: 1.5, margin: 0 }}>
-                      Handcrafted Ayurvedic tonics and wellness formulations rooted in ancient scriptures, prepared with organic forest herbs, and validated by modern science.
-                    </p>
-                    <div style={{ marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-2)' }}>
-                      <span style={{ fontSize: '1.2rem' }}>🌿</span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-forest)', alignSelf: 'center' }}>
-                        100% Pure & Organic
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Link href="/about" className={`nav-link ${router.pathname === '/about' ? 'active' : ''}`}>
-                Our Story
-              </Link>
-            </div>
-
-            {!catalogMode && (
+            {/* Right side User/Cart Actions */}
+            {!catalogMode ? (
               <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
                 {session ? (
                   <Link href="/account" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
@@ -128,9 +141,37 @@ export default function Navbar() {
                   <span>{totalItems}</span>
                 </button>
               </div>
+            ) : (
+              // Empty space placeholder to balance grid layout in catalogMode
+              <div style={{ width: '40px' }} />
             )}
           </div>
         </nav>
+
+        {/* Bottom TopNav Link Strip */}
+        <div style={{ borderTop: '1px solid rgba(13, 44, 29, 0.05)', backgroundColor: 'var(--color-cream)' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '10px var(--space-6)', overflowX: 'auto', display: 'flex', gap: 'var(--space-6)', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
+            {topNavLinks.map((link, idx) => (
+              <Link
+                key={idx}
+                href={link.href}
+                className={`nav-link ${router.asPath === link.href ? 'active' : ''}`}
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: 'var(--color-forest)',
+                  textDecoration: 'none',
+                  padding: '2px 0',
+                  transition: 'color 0.2s'
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </header>
 
       {isOpen && <CartDrawer onClose={closeCart} />}
