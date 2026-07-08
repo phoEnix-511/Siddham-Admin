@@ -50,7 +50,7 @@ export default function BundlesPage() {
         productId: p.id,
         name: `[Bundle] ${p.name}`,
         price: pricePerItem,
-        image: p.images[0] || '',
+        image: (p.images as any)?.[0]?.id ? `/api/products/images/${(p.images as any)[0].id}` : '',
         stock: 99
       });
     });
@@ -104,7 +104,7 @@ export default function BundlesPage() {
                   {Array.from({ length: activeBundle.minItems }).map((_, i) => (
                     <div key={i} style={{ width: 60, height: 60, borderRadius: 8, border: '2px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', overflow: 'hidden' }}>
                       {selectedItems[i] ? (
-                        <img src={selectedItems[i].images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        <img src={(selectedItems[i].images as any)?.[0]?.id ? `/api/products/images/${(selectedItems[i].images as any)[0].id}` : ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       ) : (
                         <span style={{ color: 'rgba(255,255,255,0.3)' }}>+</span>
                       )}
@@ -137,8 +137,8 @@ export default function BundlesPage() {
                     onClick={() => toggleProduct(p)}
                   >
                     <div className="product-card-image" style={{ aspectRatio: '1', background: 'var(--color-parchment)', padding: 'var(--space-2)' }}>
-                      {p.images[0] ? (
-                        <img src={p.images[0]} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      {(p.images as any)?.[0]?.id ? (
+                        <img src={`/api/products/images/${(p.images as any)[0].id}`} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem' }}>🌿</div>
                       )}

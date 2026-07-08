@@ -51,7 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       reviews: await prisma.review.findMany(),
       productVariants: await prisma.productVariant.findMany(),
       rewardTransactions: await prisma.rewardTransaction.findMany(),
-      bundleOffers: await prisma.bundleOffer.findMany()
+      bundleOffers: await prisma.bundleOffer.findMany(),
+      productImages: await prisma.productImage.findMany()
     };
     
     const backupPath = path.join(backupDir, `auto-backup-before-restore-${Date.now()}.json`);
@@ -65,6 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await tx.order.deleteMany();
       await tx.review.deleteMany();
       await tx.productVariant.deleteMany();
+      await tx.productImage.deleteMany();
       await tx.product.deleteMany();
       await tx.category.deleteMany();
       
@@ -85,6 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       if (data.categories?.length) await tx.category.createMany({ data: data.categories });
       if (data.products?.length) await tx.product.createMany({ data: data.products });
+      if (data.productImages?.length) await tx.productImage.createMany({ data: data.productImages });
       if (data.productVariants?.length) await tx.productVariant.createMany({ data: data.productVariants });
       if (data.reviews?.length) await tx.review.createMany({ data: data.reviews });
       

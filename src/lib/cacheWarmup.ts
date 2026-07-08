@@ -26,7 +26,18 @@ export async function warmUpSearchCache() {
       // Query database directly
       const products = await prisma.product.findMany({
         where: { isActive: true },
-        include: { category: true, variants: true },
+        include: {
+          category: true,
+          variants: true,
+          images: {
+            select: {
+              id: true,
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+        },
         orderBy: { name: "asc" },
         skip,
         take: limitNum,

@@ -25,7 +25,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         reviews,
         productVariants,
         rewardTransactions,
-        bundleOffers
+        bundleOffers,
+        productImages
       ] = await Promise.all([
         prisma.category.findMany(),
         prisma.product.findMany(),
@@ -40,7 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         prisma.review.findMany(),
         prisma.productVariant.findMany(),
         prisma.rewardTransaction.findMany(),
-        prisma.bundleOffer.findMany()
+        prisma.bundleOffer.findMany(),
+        prisma.productImage.findMany()
       ]);
 
       const backup = {
@@ -60,7 +62,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           reviews,
           productVariants,
           rewardTransactions,
-          bundleOffers
+          bundleOffers,
+          productImages
         },
       };
 

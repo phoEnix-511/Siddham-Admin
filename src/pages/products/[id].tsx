@@ -730,6 +730,10 @@ export const getStaticProps: GetStaticProps = async ({ params }: GetStaticPropsC
         category: {
           select: { name: true, slug: true }
         },
+        images: {
+          select: { id: true },
+          orderBy: { createdAt: 'asc' },
+        },
         variants: {
           select: {
             id: true,

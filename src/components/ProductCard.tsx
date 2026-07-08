@@ -15,7 +15,7 @@ export default function ProductCard({ product }: { product: any }) {
       <Link href={`/products/${product.id}`}>
         <div className="product-card-image" style={{ width: '100%', aspectRatio: '1', backgroundColor: '#faf8f4' }}>
           <img
-            src={(product.images && product.images.length > 0 && product.images[0]) ? product.images[0] : '/images/hair-oil.png'}
+            src={(product.images && product.images.length > 0 && product.images[0]?.id) ? `/api/products/images/${product.images[0].id}` : '/images/hair-oil.png'}
             alt={product.name}
             loading="lazy"
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
@@ -82,7 +82,7 @@ export default function ProductCard({ product }: { product: any }) {
                 productId: product.id,
                 name: product.name,
                 price: product.price,
-                image: product.images?.[0] || '',
+                image: product.images?.[0]?.id ? `/api/products/images/${product.images[0].id}` : '',
                 stock: product.stock ?? 10
               });
               openCart();

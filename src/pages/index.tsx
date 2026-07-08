@@ -26,7 +26,7 @@ export const getStaticProps: GetStaticProps = async () => {
         take: 10,
         select: {
           id: true, name: true, price: true, comparePrice: true,
-          images: true, stock: true, isFeatured: true,
+          images: { select: { id: true } }, stock: true, isFeatured: true,
           category: { select: { name: true, slug: true } },
           description: true, variants: { select: { id: true, name: true, price: true, stock: true } }
         }

@@ -45,7 +45,7 @@ function normalizeProduct(product: Record<string, unknown>): ProductSearchItem |
     name: product.name,
     price: typeof product.price === 'number' ? product.price : undefined,
     images: Array.isArray(product.images)
-      ? product.images.filter((image): image is string => typeof image === 'string')
+      ? product.images.map((img: any) => img.id ? `/api/products/images/${img.id}` : img).filter((image): image is string => typeof image === 'string')
       : [],
     description: typeof product.description === 'string' ? product.description : undefined,
     caption: typeof product.caption === 'string' ? product.caption : undefined,
