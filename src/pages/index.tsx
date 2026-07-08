@@ -9,7 +9,7 @@ import ProductCard from '@/components/ProductCard';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
 import { getOrSet } from '@/lib/cache';
 
-const DEFAULT_CAROUSEL_IMAGES = ['/images/banner1.jpg', '/images/banner3.jpg', '/images/banner4.jpg'];
+const DEFAULT_CAROUSEL_IMAGES = ['/images/banner2.jpg', '/images/banner3.jpg', '/images/banner4.jpg'];
 
 function parseCarouselImages(value?: string) {
   return (value || '')
