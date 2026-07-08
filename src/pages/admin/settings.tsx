@@ -331,7 +331,7 @@ export default function AdminSettingsPage() {
                   placeholder="One image URL per line"
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
-                  Enter one image URL per line for the homepage hero carousel. Leave blank to use the default banners.
+                  Enter one image URL per line for the homepage hero carousel. Recommended size: 2560 × 1600 px for the hero banner. Leave blank to use the default banners.
                 </span>
               </div>
               <div className="form-group">

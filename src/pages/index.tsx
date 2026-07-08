@@ -9,7 +9,7 @@ import ProductCard from '@/components/ProductCard';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
 import { getOrSet } from '@/lib/cache';
 
-const DEFAULT_CAROUSEL_IMAGES = ['/images/banner2.jpg', '/images/banner3.jpg', '/images/banner4.jpg'];
+const DEFAULT_CAROUSEL_IMAGES = ['/images/banner1.jpg', '/images/banner3.jpg', '/images/banner4.jpg'];
 
 function parseCarouselImages(value?: string) {
   return (value || '')
@@ -199,7 +199,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
       </div>
 
       {/* 3. Hero Slideshow Banner — clean images with blurred full-bleed background on wide screens */}
-      <section style={{ width: '100%', position: 'relative', height: '50vh', minHeight: '320px', maxHeight: '500px', overflow: 'hidden', background: '#000' }}>
+      <section style={{ width: '100%', position: 'relative', aspectRatio: '16 / 9', overflow: 'hidden', background: '#000', borderRadius: '16px 16px 16px 16px', boxShadow: '0 16px 40px rgba(6, 26, 17, 0.16)' }}>
         {slideImages.map((img, idx) => (
           <div
             key={idx}
@@ -220,8 +220,9 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
                 position: 'absolute',
                 inset: 0,
                 backgroundImage: `url(${img})`,
-                backgroundSize: 'cover',
+                backgroundSize: '100% 100%',
                 backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
                 filter: 'blur(16px) brightness(0.65)',
                 transform: 'scale(1.1)', // Prevents white borders from blur filter
                 zIndex: 1
@@ -234,7 +235,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
                 width: '100%',
                 height: '100%',
                 backgroundImage: `url(${img})`,
-                backgroundSize: 'contain',
+                backgroundSize: '100% 100%',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 zIndex: 2
@@ -255,9 +256,9 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
             href="/shop"
             style={{
               display: 'inline-block',
-              padding: '14px 40px',
+              padding: '14px 10px',
               borderRadius: '9999px',
-              background: 'rgba(196, 133, 42, 0.92)',
+              background: 'rgba(172, 172, 172, 0.22)',
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
               color: '#fff',

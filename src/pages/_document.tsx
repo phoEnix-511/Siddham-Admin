@@ -6,7 +6,9 @@ export default function Document() {
       <Head>
         <meta charSet="UTF-8" />
         <meta name="theme-color" content="#18181b" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/images/logo.jpg" type="image/jpeg" />
+        <link rel="shortcut icon" href="/images/logo.jpg" type="image/jpeg" />
+        <link rel="apple-touch-icon" href="/images/logo.jpg" type="image/jpeg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <meta name="description" content="Siddham Wellness - Premium Ayurvedic products rooted in ancient wisdom. Shop our range of herbal shampoos, supplements, and natural skincare." />

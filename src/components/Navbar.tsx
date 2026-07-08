@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '@/context/CartContext';
@@ -17,10 +17,11 @@ export default function Navbar() {
   const { totalItems, isOpen, openCart, closeCart } = useCart();
   const [announcement, setAnnouncement] = useState({ active: false, text: '' });
   const [catalogMode, setCatalogMode] = useState(false);
-  const { data: session } = useSession();
-
-  // Search input state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+  const { data: session } = useSession();
 
   useEffect(() => {
     // Load announcement and catalog settings
@@ -38,15 +39,44 @@ export default function Navbar() {
       .catch(err => console.error('Error loading settings in Navbar:', err));
   }, []);
 
+  useEffect(() => {
+    if (searchVal.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      fetch(`/api/products?search=${encodeURIComponent(searchVal.trim())}&limit=6`)
+        .then((res) => res.json())
+        .then((data) => setSuggestions(data.products || []))
+        .catch(() => setSuggestions([]));
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchVal]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchVal.trim()) {
+      setSearchOpen(false);
       router.push(`/shop?search=${encodeURIComponent(searchVal.trim())}`);
     }
   };
 
-  // Static navbar link definitions as requested
-  const topNavLinks = [
+  const handleOpenCart = () => {
+    setSearchOpen(false);
+    openCart();
+  };
+
+  const quickLinks = useMemo(() => [
+    { label: 'All Products', href: '/shop' },
+    { label: 'Hair Care', href: '/shop?category=hair-wellness' },
+    { label: 'Skin Care', href: '/shop?category=skin-wellness' },
+    { label: 'Digestive Wellness', href: '/shop?category=digestive-wellness' },
+    { label: 'Immunity', href: '/shop?category=immunity-wellness' },
+  ], []);
+
+  const navLinks = [
     { label: "All products", href: "/shop" },
     { label: "Single herb powders", href: "/shop?category=single-herb-powders" },
     { label: "Single herb tablets", href: "/shop?category=single-herb-tablets" },
@@ -58,7 +88,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky-header" style={{ position: 'sticky', top: 0, zIndex: 1000, width: '100%', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottom: '1px solid rgba(13, 44, 29, 0.08)' }}>
+      <header className="sticky-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 2147483646, width: '100%', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', backgroundColor: 'rgba(255, 255, 255, 0.95)', borderBottom: '1px solid rgba(13, 44, 29, 0.08)' }}>
         {/* Dynamic Announcement Bar */}
         {announcement.active && announcement.text && (
           <div className="announcement-bar" style={{ background: 'var(--color-saffron)', color: 'var(--color-forest-dark)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '0.75rem', padding: '8px', textAlign: 'center' }}>
@@ -66,112 +96,104 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Top Header Row with Logo, Search Bar, and Actions */}
-        <nav className="nav" role="navigation" aria-label="Main navigation" style={{ padding: '0 var(--space-6)', maxWidth: '1400px', margin: '0 auto' }}>
-          <div className="nav-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '85px', gap: 'var(--space-4)' }}>
-            
-            {/* Branded Logo Image - Clicking it leads to homepage */}
-            <Link href="/" className="nav-logo" aria-label="Siddham Wellness Home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <img 
-                src="/images/logo.jpg" 
-                alt="Siddham Logo" 
-                style={{ height: '55px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} 
-              />
-              <span className="nav-logo-name" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-forest-dark)', letterSpacing: '-0.02em', display: 'none' }}>Siddham.</span>
-            </Link>
+        <nav className="nav" role="navigation" aria-label="Main navigation" style={{ padding: '0 var(--space-4)', maxWidth: '1400px', margin: '0 auto' }}>
+          <div className="nav-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '84px', gap: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <button
+                type="button"
+                className="nav-icon-btn"
+                aria-label="Open navigation menu"
+                onClick={() => setSidebarOpen(true)}
+                style={{ width: 42, height: 42, borderRadius: '50%', border: '1px solid rgba(13, 44, 29, 0.12)', background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                ☰
+              </button>
 
-            {/* Central Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="nav-search-form" style={{ flex: 1, maxWidth: '500px', position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <input
-                type="text"
-                placeholder="What are you looking for?"
-                value={searchVal}
-                onChange={(e) => setSearchVal(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 45px 10px 18px',
-                  borderRadius: '9999px',
-                  border: '1.5px solid rgba(13, 44, 29, 0.15)',
-                  outline: 'none',
-                  fontSize: '0.9rem',
-                  fontFamily: 'var(--font-sans)',
-                  transition: 'border-color 0.2s',
-                  backgroundColor: 'rgba(13, 44, 29, 0.02)'
-                }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--color-saffron)'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(13, 44, 29, 0.15)'}
-              />
-              <button 
-                type="submit" 
-                style={{
-                  position: 'absolute',
-                  right: '15px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  padding: 0
-                }}
-                aria-label="Submit search query"
+              <Link href="/" className="nav-logo" aria-label="Siddham Wellness Home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                <img src="/images/logo.jpg" alt="Siddham Logo" style={{ height: '48px', width: 'auto', borderRadius: '4px', objectFit: 'contain' }} />
+              </Link>
+            </div>
+
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
+              <span className="nav-brand-mark" style={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', fontWeight: 700, color: 'var(--color-forest-dark)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>Siddham Wellness</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <button
+                type="button"
+                className="nav-icon-btn"
+                aria-label="Open search"
+                onClick={() => setSearchOpen(true)}
+                style={{ width: 42, height: 42, borderRadius: '50%', border: '1px solid rgba(13, 44, 29, 0.12)', background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 🔍
               </button>
-            </form>
-
-            {/* Right side User/Cart Actions */}
-            {!catalogMode ? (
-              <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-                {session ? (
-                  <Link href="/account" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Account
-                  </Link>
-                ) : (
-                  <Link href="/login" className="btn btn-outline" style={{ borderRadius: '9999px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    Login
-                  </Link>
-                )}
+              {!catalogMode ? (
                 <button
                   id="cart-btn"
                   className="btn btn-gold top-cart-btn"
-                  onClick={openCart}
+                  onClick={handleOpenCart}
                   aria-label={`Open cart, ${totalItems} items`}
-                  style={{ borderRadius: '9999px', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  style={{ borderRadius: '9999px', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <span style={{ fontSize: '1.1rem' }}>🛍️</span>
+                  <span style={{ fontSize: '1rem' }}>🛍️</span>
                   <span>{totalItems}</span>
                 </button>
-              </div>
-            ) : (
-              // Empty space placeholder to balance grid layout in catalogMode
-              <div style={{ width: '40px' }} />
-            )}
+              ) : null}
+            </div>
           </div>
         </nav>
 
-        {/* Bottom TopNav Link Strip */}
-        {/* <div style={{ borderTop: '1px solid rgba(13, 44, 29, 0.05)', backgroundColor: 'var(--color-cream)' }}>
-          <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '10px var(--space-6)', overflowX: 'auto', display: 'flex', gap: 'var(--space-6)', justifyContent: 'center', alignItems: 'center', whiteSpace: 'nowrap' }}>
-            {topNavLinks.map((link, idx) => (
-              <Link
-                key={idx}
-                href={link.href}
-                className={`nav-link ${router.asPath === link.href ? 'active' : ''}`}
-                style={{
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  color: 'var(--color-forest)',
-                  textDecoration: 'none',
-                  padding: '2px 0',
-                  transition: 'color 0.2s'
-                }}
-              >
+        <div className={`nav-sidebar-backdrop ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />
+        <aside className={`nav-sidebar ${sidebarOpen ? 'open' : ''}`} aria-label="Sidebar navigation">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)' }}>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--color-forest-dark)' }}>Explore Siddham</div>
+            <button type="button" onClick={() => setSidebarOpen(false)} style={{ border: 'none', background: 'transparent', fontSize: '1.15rem', cursor: 'pointer' }} aria-label="Close navigation">✕</button>
+          </div>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} onClick={() => setSidebarOpen(false)} style={{ padding: '10px 12px', borderRadius: '10px', color: 'var(--color-forest-dark)', textDecoration: 'none', fontWeight: 600, background: router.asPath === link.href ? 'rgba(196,133,42,0.16)' : 'transparent' }}>
                 {link.label}
               </Link>
             ))}
+            <div style={{ marginTop: 'var(--space-4)', borderTop: '1px solid rgba(13,44,29,0.08)', paddingTop: 'var(--space-4)' }}>
+              {session ? (
+                <Link href="/account" onClick={() => setSidebarOpen(false)} style={{ display: 'block', padding: '10px 12px', borderRadius: '10px', color: 'var(--color-forest-dark)', textDecoration: 'none', fontWeight: 600 }}>
+                  My Account
+                </Link>
+              ) : (
+                <Link href="/login" onClick={() => setSidebarOpen(false)} style={{ display: 'block', padding: '10px 12px', borderRadius: '10px', color: 'var(--color-forest-dark)', textDecoration: 'none', fontWeight: 600 }}>
+                  Login / Register
+                </Link>
+              )}
+            </div>
+          </nav>
+        </aside>
+
+        <div className={`nav-search-drawer ${searchOpen ? 'open' : ''}`}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-forest-dark)' }}>Search Siddham</div>
+            <button type="button" onClick={() => setSearchOpen(false)} style={{ border: 'none', background: 'transparent', fontSize: '1.1rem', cursor: 'pointer' }} aria-label="Close search">✕</button>
           </div>
-        </div> */}
+          <form onSubmit={handleSearchSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <input
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Search products or concerns"
+              style={{ width: '100%', padding: '12px 14px', borderRadius: '999px', border: '1px solid rgba(13,44,29,0.14)', outline: 'none' }}
+            />
+            <button type="submit" className="btn btn-gold" style={{ borderRadius: '999px' }}>Search</button>
+          </form>
+          {suggestions.length > 0 && (
+            <div style={{ marginTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              {suggestions.map((item) => (
+                <button key={item.id} type="button" onClick={() => { setSearchOpen(false); router.push(`/shop?search=${encodeURIComponent(item.name)}`); }} style={{ textAlign: 'left', border: 'none', background: 'rgba(13,44,29,0.03)', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', color: 'var(--color-forest-dark)' }}>
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
       {isOpen && <CartDrawer onClose={closeCart} />}

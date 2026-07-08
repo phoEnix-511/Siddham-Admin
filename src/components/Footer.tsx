@@ -38,13 +38,17 @@ export default function Footer() {
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
               {contacts.facebook && (
-                <a href={contacts.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', transition: 'background 0.25s' }} title="Facebook">
-                  📘
+                <a href={contacts.facebook} target="_blank" rel="noopener noreferrer" style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.25s' }} title="Facebook" aria-label="Follow us on Facebook">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style={{ color: 'var(--color-forest-dark)' }}>
+                    <path d="M13.5 20v-7h2.3l.3-2.7h-2.6V3.8c0-.7.2-1.3 1.2-1.3h1.3V.1c-.2 0-1 .1-2 .1-2 0-3.4 1.2-3.4 3.5v2h-2.3V13h2.3v7h2.8z"/>
+                  </svg>
                 </a>
               )}
               {contacts.instagram && (
-                <a href={contacts.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', transition: 'background 0.25s' }} title="Instagram">
-                  📸
+                <a href={contacts.instagram} target="_blank" rel="noopener noreferrer" style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(196,133,42,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.25s' }} title="Instagram" aria-label="Follow us on Instagram">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style={{ color: 'var(--color-forest-dark)' }}>
+                    <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zm5.25-3.25a1 1 0 1 1-1 1 1 1 0 0 1 1-1z"/>
+                  </svg>
                 </a>
               )}
             </div>

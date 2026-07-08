@@ -1,4 +1,5 @@
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { CartProvider, useCart } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
@@ -68,8 +69,28 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   const shouldShowToolbar = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
+  const router = useRouter();
+  const pageTitle = router.pathname === '/' ? 'Siddham Wellness | Ayurvedic Wellness Store' : `${router.pathname.replace(/^\//, '').replace(/\//g, ' · ').replace(/-/g, ' ')} | Siddham Wellness`;
+  const pageDescription = 'Shop authentic Ayurvedic wellness products, herbal supplements, hair care, and skincare with Siddham Wellness.';
+
   return (
     <SessionProvider session={session}>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta name="keywords" content="ayurvedic, wellness, herbal supplements, hair care, skin care, siddham wellness" />
+        <meta name="robots" content="index,follow" />
+        <link rel="icon" href="/images/logo.jpg" type="image/jpeg" />
+        <link rel="shortcut icon" href="/images/logo.jpg" type="image/jpeg" />
+        <link rel="apple-touch-icon" href="/images/logo.jpg" type="image/jpeg" />
+        <meta property="og:title" content="Siddham Wellness" />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:title" content="Siddham Wellness" />
+        <meta property="twitter:description" content={pageDescription} />
+        <link rel="canonical" href={`https://siddhamwellness.com${router.asPath || '/'}`} />
+      </Head>
       <ToastProvider>
         <CartProvider>
           <AnalyticsTracker />
