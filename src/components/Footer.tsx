@@ -1,29 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function Footer() {
-  const [contacts, setContacts] = useState({
-    phone: '+91 98765 43210',
-    email: 'hello@siddhamwellness.com',
-    instagram: '',
-    facebook: '',
-  });
-
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.settings) {
-          setContacts({
-            phone: data.settings.store_phone || '+91 98765 43210',
-            email: data.settings.store_email || 'hello@siddhamwellness.com',
-            instagram: data.settings.social_instagram || '',
-            facebook: data.settings.social_facebook || '',
-          });
-        }
-      })
-      .catch(err => console.error('Error fetching settings for Footer:', err));
-  }, []);
+  const { storePhone, storeEmail, storeInstagram, storeFacebook } = useSettings();
+  const contacts = {
+    phone: storePhone,
+    email: storeEmail,
+    instagram: storeInstagram,
+    facebook: storeFacebook,
+  };
 
   return (
     <footer className="footer" role="contentinfo">

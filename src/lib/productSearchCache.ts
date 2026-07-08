@@ -81,7 +81,7 @@ function readStoredPayload(): ProductSearchCachePayload | null {
 
     return {
       savedAt: parsed.savedAt,
-      products: parsed.products.map((product) => normalizeProduct(product as Record<string, unknown>)).filter(isProductSearchItem),
+      products: parsed.products.map((product) => normalizeProduct(product as unknown as Record<string, unknown>)).filter(isProductSearchItem),
     };
   } catch {
     return null;

@@ -1,23 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function MobileBottomNav() {
   const router = useRouter();
   const { totalItems } = useCart();
-  const [catalogMode, setCatalogMode] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.settings) {
-          setCatalogMode(data.settings.catalog_mode === 'true');
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const { catalogMode } = useSettings();
 
   // Don't show on admin routes
   if (router.pathname.startsWith('/admin')) return null;

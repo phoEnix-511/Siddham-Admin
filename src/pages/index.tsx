@@ -122,7 +122,14 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
   return (
     <>
       <Head>
-        <title>Siddham Wellness – Authentic Ayurveda</title>
+        <title>Siddham Wellness – Authentic Ayurvedic Products</title>
+        <meta name="description" content="Discover Siddham Wellness — premium Ayurvedic hair care, herbal supplements, and natural skincare rooted in ancient wisdom. Free shipping on orders above ₹{promotional.freeShippingThreshold}." />
+        <meta property="og:title" content="Siddham Wellness – Ancient Wisdom, Modern Wellness" />
+        <meta property="og:description" content="Premium Ayurvedic products crafted with pure ingredients for holistic wellbeing. Explore our curated range of herbal formulations." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.siddhamwellness.com/" />
+        <meta name="twitter:title" content="Siddham Wellness – Ancient Wisdom, Modern Wellness" />
+        <link rel="canonical" href="https://www.siddhamwellness.com/" />
       </Head>
 
       {/* 1. Announcement Bar */}
@@ -354,11 +361,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
             Rooted in Ayurveda. Crafted for Wellness.
           </p>
 
-          <div className="concern-grid-5col" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 'var(--space-5)',
-          }}>
+          <div className="concern-grid-5col">
             {concernsList.map((concern, idx) => (
               <Link
                 key={idx}

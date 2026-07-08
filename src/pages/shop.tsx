@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useSettings } from '@/context/SettingsContext';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
 import {
   filterProductSearchProducts,
@@ -60,7 +61,7 @@ export default function ShopPage() {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [catalogMode, setCatalogMode] = useState(false);
+  const { catalogMode } = useSettings();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState(''); // separate controlled input
@@ -118,14 +119,6 @@ export default function ShopPage() {
         }
       })
       .catch(() => setCategories([]));
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.settings) {
-          setCatalogMode(data.settings.catalog_mode === 'true');
-        }
-      })
-      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -210,11 +203,25 @@ export default function ShopPage() {
     setTimeout(() => setAddingToCart(null), 1000);
   };
 
+  const activeLabel = activeCategory
+    ? (categories.find(c => c.slug === activeCategory)?.name || activeCategory.replace(/-/g, ' '))
+    : 'All Products';
+  const pageTitle = activeCategory
+    ? `${activeLabel} | Shop – Siddham Wellness`
+    : 'Shop Ayurvedic Products – Siddham Wellness';
+  const pageDesc = activeCategory
+    ? `Shop ${activeLabel} — authentic Ayurvedic formulations by Siddham Wellness.`
+    : "Browse Siddham Wellness's complete range of Ayurvedic hair care, supplements, skin care, and essential oils.";
+
   return (
     <>
       <Head>
-        <title>Shop – Siddham Wellness</title>
-        <meta name="description" content="Browse Siddham Wellness's complete range of Ayurvedic hair care, supplements, skin care, and essential oils." />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:type" content="website" />
+        <link rel="canonical" href={`https://www.siddhamwellness.com/shop${activeCategory ? `?category=${activeCategory}` : ''}`} />
       </Head>
       <Navbar />
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 import { useRouter } from 'next/router';
 
 interface CartDrawerProps {
@@ -9,6 +10,7 @@ interface CartDrawerProps {
 
 export default function CartDrawer({ onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, totalAmount } = useCart();
+  const { freeShippingThreshold, shippingCharge } = useSettings();
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
@@ -17,7 +19,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
     setMounted(true);
   }, []);
 
-  const shippingAmount = totalAmount >= 999 ? 0 : totalAmount > 0 ? 99 : 0;
+  const shippingAmount = totalAmount >= freeShippingThreshold ? 0 : totalAmount > 0 ? shippingCharge : 0;
   const grandTotal = totalAmount + shippingAmount;
 
   const handleCheckout = () => {
@@ -30,7 +32,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
   return createPortal(
     <>
       <div className="cart-overlay" onClick={onClose} />
-      <div className="cart-drawer" role="dialog" aria-label="Shopping Cart">
+      <div className="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping Cart">
         <div className="cart-header" style={{ padding: 'var(--space-6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-gray-200)' }}>
           <h2 className="cart-title" style={{ fontFamily: 'var(--font-sans)', fontWeight: 800, fontSize: '1.4rem', color: 'var(--color-forest-dark)', letterSpacing: '-0.02em', margin: 0 }}>Your Cart 🛍️</h2>
           <button className="modal-close" onClick={onClose} aria-label="Close cart" style={{ background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--color-gray-500)' }}>✕</button>
@@ -56,10 +58,17 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
                       width: 80, height: 80, borderRadius: 12,
                       background: 'var(--color-parchment)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '2rem', flexShrink: 0,
+                      fontSize: '2rem', flexShrink: 0, overflow: 'hidden',
                     }}
                   >
-                    🌿
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : '🌿'}
                   </div>
                   <div className="cart-item-info" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <div className="cart-item-name" style={{ fontFamily: 'var(--font-sans)', fontWeight: 700, fontSize: '1rem', color: 'var(--color-forest-dark)', lineHeight: 1.2 }}>
@@ -101,7 +110,7 @@ export default function CartDrawer({ onClose }: CartDrawerProps) {
               </div>
             ) : (
               <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-600)', background: 'var(--color-gray-200)', padding: '8px', borderRadius: '4px', fontWeight: 600, marginBottom: 'var(--space-4)', textAlign: 'center' }}>
-                Add ₹{999 - totalAmount} more for FREE shipping
+                Add ₹{Math.ceil(freeShippingThreshold - totalAmount)} more for FREE shipping
               </div>
             )}
 

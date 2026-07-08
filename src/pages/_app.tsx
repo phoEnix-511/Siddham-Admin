@@ -3,12 +3,16 @@ import Head from 'next/head';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { CartProvider, useCart } from '@/context/CartContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { SettingsProvider } from '@/context/SettingsContext';
 import { useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/router';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { VercelToolbar } from '@vercel/toolbar/next';
 import '@/styles/globals.css';
+
+const SITE_URL = 'https://www.siddhamwellness.com';
+const OG_IMAGE = `${SITE_URL}/images/og-default.jpg`;
 
 // Lightweight component to track active users without blocking rendering
 function AnalyticsTracker() {
@@ -70,36 +74,46 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   const shouldShowToolbar = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
   const router = useRouter();
-  const pageTitle = router.pathname === '/' ? 'Siddham Wellness | Ayurvedic Wellness Store' : `${router.pathname.replace(/^\//, '').replace(/\//g, ' · ').replace(/-/g, ' ')} | Siddham Wellness`;
+  // Individual pages set their own <title> — this is just a safe global fallback
   const pageDescription = 'Shop authentic Ayurvedic wellness products, herbal supplements, hair care, and skincare with Siddham Wellness.';
+  // For canonical: strip query strings from shop/search pages to prevent duplicate indexing
+  const canonicalPath = router.pathname.startsWith('/shop') ? router.pathname : router.asPath.split('?')[0];
 
   return (
     <SessionProvider session={session}>
       <Head>
-        <title>{pageTitle}</title>
+        <title>Siddham Wellness | Authentic Ayurvedic Products</title>
         <meta name="description" content={pageDescription} />
         <meta name="keywords" content="ayurvedic, wellness, herbal supplements, hair care, skin care, siddham wellness" />
         <meta name="robots" content="index,follow" />
-        <link rel="icon" href="/images/logo.jpg" type="image/jpeg" />
-        <link rel="shortcut icon" href="/images/logo.jpg" type="image/jpeg" />
-        <link rel="apple-touch-icon" href="/images/logo.jpg" type="image/jpeg" />
-        <meta property="og:title" content="Siddham Wellness" />
+        <meta name="format-detection" content="telephone=no" />
+        {/* Open Graph */}
+        <meta property="og:site_name" content="Siddham Wellness" />
+        <meta property="og:title" content="Siddham Wellness | Authentic Ayurvedic Products" />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:title" content="Siddham Wellness" />
-        <meta property="twitter:description" content={pageDescription} />
-        <link rel="canonical" href={`https://siddhamwellness.com${router.asPath || '/'}`} />
+        <meta property="og:image" content={OG_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:url" content={`${SITE_URL}${canonicalPath}`} />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Siddham Wellness | Authentic Ayurvedic Products" />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={OG_IMAGE} />
+        <link rel="canonical" href={`${SITE_URL}${canonicalPath}`} />
       </Head>
       <ToastProvider>
-        <CartProvider>
-          <AnalyticsTracker />
-          <AuthGuard>
-            <Component {...pageProps} />
-          </AuthGuard>
-          <MobileBottomNav />
-          {shouldShowToolbar && <VercelToolbar />}
-        </CartProvider>
+        <SettingsProvider>
+          <CartProvider>
+            <AnalyticsTracker />
+            <AuthGuard>
+              <Component {...pageProps} />
+            </AuthGuard>
+            <MobileBottomNav />
+            {shouldShowToolbar && <VercelToolbar />}
+          </CartProvider>
+        </SettingsProvider>
       </ToastProvider>
     </SessionProvider>
   );

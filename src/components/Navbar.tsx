@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 import CartDrawer from './CartDrawer';
 import { useSession } from 'next-auth/react';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
@@ -18,13 +19,13 @@ export default function Navbar() {
   const router = useRouter();
   const { totalItems, isOpen, openCart, closeCart } = useCart();
   const { data: session } = useSession();
+  const { catalogMode, raw: settingsRaw } = useSettings();
   const stickyShellRef = useRef<HTMLDivElement>(null);
   const stickyHeaderRef = useRef<HTMLElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const stickyTopRef = useRef(0);
   const isPinnedRef = useRef(false);
   const [announcement, setAnnouncement] = useState({ active: false, text: '' });
-  const [catalogMode, setCatalogMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
@@ -37,20 +38,16 @@ export default function Navbar() {
   const normalizedSearch = trimmedSearch.toLowerCase();
   const productSuggestionsLoading = productSearchStatus === 'loading';
 
+  // Sync announcement bar state from settings context
   useEffect(() => {
-    fetch('/api/settings')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.settings) {
-          setAnnouncement({
-            active: data.settings.announcement_bar_active === 'true',
-            text: data.settings.announcement_bar_text || '',
-          });
-          setCatalogMode(data.settings.catalog_mode === 'true');
-        }
-      })
-      .catch((err) => console.error('Error loading settings in Navbar:', err));
-  }, []);
+    if (settingsRaw && Object.keys(settingsRaw).length > 0) {
+      setAnnouncement({
+        active: settingsRaw.announcement_bar_active === 'true',
+        text: settingsRaw.announcement_bar_text || '',
+      });
+    }
+  }, [settingsRaw]);
+
 
   useEffect(() => {
     if (!searchOpen || searchProducts.length > 0) {

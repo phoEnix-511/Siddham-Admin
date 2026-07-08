@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
+import { useSettings } from '@/context/SettingsContext';
 import { GetStaticProps, GetStaticPaths, GetStaticPropsContext } from 'next';
 import { prisma } from '@/lib/prisma';
 import { CONCERN_ICONS } from '@/lib/concerns';
@@ -68,7 +69,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [catalogMode, setCatalogMode] = useState(false);
+  const { catalogMode } = useSettings();
 
   useEffect(() => {
     if (initialProduct) {
@@ -82,16 +83,6 @@ export default function ProductDetailPage({ product: initialProduct }: { product
     }
   }, [initialProduct]);
 
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.settings) {
-          setCatalogMode(data.settings.catalog_mode === 'true');
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Build unified media list: images first, then video
   const getYouTubeEmbedId = (url?: string) => {
@@ -202,11 +193,76 @@ export default function ProductDetailPage({ product: initialProduct }: { product
     addToast(`${qty}× ${itemLabel} added to cart`, 'success');
   };
 
+  const SITE_URL = 'https://www.siddhamwellness.com';
+  const productUrl = `${SITE_URL}/products/${product.id}`;
+  const productImage = product.images?.[0] || `${SITE_URL}/images/og-default.jpg`;
+  const metaDesc = (product.description || '').replace(/\s+/g, ' ').trim().slice(0, 157) + (product.description?.length > 157 ? '...' : '');
+
+  const avgRating = product.reviews && product.reviews.length > 0
+    ? (product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length).toFixed(1)
+    : null;
+
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.images || [],
+    sku: product.sku || product.id,
+    brand: { '@type': 'Brand', name: 'Siddham Wellness' },
+    url: productUrl,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: String(activePrice),
+      availability: activeStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: productUrl,
+      seller: { '@type': 'Organization', name: 'Siddham Wellness' },
+    },
+    ...(avgRating && product.reviews && product.reviews.length > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: avgRating,
+        reviewCount: product.reviews.length,
+      },
+    } : {}),
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE_URL}/shop` },
+      { '@type': 'ListItem', position: 3, name: product.category.name, item: `${SITE_URL}/shop?category=${product.category.slug}` },
+      { '@type': 'ListItem', position: 4, name: product.name, item: productUrl },
+    ],
+  };
+
   return (
     <>
       <Head>
         <title>{product.name} – Siddham Wellness</title>
-        <meta name="description" content={product.description} />
+        <meta name="description" content={metaDesc} />
+        <meta property="og:title" content={`${product.name} – Siddham Wellness`} />
+        <meta property="og:description" content={metaDesc} />
+        <meta property="og:image" content={productImage} />
+        <meta property="og:image:width" content="800" />
+        <meta property="og:image:height" content="800" />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={productUrl} />
+        <meta name="twitter:title" content={`${product.name} – Siddham Wellness`} />
+        <meta name="twitter:description" content={metaDesc} />
+        <meta name="twitter:image" content={productImage} />
+        <link rel="canonical" href={productUrl} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        />
       </Head>
       <Navbar />
 

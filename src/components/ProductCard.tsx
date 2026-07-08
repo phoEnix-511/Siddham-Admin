@@ -1,24 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
+import { useSettings } from '@/context/SettingsContext';
 import { useRouter } from 'next/router';
 
 export default function ProductCard({ product }: { product: any }) {
   const { addItem, openCart } = useCart();
   const router = useRouter();
-  const [catalogMode, setCatalogMode] = useState(false);
+  const { catalogMode } = useSettings();
   const disc = product.comparePrice ? Math.round((1 - product.price / product.comparePrice) * 100) : 0;
-
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.settings) {
-          setCatalogMode(data.settings.catalog_mode === 'true');
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   return (
     <div className="product-card" key={product.id}>
@@ -93,7 +83,7 @@ export default function ProductCard({ product }: { product: any }) {
                 name: product.name,
                 price: product.price,
                 image: product.images?.[0] || '',
-                stock: product.stockQuantity || 10
+                stock: product.stock ?? 10
               });
               openCart();
             }}
