@@ -121,16 +121,24 @@ export default function ShopPage() {
       .catch(() => setCategories([]));
   }, []);
 
+  // Read query parameters
+  const categoryParam = (router.query.category as string) || '';
+  const searchParam = (router.query.search as string) || (router.query.q as string) || '';
+
+  // Synchronize state and trigger product fetch when query parameters, price limit, or sort order changes
   useEffect(() => {
     if (!router.isReady) return;
-    const cat = (router.query.category as string) || '';
-    const q = (router.query.search as string) || (router.query.q as string) || '';
-    setActiveCategory(cat);
-    setSearch(q);
-    setSearchInput(q);
-    fetchProducts(cat, q, 1, priceLimit, sort);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady, router.query.category, router.query.search, router.query.q]);
+    
+    setActiveCategory(categoryParam);
+    setSearch(searchParam);
+    setSearchInput(searchParam);
+
+    const timer = setTimeout(() => {
+      fetchProducts(categoryParam, searchParam, 1, priceLimit, sort);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [router.isReady, categoryParam, searchParam, priceLimit, sort, fetchProducts]);
 
   // Auto-suggestions use the shared browser cache after the first product-list fetch.
   useEffect(() => {
@@ -172,26 +180,23 @@ export default function ShopPage() {
     };
   }, [searchInput, searchProducts.length, showSuggestions]);
 
-  // Price range update with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts(activeCategory, search, 1, priceLimit, sort);
-    }, 500);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [priceLimit, sort]);
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearch(searchInput);
     setShowSuggestions(false);
-    fetchProducts(activeCategory, searchInput, 1, priceLimit, sort);
+    
+    const query: Record<string, string> = {};
+    if (activeCategory) query.category = activeCategory;
+    if (searchInput.trim()) query.search = searchInput.trim();
+    
+    router.push({ pathname: '/shop', query }, undefined, { shallow: true });
   };
 
   const handleCategoryFilter = (slug: string) => {
-    setActiveCategory(slug);
-    fetchProducts(slug, search, 1, priceLimit, sort);
-    router.push(slug ? `/shop?category=${slug}` : '/shop', undefined, { shallow: true });
+    const query: Record<string, string> = {};
+    if (slug) query.category = slug;
+    if (searchInput.trim()) query.search = searchInput.trim();
+    
+    router.push({ pathname: '/shop', query }, undefined, { shallow: true });
   };
 
   const discount = (price: number, comparePrice?: number) =>
@@ -280,9 +285,11 @@ export default function ShopPage() {
                           className="suggestion-item"
                           onMouseDown={() => {
                             setSearchInput(p.name);
-                            setSearch(p.name);
                             setShowSuggestions(false);
-                            fetchProducts(activeCategory, p.name, 1, priceLimit, sort);
+                            const query: Record<string, string> = {};
+                            if (activeCategory) query.category = activeCategory;
+                            query.search = p.name;
+                            router.push({ pathname: '/shop', query }, undefined, { shallow: true });
                           }}
                         >
                           🌿 {p.name}
