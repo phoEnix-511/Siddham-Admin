@@ -7,6 +7,11 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
+import {
+  filterProductSearchProducts,
+  getProductSearchProducts,
+  type ProductSearchItem,
+} from '@/lib/productSearchCache';
 
 interface Product {
   id: string;
@@ -61,7 +66,9 @@ export default function ShopPage() {
   const [searchInput, setSearchInput] = useState(''); // separate controlled input
   const [activeCategory, setActiveCategory] = useState('');
   const [priceLimit, setPriceLimit] = useState(2000);
-  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [suggestions, setSuggestions] = useState<ProductSearchItem[]>([]);
+  const [searchProducts, setSearchProducts] = useState<ProductSearchItem[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [sort, setSort] = useState('newest');
@@ -129,20 +136,45 @@ export default function ShopPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query.category]);
 
-  // Auto-suggestions with debounce
+  // Auto-suggestions use the shared browser cache after the first product-list fetch.
   useEffect(() => {
     if (searchInput.trim().length < 2) {
       setSuggestions([]);
       return;
     }
-    const timer = setTimeout(() => {
-      fetch(`/api/products?search=${encodeURIComponent(searchInput)}&limit=6`)
-        .then(res => res.json())
-        .then(data => { if (data.products) setSuggestions(data.products); })
-        .catch(() => {});
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchInput]);
+
+    setSuggestions(filterProductSearchProducts(searchProducts, searchInput, 6));
+  }, [searchInput, searchProducts]);
+
+  useEffect(() => {
+    if (!showSuggestions || searchInput.trim().length < 2 || searchProducts.length > 0) {
+      return;
+    }
+
+    let active = true;
+    setSuggestionsLoading(true);
+
+    getProductSearchProducts()
+      .then((products) => {
+        if (active) {
+          setSearchProducts(products);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSearchProducts([]);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setSuggestionsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [searchInput, searchProducts.length, showSuggestions]);
 
   // Price range update with debounce
   useEffect(() => {
@@ -222,6 +254,11 @@ export default function ShopPage() {
                     style={{ width: '100%', paddingRight: 'var(--space-3)' }}
                     autoComplete="off"
                   />
+                  {showSuggestions && suggestionsLoading && suggestions.length === 0 && (
+                    <div className="suggestions-dropdown">
+                      <div className="suggestion-item">Loading suggestions...</div>
+                    </div>
+                  )}
                   {showSuggestions && suggestions.length > 0 && (
                     <div className="suggestions-dropdown">
                       {suggestions.map(p => (
