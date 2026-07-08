@@ -27,12 +27,16 @@ function formatCurrency(amount: number): string {
 }
 
 function getTransporter() {
+  const host = process.env.SMTP_HOST || 'smtp.zoho.in';
+  const port = parseInt(process.env.SMTP_PORT || '465');
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   if (user && pass) {
     return nodemailer.createTransport({
-      service: 'gmail',
+      host,
+      port,
+      secure: port === 465,
       auth: {
         user,
         pass,
@@ -52,27 +56,30 @@ async function sendEmail({
   html: string;
 }): Promise<{ success: boolean; error?: any }> {
   const transporter = getTransporter();
+  const fromEmail = process.env.SMTP_FROM || 'support@siddhamwellness.com';
+
   if (transporter) {
     try {
-      console.log(`[email] Attempting to send email via Gmail SMTP to: ${to}`);
+      console.log(`[email] Attempting to send email via SMTP (${process.env.SMTP_HOST || 'smtp.zoho.in'}) to: ${to}`);
       await transporter.sendMail({
-        from: `"Siddham Wellness" <${process.env.SMTP_USER}>`,
+        from: `"Siddham Wellness" <${fromEmail}>`,
         to,
         subject,
         html,
       });
-      console.log(`[email] Email sent successfully via Gmail SMTP to: ${to}`);
+      console.log(`[email] Email sent successfully via SMTP to: ${to}`);
       return { success: true };
     } catch (err) {
-      console.error('[email] Gmail SMTP failed, falling back to Resend:', err);
+      console.error('[email] SMTP failed, falling back to Resend:', err);
     }
   }
 
   // Fallback to Resend
   try {
     console.log(`[email] Attempting to send email via Resend to: ${to}`);
+    const fromResend = process.env.RESEND_FROM || 'Siddham Wellness <orders@resend.dev>';
     const { error } = await resend.emails.send({
-      from: 'Siddham Wellness <orders@resend.dev>',
+      from: fromResend,
       to,
       subject,
       html,

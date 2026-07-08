@@ -437,7 +437,7 @@ export default function AdminSettingsPage() {
               <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
                 <div className="form-group">
                   <label className="form-label" htmlFor="store-email">Contact Email</label>
-                  <input id="store-email" className="form-input" name="store_email" type="email" value={settings.store_email} onChange={handleChange} placeholder="hello@siddhamwellness.com" />
+                  <input id="store-email" className="form-input" name="store_email" type="email" value={settings.store_email} onChange={handleChange} placeholder="support@siddhamwellness.com" />
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="store-phone">Contact Phone</label>
