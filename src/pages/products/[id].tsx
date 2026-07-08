@@ -789,7 +789,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   try {
     // Pre-generate featured products to speed up initial loads
     const featuredProducts = await prisma.product.findMany({
-      where: { isFeatured: true, isActive: true },
+      where: { isFeatured: true, isActive: true, isDeleted: false },
       select: { id: true },
       take: 50,
     });

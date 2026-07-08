@@ -22,7 +22,7 @@ export const getStaticProps: GetStaticProps = async () => {
   try {
     const [products, categories, settingsMap, coupons] = await Promise.all([
       prisma.product.findMany({
-        where: { isFeatured: true },
+        where: { isFeatured: true, isActive: true, isDeleted: false },
         take: 10,
         select: {
           id: true, name: true, price: true, comparePrice: true,

@@ -12,7 +12,7 @@ export async function warmUpSearchCache() {
 
     // First, count total active products
     const total = await prisma.product.count({
-      where: { isActive: true },
+      where: { isActive: true, isDeleted: false },
     });
 
     const limitNum = 250;
@@ -25,7 +25,7 @@ export async function warmUpSearchCache() {
       
       // Query database directly
       const products = await prisma.product.findMany({
-        where: { isActive: true },
+        where: { isActive: true, isDeleted: false },
         include: {
           category: true,
           variants: true,

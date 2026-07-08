@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEditorRole } from "@/lib/auth";
 import { generateSlug } from "@/lib/utils";
 import { getOrSet, del, delPattern } from "@/lib/cache";
+import { warmUpSearchCache } from "@/lib/cacheWarmup";
 
 const PRODUCT_CACHE_TTL = 60 * 10; // 10 minutes
 const REVIEWS_LIMIT = 20; // cap reviews to avoid over-fetching
@@ -45,7 +46,7 @@ export default async function handler(
           }),
       );
 
-      if (!product) return res.status(404).json({ error: "Product not found" });
+      if (!product || product.isDeleted) return res.status(404).json({ error: "Product not found" });
 
       res.setHeader(
         "Cache-Control",
@@ -222,7 +223,6 @@ export default async function handler(
       ]);
 
       // Warm up search cache in the background
-      const { warmUpSearchCache } = require("@/lib/cacheWarmup");
       warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after product update/delete:", err));
 
       return res.status(200).json({ product });
@@ -240,18 +240,10 @@ export default async function handler(
     }
 
     try {
-      const orderItemCount = await prisma.orderItem.count({
-        where: { productId },
+      await prisma.product.update({
+        where: { id: productId },
+        data: { isDeleted: true, isActive: false },
       });
-
-      if (orderItemCount > 0) {
-        await prisma.product.update({
-          where: { id: productId },
-          data: { isActive: false },
-        });
-      } else {
-        await prisma.product.delete({ where: { id: productId } });
-      }
 
       await Promise.all([
         del(productCacheKey(productId)),
@@ -259,15 +251,11 @@ export default async function handler(
       ]);
 
       // Warm up search cache in the background
-      const { warmUpSearchCache } = require("@/lib/cacheWarmup");
       warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after product update/delete:", err));
 
       return res.status(200).json({
         success: true,
-        message:
-          orderItemCount > 0
-            ? "Product soft-deleted (marked inactive) since it is referenced in orders."
-            : "Product deleted.",
+        message: "Product soft-deleted successfully.",
       });
     } catch (error) {
       console.error(error);

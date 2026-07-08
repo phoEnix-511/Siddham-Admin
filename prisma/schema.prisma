@@ -111,6 +111,7 @@ model Product {
   sku          String?          @unique
   isActive     Boolean          @default(true)
   isFeatured   Boolean          @default(false)
+  isDeleted    Boolean          @default(false)
   ingredients  String?
   benefits     String?
   usage        String?

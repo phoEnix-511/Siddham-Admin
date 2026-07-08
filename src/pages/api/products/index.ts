@@ -51,7 +51,7 @@ export default async function handler(
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
-      const where: Record<string, any> = {};
+      const where: Record<string, any> = { isDeleted: false };
       if (!isAdmin || showInactive !== "true") {
         where.isActive = true;
       }
