@@ -1,5 +1,3 @@
-import nodemailer from 'nodemailer';
-
 export interface OrderEmailData {
   orderNumber: string;
   customerName: string;
@@ -23,29 +21,6 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST || 'smtp.elasticemail.com';
-  const port = parseInt(process.env.SMTP_PORT || '2525');
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (user && pass) {
-    return nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: {
-        user,
-        pass,
-      },
-      connectionTimeout: 5000, // 5 seconds
-      greetingTimeout: 5000,   // 5 seconds
-      socketTimeout: 10000,    // 10 seconds
-    });
-  }
-  return null;
-}
-
 async function sendEmail({
   to,
   subject,
@@ -55,26 +30,53 @@ async function sendEmail({
   subject: string;
   html: string;
 }): Promise<{ success: boolean; error?: any }> {
-  const transporter = getTransporter();
+  const apiKey = process.env.ELASTICEMAIL_API_KEY;
   const fromEmail = process.env.SMTP_FROM || 'no-reply@siddhamwellness.com';
 
-  if (!transporter) {
-    console.error('[email] No SMTP transporter configured');
-    return { success: false, error: 'SMTP transporter not configured' };
+  if (!apiKey) {
+    console.error('[email] No Elastic Email API key configured');
+    return { success: false, error: 'Elastic Email API key not configured' };
   }
 
   try {
-    console.log(`[email] Attempting to send email via SMTP (${process.env.SMTP_HOST || 'smtp.elasticemail.com'}) to: ${to}`);
-    await transporter.sendMail({
-      from: `"Siddham Wellness" <${fromEmail}>`,
-      to,
-      subject,
-      html,
+    console.log(`[email] Attempting to send email via Elastic Email API to: ${to}`);
+    const response = await fetch('https://api.elasticemail.com/v4/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-elasticemail-apikey': apiKey,
+      },
+      body: JSON.stringify({
+        Recipients: [
+          {
+            Email: to,
+          },
+        ],
+        Content: {
+          Body: [
+            {
+              ContentType: 'HTML',
+              Content: html,
+              Charset: 'utf-8',
+            },
+          ],
+          From: `"Siddham Wellness" <${fromEmail}>`,
+          Subject: subject,
+        },
+      }),
     });
-    console.log(`[email] Email sent successfully via SMTP to: ${to}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[email] Elastic Email API failed: Status ${response.status} - ${errorText}`);
+      return { success: false, error: errorText };
+    }
+
+    const result = await response.json();
+    console.log(`[email] Email sent successfully via Elastic Email API to: ${to}. Transaction ID:`, result.TransactionID);
     return { success: true };
   } catch (err) {
-    console.error('[email] SMTP failed:', err);
+    console.error('[email] Elastic Email API error:', err);
     return { success: false, error: err };
   }
 }
