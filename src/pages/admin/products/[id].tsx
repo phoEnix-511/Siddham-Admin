@@ -229,7 +229,7 @@ export default function ProductFormPage() {
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed, description: newCategoryDescription.trim() || null }),
+        body: JSON.stringify({ name: trimmed, description: newCategoryDescription.trim() || null, isConcern: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create category');
