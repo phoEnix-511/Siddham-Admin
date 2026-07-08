@@ -3644,6 +3644,12 @@ p {
   }
 }
 
+@media (max-width: 500px) {
+  .hero-explore-btn {
+    display: none !important;
+  }
+}
+
 /* ── Accessibility: Reduce Motion ────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -3,6 +3,7 @@ import { GetStaticProps } from 'next';
 import { prisma } from '@/lib/prisma';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -95,6 +96,7 @@ export const getStaticProps: GetStaticProps = async () => {
 };
 
 export default function Home({ featuredProducts, categories, coupons = [], hero, promotional, catalogMode, carouselImages = DEFAULT_CAROUSEL_IMAGES }: { featuredProducts: any[], categories: any[], coupons?: any[], hero: any, promotional: any, catalogMode: boolean, carouselImages?: string[] }) {
+  const router = useRouter();
   // Hook for slideshow
   const [activeSlide, setActiveSlide] = React.useState(0);
   const slideImages = React.useMemo(() => (carouselImages && carouselImages.length > 0 ? carouselImages : DEFAULT_CAROUSEL_IMAGES), [carouselImages]);
@@ -206,7 +208,10 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
       </div>
 
       {/* 3. Hero Slideshow Banner — clean images with blurred full-bleed background on wide screens */}
-      <section style={{ width: '100%', position: 'relative', aspectRatio: '16 / 9', overflow: 'hidden', background: '#000', borderRadius: '16px 16px 16px 16px', boxShadow: '0 16px 40px rgba(6, 26, 17, 0.16)' }}>
+      <section 
+        onClick={() => router.push('/shop')}
+        style={{ width: '100%', position: 'relative', aspectRatio: '16 / 9', overflow: 'hidden', background: '#000', borderRadius: '16px 16px 16px 16px', boxShadow: '0 16px 40px rgba(6, 26, 17, 0.16)', cursor: 'pointer' }}
+      >
         {slideImages.map((img, idx) => (
           <div
             key={idx}
@@ -252,15 +257,19 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
         ))}
 
         {/* Explore button — glass pill floating at bottom center */}
-        <div style={{
-          position: 'absolute',
-          bottom: '36px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10
-        }}>
+        <div 
+          className="hero-explore-btn"
+          style={{
+            position: 'absolute',
+            bottom: '36px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10
+          }}
+        >
           <Link
             href="/shop"
+            onClick={(e) => e.stopPropagation()}
             style={{
               display: 'inline-block',
               padding: '14px 10px',
@@ -287,7 +296,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
           {slideImages.map((_, idx) => (
             <button
               key={idx}
-              onClick={() => setActiveSlide(idx)}
+              onClick={(e) => { e.stopPropagation(); setActiveSlide(idx); }}
               aria-label={`Show slide ${idx + 1}`}
               style={{
                 width: idx === activeSlide ? '24px' : '8px',
@@ -305,12 +314,12 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
 
         {/* Prev / Next arrows */}
         <button
-          onClick={() => setActiveSlide((activeSlide - 1 + slideImages.length) % slideImages.length)}
+          onClick={(e) => { e.stopPropagation(); setActiveSlide((activeSlide - 1 + slideImages.length) % slideImages.length); }}
           aria-label="Previous slide"
           style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.2rem', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >‹</button>
         <button
-          onClick={() => setActiveSlide((activeSlide + 1) % slideImages.length)}
+          onClick={(e) => { e.stopPropagation(); setActiveSlide((activeSlide + 1) % slideImages.length); }}
           aria-label="Next slide"
           style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 10, background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', border: 'none', borderRadius: '50%', width: '42px', height: '42px', fontSize: '1.2rem', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >›</button>

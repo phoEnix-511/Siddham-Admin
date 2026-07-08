@@ -124,10 +124,13 @@ export default function ShopPage() {
   useEffect(() => {
     if (!router.isReady) return;
     const cat = (router.query.category as string) || '';
+    const q = (router.query.search as string) || (router.query.q as string) || '';
     setActiveCategory(cat);
-    fetchProducts(cat, search, 1, priceLimit, sort);
+    setSearch(q);
+    setSearchInput(q);
+    fetchProducts(cat, q, 1, priceLimit, sort);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady, router.query.category]);
+  }, [router.isReady, router.query.category, router.query.search, router.query.q]);
 
   // Auto-suggestions use the shared browser cache after the first product-list fetch.
   useEffect(() => {
