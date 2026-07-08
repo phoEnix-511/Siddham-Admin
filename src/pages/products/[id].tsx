@@ -93,7 +93,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
   };
 
   const mediaItems: Array<{ type: 'image'; src: string } | { type: 'video'; embedId: string }> = [
-    ...(product.images || []).map(src => ({ type: 'image' as const, src })),
+    ...(product.images || []).map((img: any) => ({ type: 'image' as const, src: img.id ? `/api/products/images/${img.id}` : img })),
     ...(product.videoUrl && getYouTubeEmbedId(product.videoUrl)
       ? [{ type: 'video' as const, embedId: getYouTubeEmbedId(product.videoUrl)! }]
       : []),
@@ -178,6 +178,9 @@ export default function ProductDetailPage({ product: initialProduct }: { product
     : 0;
 
   const handleAddToCart = () => {
+    const coverImage = (product.images?.[0] as any)?.id 
+      ? `/api/products/images/${(product.images[0] as any).id}` 
+      : '';
     for (let i = 0; i < qty; i++) {
       addItem({
         productId: product.id,
@@ -185,7 +188,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
         variantName: selectedVariant?.name,
         name: product.name,
         price: activePrice,
-        image: product.images?.[0] || '',
+        image: coverImage,
         stock: activeStock,
       });
     }
@@ -195,7 +198,9 @@ export default function ProductDetailPage({ product: initialProduct }: { product
 
   const SITE_URL = 'https://www.siddhamwellness.com';
   const productUrl = `${SITE_URL}/products/${product.id}`;
-  const productImage = product.images?.[0] || `${SITE_URL}/images/og-default.jpg`;
+  const productImage = (product.images?.[0] as any)?.id 
+    ? `${SITE_URL}/api/products/images/${(product.images[0] as any).id}` 
+    : `${SITE_URL}/images/og-default.jpg`;
   const metaDesc = (product.description || '').replace(/\s+/g, ' ').trim().slice(0, 157) + (product.description?.length > 157 ? '...' : '');
 
   const avgRating = product.reviews && product.reviews.length > 0
@@ -207,7 +212,7 @@ export default function ProductDetailPage({ product: initialProduct }: { product
     '@type': 'Product',
     name: product.name,
     description: product.description,
-    image: product.images || [],
+    image: (product.images || []).map((img: any) => img.id ? `${SITE_URL}/api/products/images/${img.id}` : img),
     sku: product.sku || product.id,
     brand: { '@type': 'Brand', name: 'Siddham Wellness' },
     url: productUrl,

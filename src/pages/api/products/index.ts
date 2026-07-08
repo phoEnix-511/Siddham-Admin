@@ -81,7 +81,18 @@ export default async function handler(
         const [products, total] = await Promise.all([
           prisma.product.findMany({
             where,
-            include: { category: true, variants: true },
+            include: {
+              category: true,
+              variants: true,
+              images: {
+                select: {
+                  id: true,
+                },
+                orderBy: {
+                  createdAt: "asc",
+                },
+              },
+            },
             orderBy,
             skip,
             take: limitNum,
@@ -136,14 +147,30 @@ export default async function handler(
           ? [data.videoUrl]
           : [];
 
+      const { images: rawImages, ...restData } = data;
+
       const productData = {
-        ...data,
-        slug: data.slug || generateSlug(data.name),
+        ...restData,
+        slug: restData.slug || generateSlug(restData.name),
         videoUrl: videoUrls[0] || null,
         videoUrls,
+        images: {
+          create: Array.isArray(rawImages)
+            ? rawImages.filter(Boolean).map((base64: string) => ({ base64 }))
+            : [],
+        },
       };
 
-      const product = await prisma.product.create({ data: productData });
+      const product = await prisma.product.create({
+        data: productData,
+        include: {
+          category: true,
+          variants: true,
+          images: {
+            select: { id: true }
+          }
+        }
+      });
 
       // Invalidate all product list caches so new product shows up
       await delPattern("products:list:");

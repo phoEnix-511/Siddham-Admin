@@ -198,7 +198,10 @@ export default function ShopPage() {
     e.preventDefault();
     if (product.stock === 0 || addingToCart === product.id) return;
     setAddingToCart(product.id);
-    addItem({ productId: product.id, name: product.name, price: product.price, image: product.images?.[0] || '', stock: product.stock });
+    const coverImage = (product.images as any)?.[0]?.id 
+      ? `/api/products/images/${(product.images as any)[0].id}` 
+      : '';
+    addItem({ productId: product.id, name: product.name, price: product.price, image: coverImage, stock: product.stock });
     addToast(`${product.name} added to cart ✓`, 'success');
     setTimeout(() => setAddingToCart(null), 1000);
   };
@@ -393,9 +396,9 @@ export default function ShopPage() {
                   <div className="product-card" key={product.id}>
                     <Link href={`/products/${product.id}`}>
                       <div className="product-card-image">
-                        {product.images && product.images.length > 0 && product.images[0] ? (
+                        {product.images && product.images.length > 0 && (product.images[0] as any)?.id ? (
                           <img
-                            src={product.images[0]}
+                            src={`/api/products/images/${(product.images[0] as any).id}`}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
@@ -410,7 +413,7 @@ export default function ShopPage() {
                         ) : null}
                         <div
                           className="img-placeholder fallback-placeholder"
-                          style={{ display: product.images && product.images.length > 0 && product.images[0] ? 'none' : 'flex' }}
+                          style={{ display: product.images && product.images.length > 0 && (product.images[0] as any)?.id ? 'none' : 'flex' }}
                         >
                           {CONCERN_ICONS[product.category.slug] || '🌿'}
                         </div>

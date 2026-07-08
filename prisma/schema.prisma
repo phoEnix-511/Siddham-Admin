@@ -106,7 +106,7 @@ model Product {
   description  String
   price        Float
   comparePrice Float?
-  images       String[]
+  images       ProductImage[]
   stock        Int              @default(0)
   sku          String?          @unique
   isActive     Boolean          @default(true)
@@ -125,6 +125,14 @@ model Product {
   category     Category         @relation(fields: [categoryId], references: [id])
   variants     ProductVariant[]
   reviews      Review[]
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  base64    String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Order {

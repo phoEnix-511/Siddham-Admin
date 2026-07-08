@@ -29,6 +29,14 @@ export default async function handler(
             include: {
               category: true,
               variants: true,
+              images: {
+                select: {
+                  id: true,
+                },
+                orderBy: {
+                  createdAt: "asc",
+                },
+              },
               reviews: {
                 orderBy: { createdAt: "desc" },
                 take: REVIEWS_LIMIT,
@@ -81,7 +89,6 @@ export default async function handler(
     try {
       const updateData: Record<string, unknown> = {
         description,
-        images,
         isActive,
         isFeatured,
         ingredients,
@@ -164,10 +171,49 @@ export default async function handler(
         );
       }
 
+      if (images !== undefined && Array.isArray(images)) {
+        const keptImageIds: string[] = [];
+        const newImagesBase64: string[] = [];
+
+        images.forEach((img: string) => {
+          if (img.startsWith("/api/products/images/")) {
+            const id = img.split("/").pop();
+            if (id) keptImageIds.push(id);
+          } else if (img.startsWith("data:")) {
+            newImagesBase64.push(img);
+          }
+        });
+
+        // 1. Delete removed images
+        await prisma.productImage.deleteMany({
+          where: {
+            productId,
+            id: { notIn: keptImageIds },
+          },
+        });
+
+        // 2. Insert new base64 images
+        if (newImagesBase64.length > 0) {
+          await prisma.productImage.createMany({
+            data: newImagesBase64.map((base64) => ({
+              productId,
+              base64,
+            })),
+          });
+        }
+      }
+
       const product = await prisma.product.update({
         where: { id: productId },
         data: updateData,
-        include: { category: true, variants: true },
+        include: {
+          category: true,
+          variants: true,
+          images: {
+            select: { id: true },
+            orderBy: { createdAt: "asc" }
+          }
+        },
       });
 
       await Promise.all([

@@ -176,7 +176,7 @@ export default function ProductFormPage() {
             ingredients: p.ingredients || '', benefits: p.benefits || '',
             usage: p.usage || '', weight: p.weight || '',
             isActive: p.isActive, isFeatured: p.isFeatured,
-            images: p.images || [], videoUrl: p.videoUrl || '', videoUrls: p.videoUrls || (p.videoUrl ? [p.videoUrl] : []),
+            images: (p.images || []).map((img: any) => img.id ? `/api/products/images/${img.id}` : img), videoUrl: p.videoUrl || '', videoUrls: p.videoUrls || (p.videoUrl ? [p.videoUrl] : []),
           });
           if (p.variants) {
             setVariants(p.variants.map((v: any) => ({
