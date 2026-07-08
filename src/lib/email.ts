@@ -1,7 +1,4 @@
-import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface OrderEmailData {
   orderNumber: string;
@@ -27,8 +24,8 @@ function formatCurrency(amount: number): string {
 }
 
 function getTransporter() {
-  const host = process.env.SMTP_HOST || 'smtp.zoho.in';
-  const port = parseInt(process.env.SMTP_PORT || '465');
+  const host = process.env.SMTP_HOST || 'smtp.elasticemail.com';
+  const port = parseInt(process.env.SMTP_PORT || '2525');
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
@@ -41,6 +38,9 @@ function getTransporter() {
         user,
         pass,
       },
+      connectionTimeout: 5000, // 5 seconds
+      greetingTimeout: 5000,   // 5 seconds
+      socketTimeout: 10000,    // 10 seconds
     });
   }
   return null;
@@ -56,43 +56,25 @@ async function sendEmail({
   html: string;
 }): Promise<{ success: boolean; error?: any }> {
   const transporter = getTransporter();
-  const fromEmail = process.env.SMTP_FROM || 'support@siddhamwellness.com';
+  const fromEmail = process.env.SMTP_FROM || 'no-reply@siddhamwellness.com';
 
-  if (transporter) {
-    try {
-      console.log(`[email] Attempting to send email via SMTP (${process.env.SMTP_HOST || 'smtp.zoho.in'}) to: ${to}`);
-      await transporter.sendMail({
-        from: `"Siddham Wellness" <${fromEmail}>`,
-        to,
-        subject,
-        html,
-      });
-      console.log(`[email] Email sent successfully via SMTP to: ${to}`);
-      return { success: true };
-    } catch (err) {
-      console.error('[email] SMTP failed, falling back to Resend:', err);
-    }
+  if (!transporter) {
+    console.error('[email] No SMTP transporter configured');
+    return { success: false, error: 'SMTP transporter not configured' };
   }
 
-  // Fallback to Resend
   try {
-    console.log(`[email] Attempting to send email via Resend to: ${to}`);
-    const fromResend = process.env.RESEND_FROM || 'Siddham Wellness <orders@resend.dev>';
-    const { error } = await resend.emails.send({
-      from: fromResend,
+    console.log(`[email] Attempting to send email via SMTP (${process.env.SMTP_HOST || 'smtp.elasticemail.com'}) to: ${to}`);
+    await transporter.sendMail({
+      from: `"Siddham Wellness" <${fromEmail}>`,
       to,
       subject,
       html,
     });
-
-    if (error) {
-      console.error('[email] Resend failed:', error);
-      return { success: false, error };
-    }
-    console.log(`[email] Email sent successfully via Resend to: ${to}`);
+    console.log(`[email] Email sent successfully via SMTP to: ${to}`);
     return { success: true };
   } catch (err) {
-    console.error('[email] Resend unexpected error:', err);
+    console.error('[email] SMTP failed:', err);
     return { success: false, error: err };
   }
 }
