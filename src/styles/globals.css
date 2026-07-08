@@ -2794,9 +2794,6 @@ p {
 
 /* ── Mobile fixes for product detail page ────────────────────── */
 @media (max-width: 1000px) {
-  .nav-brand-mark {
-    display: none;
-  }
   .mobile-bottom-nav {
     display: flex;
   }
