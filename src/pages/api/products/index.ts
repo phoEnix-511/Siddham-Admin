@@ -104,10 +104,15 @@ export default async function handler(
 
       if (shouldCache) {
         const cacheKey = buildListCacheKey(req.query);
-        data = await getOrSet(cacheKey, LIST_CACHE_TTL, fetchFresh);
+        const isQuickSearch = limitNum >= 100;
+        const ttl = isQuickSearch ? 86400 : LIST_CACHE_TTL; // 24 hours for quick search, 5 mins otherwise
+
+        data = await getOrSet(cacheKey, ttl, fetchFresh);
         res.setHeader(
           "Cache-Control",
-          "public, s-maxage=60, stale-while-revalidate=300",
+          isQuickSearch
+            ? "public, s-maxage=86400, stale-while-revalidate=3600"
+            : "public, s-maxage=60, stale-while-revalidate=300",
         );
       } else {
         data = await fetchFresh();
@@ -142,6 +147,10 @@ export default async function handler(
 
       // Invalidate all product list caches so new product shows up
       await delPattern("products:list:");
+
+      // Warm up search cache in the background
+      const { warmUpSearchCache } = require("@/lib/cacheWarmup");
+      warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after create:", err));
 
       return res.status(201).json({ product });
     } catch (error) {

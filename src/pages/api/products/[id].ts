@@ -175,6 +175,10 @@ export default async function handler(
         delPattern("products:list:"),
       ]);
 
+      // Warm up search cache in the background
+      const { warmUpSearchCache } = require("@/lib/cacheWarmup");
+      warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after product update/delete:", err));
+
       return res.status(200).json({ product });
     } catch (error) {
       console.error(error);
@@ -207,6 +211,10 @@ export default async function handler(
         del(productCacheKey(productId)),
         delPattern("products:list:"),
       ]);
+
+      // Warm up search cache in the background
+      const { warmUpSearchCache } = require("@/lib/cacheWarmup");
+      warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after product update/delete:", err));
 
       return res.status(200).json({
         success: true,
