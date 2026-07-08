@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
+import { CONCERN_ICONS } from '@/lib/concerns';
 import { getOrSet } from '@/lib/cache';
 
 const DEFAULT_CAROUSEL_IMAGES = ['/images/banner2.jpg', '/images/banner3.jpg', '/images/banner4.jpg'];
@@ -119,7 +119,7 @@ export default function Home({ featuredProducts, categories, coupons = [], hero,
     }
   };
 
-  const concernsList = CONCERN_CATEGORIES;
+  const concernsList = React.useMemo(() => (categories || []).filter((c: any) => c.isConcern), [categories]);
 
   return (
     <>

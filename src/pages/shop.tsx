@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useToast } from '@/context/ToastContext';
 import { useSettings } from '@/context/SettingsContext';
-import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
+import { CONCERN_ICONS } from '@/lib/concerns';
 import {
   filterProductSearchProducts,
   getProductSearchProducts,
@@ -99,24 +99,8 @@ export default function ShopPage() {
     fetch('/api/categories')
       .then(r => r.json())
       .then(d => {
-        const concernCategories = (d.categories || []).filter((cat: Category) => {
-          const isConcern = cat.isConcern || CONCERN_CATEGORIES.some((concern) => concern.slug === cat.slug);
-          return isConcern;
-        });
-
-        if (concernCategories.length > 0) {
-          setCategories(concernCategories);
-        } else {
-          setCategories(
-            CONCERN_CATEGORIES.map((concern) => ({
-              id: concern.slug,
-              name: concern.name,
-              slug: concern.slug,
-              isConcern: true,
-              _count: { products: 0 },
-            })),
-          );
-        }
+        const concernCategories = (d.categories || []).filter((cat: Category) => cat.isConcern);
+        setCategories(concernCategories);
       })
       .catch(() => setCategories([]));
   }, []);

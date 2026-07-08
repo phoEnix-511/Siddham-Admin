@@ -94,6 +94,7 @@ model Category {
   slug        String    @unique
   description String?
   imageUrl    String?
+  isConcern   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]

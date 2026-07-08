@@ -15,48 +15,16 @@ export default async function handler(
   if (req.method === "GET") {
     try {
       const categories = await getOrSet(CACHE_KEY, CACHE_TTL, async () => {
-        const existingCategories = await prisma.category.findMany({
+        return prisma.category.findMany({
           include: {
             _count: {
               select: {
-                products: { where: { isActive: true } },
+                products: { where: { isActive: true, isDeleted: false } },
               },
             },
           },
           orderBy: { name: "asc" },
         });
-
-        const mappedCategories = existingCategories.map((category) => ({
-          ...category,
-          isConcern: CONCERN_CATEGORIES.some(
-            (concern) => concern.slug === category.slug,
-          ),
-        }));
-
-        const concernSlugs = new Set(
-          mappedCategories.map((category) => category.slug),
-        );
-        const missingConcerns = CONCERN_CATEGORIES.filter(
-          (concern) => !concernSlugs.has(concern.slug),
-        );
-
-        for (const concern of missingConcerns) {
-          const created = await prisma.category.create({
-            data: {
-              name: concern.name,
-              slug: concern.slug,
-              description: concern.description || null,
-              imageUrl: concern.imageUrl || null,
-            },
-          });
-          mappedCategories.push({
-            ...created,
-            _count: { products: 0 },
-            isConcern: true,
-          });
-        }
-
-        return mappedCategories.sort((a, b) => a.name.localeCompare(b.name));
       });
 
       res.setHeader(
@@ -77,7 +45,7 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const { name, description, imageUrl } = req.body;
+    const { name, description, imageUrl, isConcern = false } = req.body;
     if (!name) return res.status(400).json({ error: "Name is required" });
 
     try {
@@ -88,6 +56,7 @@ export default async function handler(
           slug,
           description: description || null,
           imageUrl: imageUrl || null,
+          isConcern,
         },
       });
 
