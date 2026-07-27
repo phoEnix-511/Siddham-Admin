@@ -2,10 +2,31 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import Razorpay from 'razorpay';
 import { prisma } from '@/lib/prisma';
 
+async function getRazorpayKeys(): Promise<{ keyId: string; keySecret: string }> {
+  let keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
+  let keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+
+  if (!keyId || !keySecret) {
+    try {
+      const settings = await prisma.setting.findMany({
+        where: { key: { in: ['razorpay_key_id', 'razorpay_key_secret'] } },
+      });
+      const map: Record<string, string> = {};
+      settings.forEach((s) => { map[s.key] = s.value; });
+
+      keyId = keyId || map['razorpay_key_id'] || '';
+      keySecret = keySecret || map['razorpay_key_secret'] || '';
+    } catch (err) {
+      console.error('[razorpay] Failed to fetch keys from DB:', err);
+    }
+  }
+
+  return { keyId, keySecret };
+}
+
 const getRazorpayInstance = async () => {
-  const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
-  const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
-  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+  const { keyId, keySecret } = await getRazorpayKeys();
+  return { razorpay: new Razorpay({ key_id: keyId, key_secret: keySecret }), keyId };
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -20,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const razorpay = await getRazorpayInstance();
+    const { razorpay, keyId } = await getRazorpayInstance();
     let finalAmount = 0;
     let finalReceipt = receipt || `rcpt_${Date.now()}`;
     let notes: Record<string, string> | undefined = undefined;
@@ -62,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      keyId,
     });
   } catch (error) {
     console.error('Razorpay create order error:', error);

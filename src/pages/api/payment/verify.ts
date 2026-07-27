@@ -30,8 +30,13 @@ export default async function handler(
   }
 
   try {
+    let keySecret = process.env.RAZORPAY_KEY_SECRET || "";
+    if (!keySecret) {
+      const dbSecret = await prisma.setting.findUnique({ where: { key: "razorpay_key_secret" } });
+      keySecret = dbSecret?.value || "";
+    }
+
     // Verify Razorpay signature
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || "";
     const body = razorpayOrderId + "|" + razorpayPaymentId;
     const expectedSignature = crypto
       .createHmac("sha256", keySecret)
