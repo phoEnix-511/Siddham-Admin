@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { requireAdminRole, requireViewerRole } from '@/lib/auth';
-import { getOrSet, del } from '@/lib/cache';
+import { getOrSet, del, delPattern } from '@/lib/cache';
 
 const SETTINGS_CACHE_TTL = 60 * 10; // 10 minutes
 
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return map;
       });
 
-      res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
       return res.status(200).json({ settings: settingsMap });
     } catch (error) {
       console.error(error);
@@ -65,7 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Invalidate settings cache
       await Promise.all([
         del('settings:admin'),
-        del('settings:public')
+        del('settings:public'),
+        delPattern('settings:'),
       ]);
 
       return res.status(200).json({ success: true });

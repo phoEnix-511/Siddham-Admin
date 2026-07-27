@@ -105,6 +105,21 @@ export default function AdminSettingsPage() {
   const [showSecret, setShowSecret] = useState(false);
   const [downloadingBackup, setDownloadingBackup] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState(false);
+  const [purgingCache, setPurgingCache] = useState(false);
+
+  const handlePurgeCache = async () => {
+    setPurgingCache(true);
+    try {
+      const res = await fetch('/api/admin/purge-cache', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to clear cache');
+      addToast('All system caches purged & search cache refreshed!', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to clear cache', 'error');
+    } finally {
+      setPurgingCache(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -629,6 +644,24 @@ export default function AdminSettingsPage() {
                     style={{ height: 250 }}
                   />
                 </div>
+              </div>
+            </SettingSection>
+
+            {/* Cache Management */}
+            <SettingSection title="Cache & Performance" icon="⚡">
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-2)' }}>
+                Purge all Redis cache keys (settings, products, categories, orders, reports) and force immediate search cache re-warming. Use this if any changes made in admin are not reflecting on the live site.
+              </div>
+              <div style={{ marginTop: 'var(--space-2)' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handlePurgeCache}
+                  disabled={purgingCache}
+                  style={{ borderColor: 'var(--color-saffron)', color: 'var(--color-forest-dark)', fontWeight: 600 }}
+                >
+                  {purgingCache ? '⏳ Purging Caches...' : '⚡ Purge & Refresh All System Caches'}
+                </button>
               </div>
             </SettingSection>
 
