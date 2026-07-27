@@ -69,8 +69,12 @@ export async function sendWhatsAppOtp(
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
   
   if (!phoneNumberId || !accessToken) {
-    console.error('[otp] WhatsApp Cloud API credentials are not set');
-    return { success: false, message: 'WhatsApp Cloud API not configured' };
+    console.error('[otp] WhatsApp Cloud API credentials are not set (WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN missing)');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[otp] [DEV FALLBACK] OTP for ${e164Phone}: ${otp}`);
+      return { success: true, message: `[DEV MODE] OTP generated: ${otp}` };
+    }
+    return { success: false, message: 'WhatsApp API credentials not configured in environment variables' };
   }
 
   try {
