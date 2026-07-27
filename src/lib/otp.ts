@@ -102,6 +102,12 @@ export async function sendWhatsAppOtp(
     return { success: false, message: 'WhatsApp API credentials not configured. Please set them in Admin Settings or Environment Variables.' };
   }
 
+  const cleanPhoneId = phoneNumberId.trim();
+  if (cleanPhoneId.startsWith('+') || cleanPhoneId.startsWith('91')) {
+    console.error(`[otp] Invalid Phone Number ID: "${phoneNumberId}". Enter Meta's numeric Phone Number ID (e.g., 104523984729103) from Meta Developer Console, not a mobile phone number.`);
+    return { success: false, message: 'Invalid WhatsApp Phone Number ID. Please enter Meta\'s numeric Phone Number ID in Admin Settings, not your mobile number.' };
+  }
+
   try {
     const url = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
     

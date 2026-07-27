@@ -519,14 +519,17 @@ export default function AdminSettingsPage() {
 
             <SettingSection title="WhatsApp Automations (Cloud API)" icon="💬">
               <p style={{ fontSize: '0.8rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-3)' }}>
-                Configure official WhatsApp Business API credentials for sending automated WhatsApp order confirmations.
+                Configure official WhatsApp Business API credentials for sending automated WhatsApp OTP and order notifications.
               </p>
               <div className="form-group">
-                <label className="form-label">Phone Number ID</label>
-                <input type="text" placeholder="1234567890" className="form-input" name="whatsapp_phone_number_id" value={settings.whatsapp_phone_number_id} onChange={handleChange} />
+                <label className="form-label">Meta Phone Number ID (NOT your mobile phone number)</label>
+                <input type="text" placeholder="104523984729103 (From Meta Developer Portal -> WhatsApp -> API Setup)" className="form-input" name="whatsapp_phone_number_id" value={settings.whatsapp_phone_number_id} onChange={handleChange} />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                  ⚠️ Do NOT enter +91... or your mobile number. Enter Meta's numeric 15-digit <strong>Phone Number ID</strong> from Meta Developer Console.
+                </span>
               </div>
               <div className="form-group">
-                <label className="form-label">Access Token</label>
+                <label className="form-label">Permanent Access Token</label>
                 <input type="password" placeholder="EAxxxxxxxxxxxxx" className="form-input" name="whatsapp_access_token" value={settings.whatsapp_access_token} onChange={handleChange} />
               </div>
             </SettingSection>
