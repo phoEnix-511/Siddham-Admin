@@ -41,8 +41,34 @@ function redisKey(phone: string): string {
   return `otp:${phone}`;
 }
 
+import { prisma } from '@/lib/prisma';
+
+async function getWhatsAppCredentials(): Promise<{ phoneNumberId: string | null; accessToken: string | null }> {
+  let phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || null;
+  let accessToken = process.env.WHATSAPP_ACCESS_TOKEN || null;
+
+  if (!phoneNumberId || !accessToken) {
+    try {
+      const settings = await prisma.setting.findMany({
+        where: {
+          key: { in: ['whatsapp_phone_number_id', 'whatsapp_access_token'] }
+        }
+      });
+      const map: Record<string, string> = {};
+      settings.forEach(s => { map[s.key] = s.value; });
+
+      phoneNumberId = phoneNumberId || map['whatsapp_phone_number_id'] || null;
+      accessToken = accessToken || map['whatsapp_access_token'] || null;
+    } catch (err) {
+      console.error('[otp] Failed to fetch WhatsApp credentials from DB:', err);
+    }
+  }
+
+  return { phoneNumberId, accessToken };
+}
+
 /**
- * Generate a 6-digit OTP, persist it in Redis, and send it via Twilio WhatsApp.
+ * Generate a 6-digit OTP, persist it in Redis, and send it via Twilio WhatsApp / WhatsApp Cloud API.
  */
 export async function sendWhatsAppOtp(
   phone: string
@@ -65,16 +91,15 @@ export async function sendWhatsAppOtp(
     return { success: false, message: 'Failed to store OTP. Please try again.' };
   }
 
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const { phoneNumberId, accessToken } = await getWhatsAppCredentials();
   
   if (!phoneNumberId || !accessToken) {
-    console.error('[otp] WhatsApp Cloud API credentials are not set (WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN missing)');
+    console.error('[otp] WhatsApp Cloud API credentials are not set (WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN missing in env and DB)');
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[otp] [DEV FALLBACK] OTP for ${e164Phone}: ${otp}`);
       return { success: true, message: `[DEV MODE] OTP generated: ${otp}` };
     }
-    return { success: false, message: 'WhatsApp API credentials not configured in environment variables' };
+    return { success: false, message: 'WhatsApp API credentials not configured. Please set them in Admin Settings or Environment Variables.' };
   }
 
   try {
