@@ -231,6 +231,24 @@ export default async function handler(
       })
       .catch(console.error);
 
+    // Send WhatsApp order confirmation (non-blocking)
+    if (customerPhone) {
+      import("@/lib/whatsapp")
+        .then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
+          getWhatsAppCredentials().then((creds) => {
+            const formattedTotal = String(order.totalAmount.toFixed(2));
+            const formattedDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            sendWhatsAppTemplate({
+              to: customerPhone,
+              templateName: creds.orderConfirmationTemplateName,
+              languageCode: creds.languageCode,
+              bodyParameters: [customerName, order.orderNumber, formattedTotal, formattedDate],
+            }).catch(err => console.error("[whatsapp] Order confirmation template error:", err));
+          });
+        })
+        .catch(console.error);
+    }
+
     return res.status(201).json({ success: true, order });
   } catch (error) {
     console.error("Payment verification error:", error);

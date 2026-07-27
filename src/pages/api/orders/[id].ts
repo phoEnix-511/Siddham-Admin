@@ -171,17 +171,22 @@ export default async function handler(
         delPattern("reports:sales:"),
       ]);
 
-      // 3. Check for status transitions to trigger email
+      // 3. Check for status transitions to trigger email & WhatsApp notifications
       const wasShipped =
         existingOrder.status !== "SHIPPED" && updatedOrder.status === "SHIPPED";
       const wasCancelled =
         existingOrder.status !== "CANCELLED" &&
         updatedOrder.status === "CANCELLED";
+      const wasDelivered =
+        existingOrder.status !== "DELIVERED" &&
+        updatedOrder.status === "DELIVERED";
 
-      if (wasShipped || wasCancelled) {
+      if (wasShipped || wasCancelled || wasDelivered) {
+        const customerPhone = updatedOrder.customer?.phone;
+        const customerName = updatedOrder.customer?.name || "Valued Customer";
         const orderEmailData = {
           orderNumber: updatedOrder.orderNumber,
-          customerName: updatedOrder.customer.name || "Valued Customer",
+          customerName,
           customerEmail: updatedOrder.customer.email,
           items: updatedOrder.items.map((item) => ({
             name: item.product.name,
@@ -209,6 +214,19 @@ export default async function handler(
               err,
             );
           });
+
+          if (customerPhone) {
+            import("@/lib/whatsapp").then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
+              getWhatsAppCredentials().then((creds) => {
+                sendWhatsAppTemplate({
+                  to: customerPhone,
+                  templateName: creds.orderShippedTemplateName,
+                  languageCode: creds.languageCode,
+                  bodyParameters: [customerName, updatedOrder.orderNumber, emailCarrier, emailTracking],
+                }).catch(err => console.error("[whatsapp] Shipped notification error:", err));
+              });
+            }).catch(console.error);
+          }
         } else if (wasCancelled) {
           const emailReason =
             updatedOrder.cancellationReason || "Admin cancellation";
@@ -218,6 +236,32 @@ export default async function handler(
               err,
             );
           });
+
+          if (customerPhone) {
+            import("@/lib/whatsapp").then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
+              getWhatsAppCredentials().then((creds) => {
+                sendWhatsAppTemplate({
+                  to: customerPhone,
+                  templateName: creds.orderCancelledTemplateName,
+                  languageCode: creds.languageCode,
+                  bodyParameters: [customerName, updatedOrder.orderNumber, emailReason],
+                }).catch(err => console.error("[whatsapp] Cancelled notification error:", err));
+              });
+            }).catch(console.error);
+          }
+        } else if (wasDelivered) {
+          if (customerPhone) {
+            import("@/lib/whatsapp").then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
+              getWhatsAppCredentials().then((creds) => {
+                sendWhatsAppTemplate({
+                  to: customerPhone,
+                  templateName: creds.orderDeliveredTemplateName,
+                  languageCode: creds.languageCode,
+                  bodyParameters: [customerName, updatedOrder.orderNumber],
+                }).catch(err => console.error("[whatsapp] Delivered notification error:", err));
+              });
+            }).catch(console.error);
+          }
         }
       }
 

@@ -41,34 +41,10 @@ function redisKey(phone: string): string {
   return `otp:${phone}`;
 }
 
-import { prisma } from '@/lib/prisma';
-
-async function getWhatsAppCredentials(): Promise<{ phoneNumberId: string | null; accessToken: string | null }> {
-  let phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || null;
-  let accessToken = process.env.WHATSAPP_ACCESS_TOKEN || null;
-
-  if (!phoneNumberId || !accessToken) {
-    try {
-      const settings = await prisma.setting.findMany({
-        where: {
-          key: { in: ['whatsapp_phone_number_id', 'whatsapp_access_token'] }
-        }
-      });
-      const map: Record<string, string> = {};
-      settings.forEach(s => { map[s.key] = s.value; });
-
-      phoneNumberId = phoneNumberId || map['whatsapp_phone_number_id'] || null;
-      accessToken = accessToken || map['whatsapp_access_token'] || null;
-    } catch (err) {
-      console.error('[otp] Failed to fetch WhatsApp credentials from DB:', err);
-    }
-  }
-
-  return { phoneNumberId, accessToken };
-}
+import { sendWhatsAppTemplate, getWhatsAppCredentials } from '@/lib/whatsapp';
 
 /**
- * Generate a 6-digit OTP, persist it in Redis, and send it via Twilio WhatsApp / WhatsApp Cloud API.
+ * Generate a 6-digit OTP, persist it in Redis, and send it via WhatsApp Cloud API Template.
  */
 export async function sendWhatsAppOtp(
   phone: string
@@ -91,9 +67,9 @@ export async function sendWhatsAppOtp(
     return { success: false, message: 'Failed to store OTP. Please try again.' };
   }
 
-  const { phoneNumberId, accessToken } = await getWhatsAppCredentials();
+  const credentials = await getWhatsAppCredentials();
   
-  if (!phoneNumberId || !accessToken) {
+  if (!credentials.phoneNumberId || !credentials.accessToken) {
     console.error('[otp] WhatsApp Cloud API credentials are not set (WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN missing in env and DB)');
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[otp] [DEV FALLBACK] OTP for ${e164Phone}: ${otp}`);
@@ -102,59 +78,29 @@ export async function sendWhatsAppOtp(
     return { success: false, message: 'WhatsApp API credentials not configured. Please set them in Admin Settings or Environment Variables.' };
   }
 
-  const cleanPhoneId = phoneNumberId.trim();
-  if (cleanPhoneId.startsWith('+') || cleanPhoneId.startsWith('91')) {
-    console.error(`[otp] Invalid Phone Number ID: "${phoneNumberId}". Enter Meta's numeric Phone Number ID (e.g., 104523984729103) from Meta Developer Console, not a mobile phone number.`);
-    return { success: false, message: 'Invalid WhatsApp Phone Number ID. Please enter Meta\'s numeric Phone Number ID in Admin Settings, not your mobile number.' };
-  }
+  // Determine parameters based on template name
+  // Default 'hello_world' has no parameters, custom OTP templates pass [otp]
+  const isHelloWorld = credentials.otpTemplateName === 'hello_world';
+  const bodyParameters = isHelloWorld ? [] : [otp];
 
-  try {
-    const url = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
-    
-    // The WhatsApp Cloud API expects the "to" number without the '+' symbol
-    const to = e164Phone.startsWith('+') ? e164Phone.slice(1) : e164Phone;
+  const result = await sendWhatsAppTemplate({
+    to: e164Phone,
+    templateName: credentials.otpTemplateName,
+    languageCode: credentials.languageCode,
+    bodyParameters,
+  });
 
-    const payload = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to,
-      type: 'text',
-      text: {
-        preview_url: false,
-        body: `Your Siddham Wellness verification code is: ${otp}. Valid for 10 minutes. 🌿`
-      }
-    };
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      if (data.error?.code === 131030) {
-        console.error(`[otp] Meta Error 131030: Phone number ${to} is not in Meta's Test Recipients list. Add it in Meta Developer Console -> WhatsApp -> API Setup -> To field, or switch App Mode to Live.`);
-        return { success: false, message: `Phone number not in Meta Test List. Add ${to} under "To" in Meta Developer Portal or switch Meta App to Live Mode.` };
-      }
-      throw new Error(data.error?.message || 'Failed to send WhatsApp message via Cloud API');
-    }
-
-    return { success: true, message: 'OTP sent to your WhatsApp' };
-  } catch (err) {
-    console.error('[otp] WhatsApp Cloud API send error:', err);
-    // Clean up the stored OTP so a retry generates a fresh one
+  if (!result.success) {
+    console.error('[otp] WhatsApp template send failed:', result.message);
     try {
       await redis.del(redisKey(e164Phone));
     } catch {
       // best-effort cleanup
     }
-    return { success: false, message: 'Failed to send WhatsApp message. Please try again.' };
+    return { success: false, message: result.message };
   }
+
+  return { success: true, message: 'OTP sent to your WhatsApp' };
 }
 
 /**
