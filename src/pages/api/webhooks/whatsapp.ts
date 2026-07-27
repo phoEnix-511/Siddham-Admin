@@ -18,14 +18,15 @@ export default async function handler(
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
 
-    const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN;
+    const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'siddham_wh_verify_2026_xK9m';
 
     if (mode === "subscribe" && token === verifyToken) {
       console.log("[whatsapp-webhook] Verification successful");
-      return res.status(200).send(challenge);
+      res.setHeader('Content-Type', 'text/plain');
+      return res.status(200).send(String(challenge || ''));
     }
 
-    console.warn("[whatsapp-webhook] Verification failed — token mismatch");
+    console.warn(`[whatsapp-webhook] Verification failed — token mismatch. Received: "${token}", expected: "${verifyToken}"`);
     return res.status(403).json({ error: "Forbidden" });
   }
 
