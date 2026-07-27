@@ -137,6 +137,10 @@ export async function sendWhatsAppOtp(
     const data = await res.json();
 
     if (!res.ok) {
+      if (data.error?.code === 131030) {
+        console.error(`[otp] Meta Error 131030: Phone number ${to} is not in Meta's Test Recipients list. Add it in Meta Developer Console -> WhatsApp -> API Setup -> To field, or switch App Mode to Live.`);
+        return { success: false, message: `Phone number not in Meta Test List. Add ${to} under "To" in Meta Developer Portal or switch Meta App to Live Mode.` };
+      }
       throw new Error(data.error?.message || 'Failed to send WhatsApp message via Cloud API');
     }
 
