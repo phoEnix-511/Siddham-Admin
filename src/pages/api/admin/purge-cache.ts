@@ -15,13 +15,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Purge all Redis cache patterns
+    // Purge all Redis cache patterns & rate limits
     await Promise.all([
       delPattern('settings:'),
       delPattern('products:'),
       delPattern('categories:'),
       delPattern('orders:'),
       delPattern('reports:'),
+      delPattern('otp_send:'),
+      delPattern('otp_verify:'),
+      delPattern('auth:'),
     ]);
 
     // Re-warm search cache in background

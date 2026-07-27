@@ -46,18 +46,18 @@ function getLimiter(type: RateLimitType): Ratelimit | null {
 
   switch (type) {
     case 'auth':
-      // 5 requests per 15 minutes
-      limiter = createLimiter(5, 15 * 60);
+      // 10 requests per 15 minutes
+      limiter = createLimiter(10, 15 * 60);
       break;
 
     case 'otp_send':
-      // 3 requests per 10 minutes
-      limiter = createLimiter(3, 10 * 60);
+      // 10 requests per 10 minutes
+      limiter = createLimiter(10, 10 * 60);
       break;
 
     case 'otp_verify':
-      // 5 requests per 10 minutes
-      limiter = createLimiter(5, 10 * 60);
+      // 15 requests per 10 minutes
+      limiter = createLimiter(15, 10 * 60);
       break;
 
     case 'payment':
