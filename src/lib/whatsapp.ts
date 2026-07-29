@@ -153,6 +153,12 @@ export async function sendWhatsAppTemplate({
           message: `Phone number ${recipient} not in Meta Test List. Add it under "To" in Meta Developer Portal or switch Meta App to Live Mode.`,
         };
       }
+      if (data.error?.code === 133010 || data.error?.code === 131009 || data.error?.message?.toLowerCase().includes('not registered')) {
+        return {
+          success: false,
+          message: `WhatsApp account not registered. Please ensure recipient (${recipient}) has WhatsApp active, and your sender Phone Number ID has completed 2FA registration in Meta Developer Console.`,
+        };
+      }
       return {
         success: false,
         message: data.error?.message || 'Failed to send WhatsApp template message',
