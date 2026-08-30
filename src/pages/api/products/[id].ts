@@ -50,7 +50,7 @@ export default async function handler(
 
       res.setHeader(
         "Cache-Control",
-        "public, s-maxage=120, stale-while-revalidate=600",
+        "no-cache, no-store, must-revalidate, max-age=0",
       );
       return res.status(200).json({ product });
     } catch (error) {

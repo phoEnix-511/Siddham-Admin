@@ -52,7 +52,9 @@ export default async function handler(
       const skip = (pageNum - 1) * limitNum;
 
       const where: Record<string, any> = { isDeleted: false };
-      if (!isAdmin || showInactive !== "true") {
+      if (isAdmin && showInactive === "true") {
+        where.isActive = false;
+      } else {
         where.isActive = true;
       }
       if (minPrice || maxPrice) {
@@ -123,7 +125,7 @@ export default async function handler(
           "Cache-Control",
           isQuickSearch
             ? "public, s-maxage=86400, stale-while-revalidate=3600"
-            : "public, s-maxage=60, stale-while-revalidate=300",
+            : "no-cache, no-store, must-revalidate, max-age=0",
         );
       } else {
         data = await fetchFresh();

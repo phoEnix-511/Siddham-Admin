@@ -14,6 +14,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
+  // Set mode from URL query parameter (e.g. /login?mode=register)
+  useEffect(() => {
+    if (router.query.mode === 'register') setMode('register');
+  }, [router.query.mode]);
+
   // Redirect if already signed in
   useEffect(() => {
     if (status === 'authenticated') router.push(callbackUrl as string);
@@ -40,10 +45,27 @@ export default function LoginPage() {
           body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Registration failed');
+        if (!res.ok) {
+          // Show detailed validation errors if available
+          if (data.details) {
+            const detailMsgs = Object.values(data.details).flat().filter(Boolean);
+            throw new Error(detailMsgs.length > 0 ? (detailMsgs as string[]).join('. ') : (data.error || 'Registration failed'));
+          }
+          throw new Error(data.error || 'Registration failed');
+        }
         setMsg({ type: 'success', text: 'Account created! Signing you in...' });
-        // Auto sign in after register
-        await signIn('credentials', { email: form.email, password: form.password, callbackUrl: callbackUrl as string });
+        // Auto sign in after register with error handling
+        const signInResult = await signIn('credentials', {
+          email: form.email,
+          password: form.password,
+          redirect: false,
+        });
+        if (signInResult?.error) {
+          setMsg({ type: 'success', text: 'Account created successfully! Please sign in.' });
+          setMode('login');
+        } else {
+          router.push(callbackUrl as string);
+        }
       } catch (err: unknown) {
         setMsg({ type: 'error', text: err instanceof Error ? err.message : 'Registration failed' });
       } finally {

@@ -317,19 +317,26 @@ export default function Navbar() {
               </div>
 
               <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
-                <span
-                  className="nav-brand-mark"
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: '1.05rem',
-                    fontWeight: 700,
-                    color: 'var(--color-forest-dark)',
-                    letterSpacing: '0.16em',
-                    textTransform: 'uppercase',
-                  }}
+                <Link
+                  href="/"
+                  style={{ textDecoration: 'none' }}
+                  aria-label="Siddham Wellness Home"
                 >
-                  Siddham Wellness
-                </span>
+                  <span
+                    className="nav-brand-mark"
+                    style={{
+                      fontFamily: 'var(--font-serif)',
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      color: 'var(--color-forest-dark)',
+                      letterSpacing: '0.16em',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Siddham Wellness
+                  </span>
+                </Link>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>

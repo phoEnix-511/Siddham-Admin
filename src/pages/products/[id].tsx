@@ -777,7 +777,7 @@ export const getStaticProps: GetStaticProps = async ({ params }: GetStaticPropsC
       props: {
         product: serializedProduct,
       },
-      revalidate: 3600, // Revalidate every 1 hour
+      revalidate: 60, // Revalidate every 1 minute for instant admin updates
     };
   } catch (error) {
     console.error('getStaticProps error for product detail:', error);

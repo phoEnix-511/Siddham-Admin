@@ -125,7 +125,7 @@ export default function AdminProductsPage() {
                 }}
                 style={{ accentColor: 'var(--color-forest)', width: 15, height: 15 }}
               />
-              Show Inactive
+              Show Inactive Only
             </label>
           </div>
           {adminRole !== 'viewer' && (

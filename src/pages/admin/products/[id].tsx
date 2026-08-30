@@ -4,6 +4,10 @@ import { useRouter } from 'next/router';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from '@/context/ToastContext';
 import { CONCERN_CATEGORIES, CONCERN_ICONS } from '@/lib/concerns';
+import dynamic from 'next/dynamic';
+import 'quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 
 interface Category {
   id: string;
@@ -60,6 +64,7 @@ export default function ProductFormPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [newVideoUrlInput, setNewVideoUrlInput] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -405,17 +410,78 @@ export default function ProductFormPage() {
                     )}
 
                     <div className="form-group" style={{ marginTop: 'var(--space-2)' }}>
-                      <label className="form-label" htmlFor="prod-video">YouTube Video URLs</label>
-                      <textarea
-                        id="prod-video"
-                        className="form-textarea"
-                        rows={3}
-                        placeholder="Add one video URL per line or separated by commas"
-                        value={form.videoUrls.join('\n')}
-                        onChange={(e) => handleVideoUrlChange(e.target.value)}
-                      />
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>
+                      <label className="form-label">YouTube Video URLs</label>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginBottom: '8px' }}>
                         The first video will be used as the primary video.
+                      </div>
+                      
+                      {form.videoUrls.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+                          {form.videoUrls.map((url, idx) => (
+                            <div key={idx} style={{
+                              display: 'flex', alignItems: 'center', gap: 'var(--space-2)',
+                              padding: 'var(--space-2)', border: '1px solid var(--color-gray-200)',
+                              borderRadius: 'var(--radius-md)', background: 'var(--color-gray-50)'
+                            }}>
+                              <span style={{ fontSize: '1.2rem', marginRight: '4px' }}>🎥</span>
+                              <input
+                                type="text"
+                                className="form-input"
+                                value={url}
+                                onChange={(e) => {
+                                  const newUrls = [...form.videoUrls];
+                                  newUrls[idx] = e.target.value;
+                                  setForm(prev => ({ ...prev, videoUrls: newUrls, videoUrl: newUrls[0] || '' }));
+                                }}
+                                style={{ flex: 1, padding: '4px 8px', margin: 0 }}
+                              />
+                              <button 
+                                type="button" 
+                                className="btn btn-sm" 
+                                style={{ padding: '4px 8px', color: 'var(--color-error)', background: 'var(--color-error-bg)' }} 
+                                onClick={() => {
+                                  const newUrls = form.videoUrls.filter((_, i) => i !== idx);
+                                  setForm(prev => ({ ...prev, videoUrls: newUrls, videoUrl: newUrls[0] || '' }));
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Add new YouTube URL..."
+                          value={newVideoUrlInput}
+                          onChange={(e) => setNewVideoUrlInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (newVideoUrlInput.trim()) {
+                                const newUrls = [...form.videoUrls, newVideoUrlInput.trim()];
+                                setForm(prev => ({ ...prev, videoUrls: newUrls, videoUrl: newUrls[0] || '' }));
+                                setNewVideoUrlInput('');
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          onClick={() => {
+                            if (newVideoUrlInput.trim()) {
+                              const newUrls = [...form.videoUrls, newVideoUrlInput.trim()];
+                              setForm(prev => ({ ...prev, videoUrls: newUrls, videoUrl: newUrls[0] || '' }));
+                              setNewVideoUrlInput('');
+                            }
+                          }}
+                        >
+                          Add
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -583,7 +649,24 @@ export default function ProductFormPage() {
                   <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                     <div className="form-group">
                       <label className="form-label" htmlFor="prod-ingredients">Ingredients</label>
-                      <textarea id="prod-ingredients" className="form-textarea" name="ingredients" value={form.ingredients} onChange={handleChange} placeholder="List all ingredients..." rows={3} />
+                      <div style={{ background: 'var(--color-white)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-gray-200)', overflow: 'hidden', paddingBottom: '40px' }}>
+                        <ReactQuill
+                          value={form.ingredients}
+                          onChange={(content) => setForm(prev => ({ ...prev, ingredients: content }))}
+                          theme="snow"
+                          modules={{
+                            toolbar: [
+                              [{ 'header': [1, 2, 3, false] }],
+                              ['bold', 'italic', 'underline', 'strike'],
+                              ['blockquote', 'code-block'],
+                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                              ['link'],
+                              ['clean']
+                            ]
+                          }}
+                          style={{ height: 200 }}
+                        />
+                      </div>
                     </div>
                     <div className="form-group">
                       <label className="form-label" htmlFor="prod-benefits">Benefits (comma-separated)</label>
