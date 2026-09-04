@@ -84,7 +84,7 @@ export default function CustomerChangePasswordPage() {
               />
             </div>
             
-            <button type="submit" className="btn" disabled={loading} style={{ marginTop: 'var(--space-2)' }}>
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: 'var(--space-2)' }}>
               {loading ? 'Updating...' : 'Update Password'}
             </button>
           </form>

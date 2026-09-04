@@ -76,7 +76,7 @@ export default function OrdersPage() {
                   </div>
                   <div className="order-bottom">
                     <span className="order-total">₹{order.totalAmount.toLocaleString('en-IN')}</span>
-                    <Link href={`/account/orders/${order.id}`} className="btn btn-secondary btn-sm">View Details</Link>
+                    <Link href={`/account/orders/${order.id}`} className="btn btn-outline btn-sm">View Details</Link>
                   </div>
                 </div>
               ))}

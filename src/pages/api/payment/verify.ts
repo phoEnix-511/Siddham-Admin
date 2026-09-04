@@ -35,6 +35,11 @@ export default async function handler(
       const dbSecret = await prisma.setting.findUnique({ where: { key: "razorpay_key_secret" } });
       keySecret = dbSecret?.value || "";
     }
+    
+    if (!keySecret) {
+      console.error('[payment/verify] RAZORPAY_KEY_SECRET not configured');
+      return res.status(500).json({ error: "Payment configuration error" });
+    }
 
     // Verify Razorpay signature
     const body = razorpayOrderId + "|" + razorpayPaymentId;
@@ -43,8 +48,17 @@ export default async function handler(
       .update(body)
       .digest("hex");
 
-    if (expectedSignature !== razorpaySignature) {
+    const sigOk = expectedSignature.length === razorpaySignature.length &&
+      crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(razorpaySignature));
+
+    if (!sigOk) {
       return res.status(400).json({ error: "Invalid payment signature" });
+    }
+
+    // Check for duplicate payment (replay attack prevention)
+    const existingOrder = await prisma.order.findFirst({ where: { razorpayPaymentId } });
+    if (existingOrder) {
+      return res.status(409).json({ error: 'Payment already processed' });
     }
 
     // LEGACY: Update existing order if orderId provided

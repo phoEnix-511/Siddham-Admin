@@ -145,7 +145,7 @@ model Order {
   paymentStatus      PaymentStatus @default(PENDING)
   paymentMethod      String?
   razorpayOrderId    String?
-  razorpayPaymentId  String?
+  razorpayPaymentId  String?       @unique
   totalAmount        Float
   shippingAmount     Float         @default(0)
   taxAmount          Float         @default(0)

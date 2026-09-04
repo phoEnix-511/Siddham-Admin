@@ -13,13 +13,13 @@ export default async function handler(
   const { id } = req.query;
 
   if (req.method === "GET") {
-    let adminRole = "admin";
+    let adminRole: string;
     try {
       const adminPayload = requireViewerRole(req);
       adminRole = adminPayload.role;
     } catch {
-      // Also allow if the user is the customer themselves
-      // But for admin API we expect viewer role.
+      // Not authenticated as admin — return 401 immediately
+      return res.status(401).json({ error: "Unauthorized" });
     }
     try {
       const cacheKey = `orders:detail:${adminRole}:${id}`;

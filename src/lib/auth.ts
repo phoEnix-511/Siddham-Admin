@@ -2,8 +2,11 @@ import jwt from 'jsonwebtoken';
 import { NextApiRequest } from 'next';
 import cookie from 'cookie';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
-
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('[auth] JWT_SECRET environment variable is not set. Cannot start server.');
+}
+const SECRET = JWT_SECRET || 'dev-only-fallback-secret-not-for-production';
 export interface AdminPayload {
   id: string;
   email: string;
@@ -13,12 +16,12 @@ export interface AdminPayload {
 }
 
 export function signToken(payload: AdminPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, SECRET, { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): AdminPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as AdminPayload;
+    return jwt.verify(token, SECRET) as AdminPayload;
   } catch {
     return null;
   }

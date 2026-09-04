@@ -28,6 +28,7 @@
   --forest-dark: var(--color-forest-dark);
   --forest-light: var(--color-forest-light);
   --saffron-pale: var(--color-parchment-dark);
+  --color-saffron-pale: var(--color-parchment); /* alias so .btn-primary text is readable */
 
   /* Neutral */
   --color-white: #ffffff;

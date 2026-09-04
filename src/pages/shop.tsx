@@ -438,7 +438,7 @@ export default function ShopPage() {
                             </button>
                           ) : (
                             <button
-                              className={`btn ${isAdding ? 'btn-outline' : 'btn-gold'}`}
+                              className={`btn ${isAdding ? 'btn-outline-gold' : 'btn-gold'}`}
                               style={{ width: '100%', borderRadius: 8, transition: 'all 0.3s ease' }}
                               onClick={e => handleAddToCart(e, product)}
                               disabled={product.stock === 0 || isAdding}

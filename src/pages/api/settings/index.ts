@@ -20,10 +20,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const settingsMap = await getOrSet(cacheKey, SETTINGS_CACHE_TTL, async () => {
         const settings = await prisma.setting.findMany({ orderBy: { group: 'asc' } });
         const map: Record<string, string> = {};
+        const PUBLIC_KEYS = [
+          'store_name', 'store_email', 'store_phone', 'store_instagram', 'store_facebook', 
+          'announcement_bar_text', 'announcement_bar_enabled', 'catalog_mode', 
+          'hero_title', 'hero_subtitle', 'hero_badge', 'currency', 
+          'shipping_free_above', 'shipping_standard_rate', 'about_us_content', 
+          'loyalty_points_rate', 'loyalty_min_redeem', 'free_shipping_threshold'
+        ];
+        
         settings.forEach(s => {
           if (!isAdmin) {
             const lowerKey = s.key.toLowerCase();
-            if (lowerKey.includes('secret') || lowerKey.includes('password')) {
+            if (!PUBLIC_KEYS.includes(lowerKey)) {
               return;
             }
           }
