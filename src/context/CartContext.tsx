@@ -37,6 +37,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('siddham_cart', JSON.stringify(items));
+    
+    // Background sync to server for analytics (debounced)
+    const timeoutId = setTimeout(() => {
+      let sessionId = localStorage.getItem('siddham_session');
+      if (!sessionId) {
+        sessionId = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('siddham_session', sessionId);
+      }
+      
+      fetch('/api/cart/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, items })
+      }).catch(err => console.error('Cart sync failed', err));
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
   }, [items]);
 
   const addItem = (newItem: Omit<CartItem, 'quantity'>) => {

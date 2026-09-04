@@ -11,11 +11,19 @@ interface Stats {
   totalCustomers: number;
   totalRevenue: number;
   pendingOrders: number;
+  analytics?: {
+    uniqueUsersLast30Days: number;
+    registeredUsers: number;
+    topProductsInCart: string[];
+    usersWithActiveCart: number;
+    topPages: string[];
+  };
 }
 
 interface LiveMetrics {
   activeUsers: number;
   activeCarts: number;
+  activeAdmins?: any[];
 }
 
 interface Order {
@@ -107,13 +115,65 @@ export default function AdminDashboard() {
                 </div>
                 <div style={{ display: 'flex', gap: '2rem', padding: 'var(--space-6)' }}>
                   <div>
-                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Active Users (Last 5m)</div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Active Users (5m)</div>
                     <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-saffron)' }}>{liveMetrics?.activeUsers || 0}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Active Carts</div>
-                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-saffron-light)' }}>{liveMetrics?.activeCarts || 0}</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-saffron-light)' }}>{stats?.analytics?.usersWithActiveCart || liveMetrics?.activeCarts || 0}</div>
                   </div>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>Unique Users (30d)</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'white' }}>{stats?.analytics?.uniqueUsersLast30Days || 0}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-header">
+                  <h3 style={{ fontSize: '1rem', color: 'var(--color-forest-dark)' }}>Top Pages (All Time)</h3>
+                </div>
+                <div style={{ padding: 'var(--space-4)' }}>
+                  {stats?.analytics?.topPages?.length ? (
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {stats.analytics.topPages.map((page: string, i: number) => (
+                        <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
+                          <span style={{ color: 'var(--color-gray-400)', width: '20px' }}>{i + 1}.</span>
+                          <span style={{ fontWeight: 500, color: 'var(--color-forest)' }}>{page}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div style={{ color: 'var(--color-gray-400)', fontSize: '0.9rem' }}>No pageview data yet.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Admins */}
+            <div className="grid-1" style={{ marginTop: 'var(--space-6)' }}>
+              <div className="card">
+                <div className="card-header">
+                  <h3 style={{ fontSize: '1rem', color: 'var(--color-forest-dark)' }}>🟢 Active Admins</h3>
+                </div>
+                <div style={{ padding: 'var(--space-4)' }}>
+                  {liveMetrics?.activeAdmins?.length ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
+                      {liveMetrics.activeAdmins.map((admin: any) => (
+                        <div key={admin.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3)', background: 'var(--color-gray-50)', borderRadius: 'var(--radius-md)' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--color-forest-light)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                            {admin.name?.substring(0, 2).toUpperCase() || 'AD'}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--color-forest-dark)' }}>{admin.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', textTransform: 'capitalize' }}>{admin.role.replace('_', ' ')}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ color: 'var(--color-gray-400)', fontSize: '0.9rem' }}>No other admins currently online.</div>
+                  )}
                 </div>
               </div>
             </div>

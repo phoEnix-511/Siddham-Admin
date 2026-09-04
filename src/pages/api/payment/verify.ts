@@ -262,6 +262,25 @@ export default async function handler(
         })
         .catch(console.error);
     }
+    
+    // Push new order event for Admin SSE stream
+    try {
+      import("@upstash/redis").then(({ Redis }) => {
+        const url = process.env.UPSTASH_REDIS_REST_URL;
+        const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+        if (url && token) {
+          const redis = new Redis({ url, token });
+          redis.lpush("notifications:new_orders", JSON.stringify({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            customerName: customerName,
+            totalAmount: order.totalAmount,
+            timestamp: Date.now()
+          })).catch(() => {});
+          redis.ltrim("notifications:new_orders", 0, 99).catch(() => {});
+        }
+      });
+    } catch (e) {}
 
     return res.status(201).json({ success: true, order });
   } catch (error) {

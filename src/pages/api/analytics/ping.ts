@@ -1,4 +1,4 @@
-﻿import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { getOrSet } from "@/lib/cache";
 import { Redis } from "@upstash/redis";
 
@@ -40,7 +40,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await redis.zrem("analytics:active_carts", sessionId);
     }
 
-    // 3. Cleanup old sessions (older than 5 minutes) asynchronously
+    // 3. Track page views (all time, can be reset by cron or left rolling)
+    if (path) {
+      // Clean path to prevent fragmentation (e.g. remove query params if needed, but path from router is usually just path)
+      await redis.zincrby("analytics:pages", 1, path);
+    }
+
+    // 4. Cleanup old sessions (older than 5 minutes) asynchronously
     // This keeps the sets small without blocking the ping response
     const fiveMinutesAgo = timestamp - (5 * 60 * 1000);
     Promise.all([

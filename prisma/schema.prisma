@@ -256,3 +256,32 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
+
+model CartSnapshot {
+  id         String   @id @default(uuid())
+  sessionId  String   @unique
+  customerId String?
+  items      Json     // Array of cart items (productId, quantity, price)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  @@index([updatedAt])
+}
+
+model WhatsAppMessage {
+  id           String   @id @default(uuid())
+  messageId    String   @unique
+  from         String
+  to           String
+  senderName   String?
+  type         String
+  body         String?
+  mediaUrl     String?
+  direction    String   // "INBOUND" | "OUTBOUND"
+  status       String   // "received" | "sent" | "delivered" | "read" | "failed"
+  timestamp    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([from, timestamp])
+}

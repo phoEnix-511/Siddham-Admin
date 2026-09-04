@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useToast } from '@/context/ToastContext';
+import AdminNotifications from './AdminNotifications';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
   const [adminRole, setAdminRole] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    let intervalId: NodeJS.Timeout;
     fetch('/api/auth/me').then(async res => {
       if (res.ok) {
         const data = await res.json();
@@ -32,8 +34,19 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
         if (data.admin.forcePasswordReset && router.pathname !== '/admin/change-password') {
           router.replace('/admin/change-password');
         }
+        
+        // Start admin presence ping
+        const pingAdmin = () => {
+          fetch('/api/admin/ping', { method: 'POST' }).catch(() => {});
+        };
+        pingAdmin();
+        intervalId = setInterval(pingAdmin, 60000);
       }
     });
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [router]);
 
   const handleLogout = async () => {
@@ -121,6 +134,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
         <header className="admin-topbar">
           <h1 className="admin-topbar-title">{title}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+            <AdminNotifications />
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest-dark)' }}>Admin</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-500)' }}>Siddham Wellness</div>
