@@ -106,6 +106,35 @@ export default function AdminSettingsPage() {
   const [downloadingBackup, setDownloadingBackup] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState(false);
   const [purgingCache, setPurgingCache] = useState(false);
+  const [testingWhatsApp, setTestingWhatsApp] = useState(false);
+
+  const handleTestWhatsApp = async () => {
+    if (!settings.whatsapp_phone_number_id || !settings.whatsapp_access_token) {
+      addToast('Please enter both Phone Number ID and Access Token to test.', 'error');
+      return;
+    }
+    setTestingWhatsApp(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone_number_id: settings.whatsapp_phone_number_id,
+          access_token: settings.whatsapp_access_token
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast(`Success! Connected to WhatsApp as: ${data.data?.display_phone_number || 'Valid Number'}`, 'success');
+      } else {
+        throw new Error(data.error || 'Failed to authenticate');
+      }
+    } catch (err: any) {
+      addToast(err.message || 'WhatsApp Connection Failed', 'error');
+    } finally {
+      setTestingWhatsApp(false);
+    }
+  };
 
   const handlePurgeCache = async () => {
     setPurgingCache(true);
@@ -530,7 +559,17 @@ export default function AdminSettingsPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">Permanent Access Token</label>
-                <input type="password" placeholder="EAxxxxxxxxxxxxx" className="form-input" name="whatsapp_access_token" value={settings.whatsapp_access_token} onChange={handleChange} />
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                  <input style={{ flex: 1 }} type="password" placeholder="EAxxxxxxxxxxxxx" className="form-input" name="whatsapp_access_token" value={settings.whatsapp_access_token} onChange={handleChange} />
+                  <button 
+                    type="button" 
+                    className="btn btn-outline" 
+                    onClick={handleTestWhatsApp}
+                    disabled={testingWhatsApp}
+                  >
+                    {testingWhatsApp ? 'Testing...' : 'Test Connection'}
+                  </button>
+                </div>
               </div>
             </SettingSection>
 
