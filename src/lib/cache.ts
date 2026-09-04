@@ -74,3 +74,12 @@ export async function delPattern(prefix: string): Promise<void> {
 }
 
 export const cache = { getOrSet, del, delPattern };
+export async function setFlag(key: string, ttl: number): Promise<void> {
+  const redis = getRedis();
+  if (redis) await redis.setex(key, ttl, '1');
+}
+export async function getFlag(key: string): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  return await redis.get(key) === '1';
+}

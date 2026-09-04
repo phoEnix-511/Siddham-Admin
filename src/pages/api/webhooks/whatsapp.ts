@@ -99,13 +99,56 @@ export default async function handler(
                   to: value.metadata?.phone_number_id || "",
                   type: msg.type,
                   body: msg.text?.body || null,
-                  mediaUrl: msg.image?.id || msg.audio?.id || msg.video?.id || null,
+                  mediaUrl: msg.type === "image" ? msg.image?.id : null,
                   direction: "INBOUND",
                   status: "received",
                   timestamp: new Date(parseInt(msg.timestamp) * 1000),
                 },
               });
-            } catch { /* model not yet migrated */ }
+
+              // Send Admin Push Notification
+              import("@/lib/push").then(({ sendAdminPushNotification }) => {
+                sendAdminPushNotification(
+                  `New WhatsApp message from ${senderName}`,
+                  msg.text?.body || "Sent an attachment",
+                  "/admin/whatsapp"
+                );
+              }).catch(console.error);
+
+              // Auto-reply logic
+              import("@/lib/cache").then(async ({ getFlag, setFlag }) => {
+                const autoReplyKey = `autoreply:${msg.from}`;
+                const hasAutoReplied = await getFlag(autoReplyKey);
+                if (!hasAutoReplied) {
+                  const settingsRes = await (prisma as any).setting.findFirst({ where: { key: 'whatsapp_access_token' } });
+                  const token = settingsRes?.value;
+                  const phoneRes = await (prisma as any).setting.findFirst({ where: { key: 'whatsapp_phone_number_id' } });
+                  const phoneId = phoneRes?.value;
+
+                  if (token && phoneId) {
+                    const replyText = "Thank you for reaching out to Siddham Wellness! We have received your query and someone will reach out to you soon. 🌿";
+                    await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+                      method: "POST",
+                      headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        messaging_product: "whatsapp",
+                        to: msg.from,
+                        type: "text",
+                        text: { body: replyText },
+                      }),
+                    });
+                    // Set 12 hour cooldown
+                    await setFlag(autoReplyKey, 43200);
+                  }
+                }
+              }).catch(console.error);
+
+            } catch (err) {
+              console.error("[whatsapp-webhook] Failed to save inbound message:", err);
+            }
           }
         }
       }

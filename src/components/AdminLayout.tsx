@@ -26,6 +26,17 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
   const { addToast } = useToast();
   const [adminRole, setAdminRole] = React.useState<string | null>(null);
 
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
   React.useEffect(() => {
     let intervalId: NodeJS.Timeout;
     fetch('/api/auth/me').then(async res => {
@@ -36,6 +47,28 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
           router.replace('/admin/change-password');
         }
         
+        // Push notification subscription
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            const subscription = await registration.pushManager.getSubscription();
+            if (!subscription && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+              const convertedVapidKey = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+              const newSubscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedVapidKey,
+              });
+              await fetch('/api/admin/push-subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSubscription),
+              });
+            }
+          } catch (err) {
+            console.error('Service Worker registration failed:', err);
+          }
+        }
+
         // Start admin presence ping
         const pingAdmin = () => {
           fetch('/api/admin/ping', { method: 'POST' }).catch(() => {});
