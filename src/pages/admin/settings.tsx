@@ -125,7 +125,9 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast(`Success! Connected to WhatsApp as: ${data.data?.display_phone_number || 'Valid Number'}`, 'success');
+        const fbData = data.data || {};
+        const displayName = fbData.display_phone_number || fbData.verified_name || `ID: ${fbData.id}` || 'Valid Number';
+        addToast(`Success! Connected to WhatsApp as: ${displayName}`, 'success');
       } else {
         throw new Error(data.error || 'Failed to authenticate');
       }
