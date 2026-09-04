@@ -136,7 +136,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
           <div className="admin-nav-section">
             <div className="admin-nav-section-label">Site</div>
-            <a href="/" target="_blank" className="admin-nav-item">
+            <a href={process.env.NEXT_PUBLIC_STORE_URL || "https://www.siddhamwellness.com"} target="_blank" rel="noopener noreferrer" className="admin-nav-item">
               <span>🌐</span>
               <span>View Store</span>
             </a>
