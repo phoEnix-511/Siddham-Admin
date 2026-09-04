@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const url = `https://graph.facebook.com/v20.0/${phone_number_id}`;
+    const url = `https://graph.facebook.com/v20.0/${phone_number_id}?fields=display_phone_number,verified_name`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
