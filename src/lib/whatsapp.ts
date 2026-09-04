@@ -172,3 +172,53 @@ export async function sendWhatsAppTemplate({
     return { success: false, message: err.message || 'WhatsApp fetch request failed' };
   }
 }
+
+/**
+ * Send a free-form WhatsApp Cloud API Message (requires active 24h customer service window)
+ */
+export async function sendWhatsAppText({
+  to,
+  text,
+}: {
+  to: string;
+  text: string;
+}): Promise<{ success: boolean; message: string; data?: any }> {
+  const { phoneNumberId, accessToken } = await getWhatsAppCredentials();
+
+  if (!phoneNumberId || !accessToken) {
+    return { success: false, message: 'WhatsApp API credentials not configured' };
+  }
+
+  const cleanPhoneId = phoneNumberId.trim();
+  const recipient = formatWhatsAppRecipient(to);
+  const url = `https://graph.facebook.com/v25.0/${cleanPhoneId}/messages`;
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: recipient,
+    type: 'text',
+    text: { preview_url: false, body: text }
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('[whatsapp] Cloud API error response:', data);
+      return { success: false, message: data.error?.message || 'Failed to send WhatsApp message' };
+    }
+    return { success: true, message: 'Message sent', data };
+  } catch (err: any) {
+    console.error('[whatsapp] Unexpected fetch error:', err);
+    return { success: false, message: err.message || 'WhatsApp request failed' };
+  }
+}

@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
   { href: '/admin/products', label: 'Products', icon: '📦' },
   { href: '/admin/orders', label: 'Orders', icon: '🛒' },
+  { href: '/admin/whatsapp', label: 'WhatsApp', icon: '💬' },
   { href: '/admin/reports', label: 'Reports', icon: '📈' },
   { href: '/admin/offers', label: 'Offers & Deals', icon: '🎁' },
   { href: '/admin/users', label: 'Admins', icon: '👥' },
@@ -59,6 +60,7 @@ export default function AdminLayout({ children, title = 'Dashboard' }: AdminLayo
     if (item.href === '/admin/users' && adminRole !== 'super_admin') return false;
     if (item.href === '/admin/customers' && adminRole !== 'super_admin') return false;
     if (item.href === '/admin/settings' && !['super_admin', 'admin'].includes(adminRole || '')) return false;
+    if (item.href === '/admin/whatsapp' && !['super_admin', 'admin'].includes(adminRole || '')) return false;
     return true;
   });
 
