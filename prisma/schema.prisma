@@ -282,3 +282,14 @@ model WhatsAppMessage {
 
   @@index([from, timestamp])
 }
+
+model CartSnapshot {
+  id         String   @id @default(uuid())
+  sessionId  String   @unique
+  customerId String?
+  items      Json     // Array of cart items (productId, quantity, price)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  @@index([updatedAt])
+}
