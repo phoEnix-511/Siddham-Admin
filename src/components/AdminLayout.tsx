@@ -47,28 +47,6 @@ function urlBase64ToUint8Array(base64String: string) {
           router.replace('/admin/change-password');
         }
         
-        // Push notification subscription
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-          try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            const subscription = await registration.pushManager.getSubscription();
-            if (!subscription && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
-              const convertedVapidKey = urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
-              const newSubscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedVapidKey,
-              });
-              await fetch('/api/admin/push-subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newSubscription),
-              });
-            }
-          } catch (err) {
-            console.error('Service Worker registration failed:', err);
-          }
-        }
-
         // Start admin presence ping
         const pingAdmin = () => {
           fetch('/api/admin/ping', { method: 'POST' }).catch(() => {});
