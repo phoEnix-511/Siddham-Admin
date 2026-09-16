@@ -74,6 +74,50 @@ export default function AdminOrderDetailPage() {
   const [cancellationReason, setCancellationReason] = useState('');
   const [isEditingCancellation, setIsEditingCancellation] = useState(false);
 
+  // Refund states
+  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [processingRefund, setProcessingRefund] = useState(false);
+
+  const handleProcessRefund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!order) return;
+    const amountNum = refundAmount ? parseFloat(refundAmount) : order.totalAmount;
+    if (isNaN(amountNum) || amountNum <= 0) {
+      addToast('Please enter a valid refund amount', 'error');
+      return;
+    }
+    if (!confirm(`Are you sure you want to process a refund of ₹${amountNum} directly via Razorpay? This will return the money to the customer's payment source.`)) {
+      return;
+    }
+
+    setProcessingRefund(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${id}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountNum,
+          reason: refundReason,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast(data.message || 'Refund successfully processed via Razorpay!', 'success');
+        setOrder(data.order);
+        setShowRefundForm(false);
+      } else {
+        throw new Error(data.error || 'Failed to process refund');
+      }
+    } catch (err: any) {
+      console.error(err);
+      addToast(err.message || 'Refund error', 'error');
+    } finally {
+      setProcessingRefund(false);
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     fetch(`/api/orders/${id}`)
@@ -372,11 +416,86 @@ export default function AdminOrderDetailPage() {
             {/* Payment Info */}
             {(order.razorpayOrderId || order.razorpayPaymentId) && (
               <div className="card" style={{ padding: 'var(--space-4)' }}>
-                <div className="card-header" style={{ padding: 0, marginBottom: 'var(--space-3)' }}><h4 style={{ color: 'var(--color-forest-dark)', margin: 0 }}>Payment Details</h4></div>
+                <div className="card-header" style={{ padding: 0, marginBottom: 'var(--space-3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ color: 'var(--color-forest-dark)', margin: 0 }}>Payment Details</h4>
+                  {order.paymentStatus === 'REFUNDED' && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-error)', background: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: 4 }}>
+                      ✓ Refunded
+                    </span>
+                  )}
+                </div>
                 <div className="card-body" style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', fontSize: '0.875rem' }}>
                   {order.paymentMethod && <div><strong>Method:</strong> {order.paymentMethod}</div>}
                   {order.razorpayOrderId && <div><strong>Razorpay Order ID:</strong> <code style={{ fontSize: '0.8rem' }}>{order.razorpayOrderId}</code></div>}
                   {order.razorpayPaymentId && <div><strong>Payment ID:</strong> <code style={{ fontSize: '0.8rem' }}>{order.razorpayPaymentId}</code></div>}
+                  
+                  {order.razorpayPaymentId && order.paymentStatus !== 'REFUNDED' && adminRole !== 'viewer' && (
+                    <div style={{ marginTop: 'var(--space-2)', borderTop: '1px solid var(--color-gray-200)', paddingTop: 'var(--space-3)' }}>
+                      {!showRefundForm ? (
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          style={{ color: 'var(--color-error)', borderColor: 'var(--color-error)' }}
+                          onClick={() => {
+                            setShowRefundForm(true);
+                            setRefundAmount(String(order.totalAmount));
+                          }}
+                        >
+                          💸 Process Razorpay Refund
+                        </button>
+                      ) : (
+                        <form onSubmit={handleProcessRefund} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', background: 'rgba(239, 68, 68, 0.05)', padding: 'var(--space-3)', borderRadius: 6, border: '1px solid var(--color-error)' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--color-error)', fontSize: '0.85rem' }}>
+                            Process Refund to Customer's Payment Source
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>Refund Amount (₹) — Order Total: ₹{order.totalAmount}</label>
+                            <input
+                              className="form-input form-input-sm"
+                              type="number"
+                              step="any"
+                              value={refundAmount}
+                              onChange={e => setRefundAmount(e.target.value)}
+                              placeholder={`Up to ${order.totalAmount}`}
+                              max={order.totalAmount}
+                              min={1}
+                              required
+                            />
+                            <span style={{ fontSize: '0.7rem', color: 'var(--color-gray-500)', marginTop: 2, display: 'block' }}>
+                              Leave as ₹{order.totalAmount} for full refund, or enter a smaller amount for partial refund.
+                            </span>
+                          </div>
+                          <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>Reason for Refund</label>
+                            <input
+                              className="form-input form-input-sm"
+                              placeholder="e.g. Customer cancelled, Damaged item, etc."
+                              value={refundReason}
+                              onChange={e => setRefundReason(e.target.value)}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                            <button
+                              type="submit"
+                              className="btn btn-sm"
+                              style={{ backgroundColor: 'var(--color-error)', color: 'white' }}
+                              disabled={processingRefund}
+                            >
+                              {processingRefund ? 'Processing Refund...' : `Confirm Refund (₹${refundAmount || order.totalAmount})`}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              onClick={() => setShowRefundForm(false)}
+                              disabled={processingRefund}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
