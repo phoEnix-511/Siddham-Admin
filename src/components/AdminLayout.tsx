@@ -92,8 +92,8 @@ function urlBase64ToUint8Array(base64String: string) {
   const filteredNavItems = navItems.filter(item => {
     if (item.href === '/admin/users' && adminRole !== 'super_admin') return false;
     if (item.href === '/admin/customers' && adminRole !== 'super_admin') return false;
+    if (item.href === '/admin/whatsapp' && adminRole !== 'super_admin') return false;
     if (item.href === '/admin/settings' && !['super_admin', 'admin'].includes(adminRole || '')) return false;
-    if (item.href === '/admin/whatsapp' && !['super_admin', 'admin'].includes(adminRole || '')) return false;
     return true;
   });
 

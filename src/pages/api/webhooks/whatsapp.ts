@@ -126,7 +126,7 @@ export default async function handler(
                   const phoneId = phoneRes?.value;
 
                   if (token && phoneId) {
-                    const replyText = "Thank you for reaching out to Siddham Wellness! We have received your query and someone will reach out to you soon. 🌿";
+                    const replyText = "Thank you for reaching out to Siddham Wellness! We have received your message and our team will get in touch with you within 24 hours. 🌿";
                     await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
                       method: "POST",
                       headers: {
@@ -140,8 +140,8 @@ export default async function handler(
                         text: { body: replyText },
                       }),
                     });
-                    // Set 12 hour cooldown
-                    await setFlag(autoReplyKey, 43200);
+                    // Set 24 hour cooldown (86400 seconds)
+                    await setFlag(autoReplyKey, 86400);
                   }
                 }
               }).catch(console.error);

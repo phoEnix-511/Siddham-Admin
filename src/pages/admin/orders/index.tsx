@@ -61,7 +61,7 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const statuses = ['', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+  const statuses = ['', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
 
   return (
     <>
@@ -128,7 +128,7 @@ export default function AdminOrdersPage() {
                             value={o.status}
                             onChange={e => updateOrderStatus(o.id, e.target.value)}
                           >
-                            {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(s => (
+                            {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map(s => (
                               <option key={s} value={s}>{s}</option>
                             ))}
                           </select>

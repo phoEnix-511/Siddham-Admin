@@ -78,6 +78,7 @@ export default function AdminOrderDetailPage() {
   const [showRefundForm, setShowRefundForm] = useState(false);
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
+  const [refundOrderStatus, setRefundOrderStatus] = useState('CANCELLED');
   const [processingRefund, setProcessingRefund] = useState(false);
 
   const handleProcessRefund = async (e: React.FormEvent) => {
@@ -100,6 +101,7 @@ export default function AdminOrderDetailPage() {
         body: JSON.stringify({
           amount: amountNum,
           reason: refundReason,
+          orderStatus: refundOrderStatus,
         }),
       });
       const data = await res.json();
@@ -474,6 +476,22 @@ export default function AdminOrderDetailPage() {
                               onChange={e => setRefundReason(e.target.value)}
                             />
                           </div>
+                          <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>Update Order Status</label>
+                            <select
+                              className="form-select form-input-sm"
+                              value={refundOrderStatus}
+                              onChange={e => setRefundOrderStatus(e.target.value)}
+                              style={{ width: '100%' }}
+                            >
+                              <option value="CANCELLED">CANCELLED (Default)</option>
+                              <option value="REFUNDED">REFUNDED</option>
+                              <option value="KEEP">KEEP CURRENT STATUS</option>
+                            </select>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--color-gray-500)', marginTop: 2, display: 'block' }}>
+                              Choose what happens to the order's fulfillment status after the refund.
+                            </span>
+                          </div>
                           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                             <button
                               type="submit"
@@ -592,7 +610,7 @@ export default function AdminOrderDetailPage() {
                     disabled={updating || adminRole === 'viewer'}
                     style={{ fontSize: '0.8rem', width: '100%' }}
                   >
-                    {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(s => (
+                    {['PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'].map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>

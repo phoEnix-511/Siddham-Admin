@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEditorRole, requireViewerRole } from "@/lib/auth";
 import { sendOrderShippedEmail, sendOrderCancelledEmail } from "@/lib/email";
 import { getOrSet, delPattern } from "@/lib/cache";
+import { sendWhatsAppTemplate, getWhatsAppCredentials } from "@/lib/whatsapp";
 
 const ORDER_DETAIL_CACHE_TTL = 60; // 1 minute
 
@@ -71,11 +72,13 @@ export default async function handler(
   }
 
   if (req.method === "PUT") {
+    let adminPayload;
     try {
-      requireEditorRole(req);
+      adminPayload = requireEditorRole(req);
     } catch {
       return res.status(401).json({ error: "Unauthorized" });
     }
+    const isSuperAdmin = adminPayload.role === 'super_admin';
 
     const {
       status,
@@ -102,43 +105,47 @@ export default async function handler(
       // State machine logic
       if (status && status !== existingOrder.status) {
         const current = existingOrder.status;
-        const terminalStates = ["DELIVERED", "CANCELLED", "REFUNDED"];
-        if (terminalStates.includes(current)) {
-          return res
-            .status(400)
-            .json({ error: `Cannot change status of a ${current} order.` });
-        }
-
-        if (
-          status === "CANCELLED" &&
-          ["SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(current)
-        ) {
-          return res
-            .status(400)
-            .json({
-              error:
-                "Order cannot be cancelled after it has been shipped or delivered.",
-            });
-        }
-
-        if (current !== status) {
-          const validNextStates: Record<string, string[]> = {
-            PENDING: ["CONFIRMED", "PROCESSING", "SHIPPED", "CANCELLED"],
-            CONFIRMED: ["PROCESSING", "SHIPPED", "CANCELLED"],
-            PROCESSING: ["SHIPPED", "CANCELLED"],
-            SHIPPED: ["PROCESSING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"],
-            OUT_FOR_DELIVERY: ["SHIPPED", "DELIVERED"],
-          };
+        
+        // Super admin can bypass terminal state restrictions
+        if (!isSuperAdmin) {
+          const terminalStates = ["DELIVERED", "CANCELLED", "REFUNDED"];
+          if (terminalStates.includes(current)) {
+            return res
+              .status(400)
+              .json({ error: `Cannot change status of a ${current} order.` });
+          }
 
           if (
-            validNextStates[current] &&
-            !validNextStates[current].includes(status)
+            status === "CANCELLED" &&
+            ["SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(current)
           ) {
             return res
               .status(400)
               .json({
-                error: `Invalid status transition from ${current} to ${status}. Expected one of: ${validNextStates[current].join(", ")}`,
+                error:
+                  "Order cannot be cancelled after it has been shipped or delivered.",
               });
+          }
+
+          if (current !== status) {
+            const validNextStates: Record<string, string[]> = {
+              PENDING: ["CONFIRMED", "PROCESSING", "SHIPPED", "CANCELLED", "REFUNDED"],
+              CONFIRMED: ["PROCESSING", "SHIPPED", "CANCELLED", "REFUNDED"],
+              PROCESSING: ["SHIPPED", "CANCELLED", "REFUNDED"],
+              SHIPPED: ["PROCESSING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "REFUNDED"],
+              OUT_FOR_DELIVERY: ["SHIPPED", "DELIVERED", "REFUNDED"],
+            };
+
+            if (
+              validNextStates[current] &&
+              !validNextStates[current].includes(status)
+            ) {
+              return res
+                .status(400)
+                .json({
+                  error: `Invalid status transition from ${current} to ${status}. Expected one of: ${validNextStates[current].join(", ")}`,
+                });
+            }
           }
         }
       }
@@ -218,15 +225,13 @@ export default async function handler(
           });
 
           if (customerPhone) {
-            import("@/lib/whatsapp").then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
-              getWhatsAppCredentials().then((creds) => {
-                sendWhatsAppTemplate({
-                  to: customerPhone,
-                  templateName: creds.orderShippedTemplateName,
-                  languageCode: creds.languageCode,
-                  bodyParameters: [customerName, updatedOrder.orderNumber, emailCarrier, emailTracking],
-                }).catch(err => console.error("[whatsapp] Shipped notification error:", err));
-              });
+            getWhatsAppCredentials().then((creds) => {
+              sendWhatsAppTemplate({
+                to: customerPhone,
+                templateName: creds.orderShippedTemplateName,
+                languageCode: creds.languageCode,
+                bodyParameters: [customerName, updatedOrder.orderNumber, emailCarrier, emailTracking],
+              }).catch(err => console.error("[whatsapp] Shipped notification error:", err));
             }).catch(console.error);
           }
         } else if (wasCancelled) {
@@ -240,28 +245,24 @@ export default async function handler(
           });
 
           if (customerPhone) {
-            import("@/lib/whatsapp").then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
-              getWhatsAppCredentials().then((creds) => {
-                sendWhatsAppTemplate({
-                  to: customerPhone,
-                  templateName: creds.orderCancelledTemplateName,
-                  languageCode: creds.languageCode,
-                  bodyParameters: [customerName, updatedOrder.orderNumber, emailReason],
-                }).catch(err => console.error("[whatsapp] Cancelled notification error:", err));
-              });
+            getWhatsAppCredentials().then((creds) => {
+              sendWhatsAppTemplate({
+                to: customerPhone,
+                templateName: creds.orderCancelledTemplateName,
+                languageCode: creds.languageCode,
+                bodyParameters: [customerName, updatedOrder.orderNumber, emailReason],
+              }).catch(err => console.error("[whatsapp] Cancelled notification error:", err));
             }).catch(console.error);
           }
         } else if (wasDelivered) {
           if (customerPhone) {
-            import("@/lib/whatsapp").then(({ sendWhatsAppTemplate, getWhatsAppCredentials }) => {
-              getWhatsAppCredentials().then((creds) => {
-                sendWhatsAppTemplate({
-                  to: customerPhone,
-                  templateName: creds.orderDeliveredTemplateName,
-                  languageCode: creds.languageCode,
-                  bodyParameters: [customerName, updatedOrder.orderNumber],
-                }).catch(err => console.error("[whatsapp] Delivered notification error:", err));
-              });
+            getWhatsAppCredentials().then((creds) => {
+              sendWhatsAppTemplate({
+                to: customerPhone,
+                templateName: creds.orderDeliveredTemplateName,
+                languageCode: creds.languageCode,
+                bodyParameters: [customerName, updatedOrder.orderNumber],
+              }).catch(err => console.error("[whatsapp] Delivered notification error:", err));
             }).catch(console.error);
           }
         }

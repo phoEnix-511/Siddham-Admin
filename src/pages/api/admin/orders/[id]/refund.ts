@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { requireSuperAdmin } from '@/lib/auth';
 import { getRazorpayInstance } from '@/lib/razorpay';
 import { delPattern } from '@/lib/cache';
+import { sendOrderCancelledEmail } from '@/lib/email';
+import { getWhatsAppCredentials, sendWhatsAppTemplate } from '@/lib/whatsapp';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -16,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { id } = req.query;
-  const { amount, reason } = req.body;
+  const { amount, reason, orderStatus } = req.body;
 
   try {
     const order = await prisma.order.findUnique({
@@ -67,14 +69,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const isFullRefund = refundAmount >= order.totalAmount;
+    
+    // Determine the next status for the order
+    let nextStatus = order.status;
+    if (orderStatus === 'CANCELLED') {
+      nextStatus = 'CANCELLED';
+    } else if (orderStatus === 'REFUNDED') {
+      nextStatus = 'REFUNDED';
+    } else if (orderStatus === 'KEEP') {
+      nextStatus = order.status;
+    } else if (isFullRefund) {
+      nextStatus = 'CANCELLED'; // Default to cancelled for a full refund if not specified
+    }
 
     // Update order in database
     const updatedOrder = await prisma.order.update({
       where: { id: order.id },
       data: {
         paymentStatus: isFullRefund ? 'REFUNDED' : 'PAID',
-        status: isFullRefund ? 'REFUNDED' : order.status,
-        cancellationReason: reason ? `Refunded ₹${refundAmount}: ${reason}` : `Refunded ₹${refundAmount}`,
+        status: nextStatus as any,
+        cancellationReason: reason 
+          ? `Refunded ₹${refundAmount} (ID: ${refund.id}): ${reason}` 
+          : `Refunded ₹${refundAmount} (ID: ${refund.id})`,
       },
       include: { customer: true, items: { include: { product: true } } },
     });
@@ -86,6 +102,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       delPattern('account:orders:'),
       delPattern('reports:'),
     ]);
+
+    // Send cancellation notifications if status changed to CANCELLED
+    if (order.status !== 'CANCELLED' && nextStatus === 'CANCELLED') {
+      const orderEmailData = {
+        orderNumber: updatedOrder.orderNumber,
+        customerName: updatedOrder.customer?.name || "Valued Customer",
+        customerEmail: updatedOrder.customer.email,
+        items: updatedOrder.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        totalAmount: updatedOrder.totalAmount,
+        shippingAmount: updatedOrder.shippingAmount,
+        shippingAddress: typeof updatedOrder.shippingAddress === 'string'
+            ? JSON.parse(updatedOrder.shippingAddress)
+            : (updatedOrder.shippingAddress as any),
+      };
+
+      const emailReason = updatedOrder.cancellationReason || "Admin cancellation via refund";
+      
+      sendOrderCancelledEmail(orderEmailData, emailReason).catch(console.error);
+
+      if (updatedOrder.customer?.phone) {
+        getWhatsAppCredentials().then((creds) => {
+          sendWhatsAppTemplate({
+            to: updatedOrder.customer.phone!,
+            templateName: creds.orderCancelledTemplateName,
+            languageCode: creds.languageCode,
+            bodyParameters: [orderEmailData.customerName, updatedOrder.orderNumber, emailReason],
+          }).catch(console.error);
+        }).catch(console.error);
+      }
+    }
 
     return res.status(200).json({
       success: true,

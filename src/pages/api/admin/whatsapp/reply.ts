@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
-import { requireAdminRole } from "@/lib/auth";
+import { requireSuperAdmin } from "@/lib/auth";
 import { sendWhatsAppText } from "@/lib/whatsapp";
 import { generateOrderNumber } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let admin;
   try {
-    admin = requireAdminRole(req);
+    admin = requireSuperAdmin(req);
   } catch (error) {
     return res.status(401).json({ error: "Unauthorized" });
   }

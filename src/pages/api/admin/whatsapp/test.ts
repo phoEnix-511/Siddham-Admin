@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { requireAdminRole } from '@/lib/auth';
+import { requireSuperAdmin } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    requireAdminRole(req);
+    requireSuperAdmin(req);
   } catch (err: any) {
     return res.status(err.message.includes('Forbidden') ? 403 : 401).json({ error: err.message });
   }

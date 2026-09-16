@@ -44,9 +44,9 @@ function createPrismaClient() {
     connectionString,
     ssl,
     // Explicit pool sizing to handle concurrent requests without exhausting DB connections
-    max: 20,
-    idleTimeoutMillis: 30_000,      // close idle connections after 30 s
-    connectionTimeoutMillis: 5_000, // fail fast if no connection available in 5 s
+    max: 10,
+    idleTimeoutMillis: 60_000,      // close idle connections after 60 s
+    connectionTimeoutMillis: 20_000, // allow up to 20s for serverless cold start
   });
 
   const adapter = new PrismaPg(pool);
