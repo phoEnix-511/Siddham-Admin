@@ -22,25 +22,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   
   try {
     const redis = new Redis({ url, token });
-    const items = await redis.lrange("notifications:new_orders", 0, 50);
-    const notifications = [];
+    const [orderItems, waItems] = await Promise.all([
+      redis.lrange("notifications:new_orders", 0, 50).catch(() => []),
+      redis.lrange("notifications:whatsapp", 0, 50).catch(() => []),
+    ]);
+
+    const notifications: any[] = [];
+    const allRaw = [...(Array.isArray(orderItems) ? orderItems : []), ...(Array.isArray(waItems) ? waItems : [])];
     
-    for (const item of items) {
+    for (const item of allRaw) {
+      let parsed: any = null;
       if (typeof item === 'string') {
-        try {
-          const parsed = JSON.parse(item);
-          if (parsed.timestamp > sinceTimestamp) {
-            notifications.push(parsed);
-          }
-        } catch (e) {}
+        try { parsed = JSON.parse(item); } catch (e) {}
       } else if (typeof item === 'object' && item !== null) {
-        if ((item as any).timestamp > sinceTimestamp) {
-          notifications.push(item);
-        }
+        parsed = item;
+      }
+      if (parsed && (!sinceTimestamp || parsed.timestamp > sinceTimestamp)) {
+        notifications.push(parsed);
       }
     }
+
+    // Sort newest first
+    notifications.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     
-    return res.status(200).json({ notifications });
+    return res.status(200).json({ notifications: notifications.slice(0, 50) });
   } catch (error) {
     return res.status(500).json({ error: "Failed to fetch notifications" });
   }

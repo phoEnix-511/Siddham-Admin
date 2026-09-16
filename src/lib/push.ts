@@ -2,11 +2,24 @@ import webpush from 'web-push';
 import { prisma } from './prisma';
 import { Redis } from '@upstash/redis';
 
-webpush.setVapidDetails(
-  'mailto:admin@siddhamwellness.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '',
-  process.env.VAPID_PRIVATE_KEY || ''
-);
+let _vapidConfigured = false;
+function ensureVapid() {
+  if (_vapidConfigured) return true;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) {
+    console.warn('[push] VAPID keys not configured in environment variables');
+    return false;
+  }
+  try {
+    webpush.setVapidDetails('mailto:admin@siddhamwellness.com', pub, priv);
+    _vapidConfigured = true;
+    return true;
+  } catch (err) {
+    console.error('[push] Invalid VAPID configuration:', err);
+    return false;
+  }
+}
 
 let _redis: Redis | null = null;
 function getRedis(): Redis | null {
@@ -20,7 +33,14 @@ function getRedis(): Redis | null {
 
 export async function sendAdminPushNotification(title: string, body: string, url: string = '/admin') {
   try {
+    if (!ensureVapid()) {
+      const r = getRedis();
+      if (r) await r.lpush("push_debug_logs", JSON.stringify({ error: "VAPID keys missing at runtime", time: Date.now() }));
+      return;
+    }
     const subscriptions = await prisma.adminPushSubscription.findMany();
+    const r = getRedis();
+    if (r) await r.lpush("push_debug_logs", JSON.stringify({ event: "sendAdminPushNotification", subsFound: subscriptions.length, title, time: Date.now() }));
     const payload = JSON.stringify({ title, body, url });
     
     const promises = subscriptions.map(sub => 

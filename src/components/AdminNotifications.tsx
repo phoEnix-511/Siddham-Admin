@@ -74,9 +74,13 @@ export default function AdminNotifications() {
             setLastChecked(Date.now());
             setUnread(prev => [...data.notifications, ...prev].slice(0, 50));
             
-            // Pop a toast for the newest order
+            // Pop a toast for the newest notification
             const newest = data.notifications[0];
-            addToast(`New order ${newest.orderNumber} from ${newest.customerName} (${formatCurrency(newest.totalAmount)})`, 'success');
+            if (newest.type === 'whatsapp') {
+              addToast(`💬 WhatsApp from ${newest.senderName}: "${newest.body?.substring(0, 40) || 'Attachment'}"`, 'info');
+            } else {
+              addToast(`New order ${newest.orderNumber} from ${newest.customerName} (${formatCurrency(newest.totalAmount)})`, 'success');
+            }
             
             // Play notification sound
             try {
@@ -162,27 +166,34 @@ export default function AdminNotifications() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {unread.map((notif, i) => (
-                <Link 
-                  key={notif.id + i} 
-                  href={`/admin/orders/${notif.id}`}
-                  onClick={() => setIsOpen(false)}
-                  style={{
-                    padding: 'var(--space-3)', borderBottom: '1px solid var(--color-gray-100)',
-                    display: 'flex', gap: 'var(--cpace-3)', alignItems: 'center',
-                    textDecoration: 'none', color: 'inherit'
-                  }}
-                >
-                  <div style={{ fontSize: '1.5rem' }}>🕜</div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest-dark)' }}>New Order: {notif.orderNumber}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>{notif.customerName} • {formatCurrency(notif.totalAmount)}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-400)', marginTop: '2px' }}>
-                      {new Date(notif.timestamp).toLocaleTimeString()}
+              {unread.map((notif, i) => {
+                const isWhatsApp = notif.type === 'whatsapp';
+                return (
+                  <Link 
+                    key={(notif.id || i) + '-' + i} 
+                    href={isWhatsApp ? '/admin/whatsapp' : `/admin/orders/${notif.id}`}
+                    onClick={() => setIsOpen(false)}
+                    style={{
+                      padding: 'var(--space-3)', borderBottom: '1px solid var(--color-gray-100)',
+                      display: 'flex', gap: 'var(--space-3)', alignItems: 'center',
+                      textDecoration: 'none', color: 'inherit'
+                    }}
+                  >
+                    <div style={{ fontSize: '1.5rem' }}>{isWhatsApp ? '💬' : '📦'}</div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {isWhatsApp ? `WhatsApp: ${notif.senderName}` : `New Order: ${notif.orderNumber}`}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {isWhatsApp ? notif.body : `${notif.customerName} • ${formatCurrency(notif.totalAmount)}`}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-gray-400)', marginTop: '2px' }}>
+                        {new Date(notif.timestamp).toLocaleTimeString()}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>

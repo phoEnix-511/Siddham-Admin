@@ -119,6 +119,27 @@ export default async function handler(
                 console.error("[push] failed:", err);
               }
 
+              // Push to Redis for Admin Notification bell icon & in-app alerts
+              try {
+                const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+                const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+                if (redisUrl && redisToken) {
+                  const { Redis } = await import("@upstash/redis");
+                  const redis = new Redis({ url: redisUrl, token: redisToken });
+                  await redis.lpush("notifications:whatsapp", JSON.stringify({
+                    type: "whatsapp",
+                    id: msg.id,
+                    senderName,
+                    senderPhone: msg.from,
+                    body: msg.text?.body || "Sent an attachment",
+                    timestamp: Date.now()
+                  }));
+                  await redis.ltrim("notifications:whatsapp", 0, 99);
+                }
+              } catch (redisErr) {
+                console.error("[whatsapp-webhook] Failed to push to Redis notifications:", redisErr);
+              }
+
               // Auto-reply logic
               try {
                 const autoReplyKey = `autoreply:${msg.from}`;
