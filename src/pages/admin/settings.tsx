@@ -126,8 +126,9 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         const fbData = data.data || {};
-        const displayName = fbData.display_phone_number || fbData.verified_name || `ID: ${fbData.id}` || 'Valid Number';
-        addToast(`Success! Connected to WhatsApp as: ${displayName}`, 'success');
+        const displayName = fbData.display_phone_number || fbData.verified_name || 'Verified Successfully';
+        addToast(`Success! Connected to WhatsApp: ${displayName}`, 'success');
+        console.log("Meta API Response:", fbData); // Also log to console for easy viewing
       } else {
         throw new Error(data.error || 'Failed to authenticate');
       }
