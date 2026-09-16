@@ -109,6 +109,35 @@ export default function AdminSettingsPage() {
   const [restoringBackup, setRestoringBackup] = useState(false);
   const [purgingCache, setPurgingCache] = useState(false);
   const [testingWhatsApp, setTestingWhatsApp] = useState(false);
+  const [testingRazorpay, setTestingRazorpay] = useState(false);
+
+  const handleTestRazorpay = async () => {
+    if (!settings.razorpay_key_id || !settings.razorpay_key_secret) {
+      addToast('Please enter both Razorpay Key ID and Key Secret to test.', 'error');
+      return;
+    }
+    setTestingRazorpay(true);
+    try {
+      const res = await fetch('/api/admin/razorpay/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key_id: settings.razorpay_key_id,
+          key_secret: settings.razorpay_key_secret,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast(data.message || 'Razorpay connection successful!', 'success');
+      } else {
+        throw new Error(data.error || 'Failed to authenticate with Razorpay');
+      }
+    } catch (err: any) {
+      addToast(err.message || 'Razorpay connection test failed', 'error');
+    } finally {
+      setTestingRazorpay(false);
+    }
+  };
 
   const handleTestWhatsApp = async () => {
     if (!settings.whatsapp_phone_number_id || !settings.whatsapp_access_token) {
@@ -460,6 +489,19 @@ export default function AdminSettingsPage() {
                   >
                     {showSecret ? '🙈' : '👁️'}
                   </button>
+                </div>
+                <div style={{ marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={handleTestRazorpay}
+                    disabled={testingRazorpay}
+                  >
+                    {testingRazorpay ? 'Testing...' : 'Test Razorpay Connection'}
+                  </button>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                    Verifies whether these API keys can authenticate against Razorpay.
+                  </span>
                 </div>
               </div>
             </SettingSection>
