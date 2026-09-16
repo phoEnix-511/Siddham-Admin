@@ -55,7 +55,10 @@ export default function AdminDashboard() {
       const res = await fetch('/api/admin/stats');
       if (res.status === 401) { router.push('/admin/login'); return; }
       const data = await res.json();
-      setStats(data.stats);
+      setStats({
+        ...data.stats,
+        analytics: data.analytics
+      });
       setLiveMetrics(data.liveMetrics);
       setRecentOrders(data.recentOrders);
       setLowStockProducts(data.lowStockProducts);
