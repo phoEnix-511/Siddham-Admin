@@ -94,9 +94,9 @@ model Category {
   slug        String    @unique
   description String?
   imageUrl    String?
-  isConcern   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  isConcern   Boolean   @default(false)
   products    Product[]
 }
 
@@ -107,12 +107,10 @@ model Product {
   description  String
   price        Float
   comparePrice Float?
-  images       ProductImage[]
   stock        Int              @default(0)
   sku          String?          @unique
   isActive     Boolean          @default(true)
   isFeatured   Boolean          @default(false)
-  isDeleted    Boolean          @default(false)
   ingredients  String?
   benefits     String?
   usage        String?
@@ -121,10 +119,12 @@ model Product {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   videoUrl     String?
-  videoUrls    String[]         @default([])
   caption      String?
+  videoUrls    String[]         @default([])
+  isDeleted    Boolean          @default(false)
   orderItems   OrderItem[]
   category     Category         @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]
   variants     ProductVariant[]
   reviews      Review[]
 }
@@ -145,7 +145,7 @@ model Order {
   paymentStatus      PaymentStatus @default(PENDING)
   paymentMethod      String?
   razorpayOrderId    String?
-  razorpayPaymentId  String?       @unique
+  razorpayPaymentId  String?
   totalAmount        Float
   shippingAmount     Float         @default(0)
   taxAmount          Float         @default(0)
@@ -255,41 +255,4 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
-}
-
-model CartSnapshot {
-  id         String   @id @default(uuid())
-  sessionId  String   @unique
-  customerId String?
-  items      Json     // Array of cart items (productId, quantity, price)
-  updatedAt  DateTime @updatedAt
-  createdAt  DateTime @default(now())
-
-  @@index([updatedAt])
-}
-
-model WhatsAppMessage {
-  id           String   @id @default(uuid())
-  messageId    String   @unique
-  from         String
-  to           String
-  senderName   String?
-  type         String
-  body         String?
-  mediaUrl     String?
-  direction    String   // "INBOUND" | "OUTBOUND"
-  status       String   // "received" | "sent" | "delivered" | "read" | "failed"
-  timestamp    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([from, timestamp])
-}
-
-model AdminPushSubscription {
-  id        String   @id @default(uuid())
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now())
 }

@@ -133,6 +133,18 @@ export default function AdminNotifications() {
                   Enable Push
                 </button>
               )}
+              {isSubscribed && (
+                <button 
+                  onClick={async () => {
+                    await fetch('/api/admin/push-test', {
+                      method: 'POST'
+                    });
+                  }}
+                  style={{ background: 'var(--color-saffron)', border: 'none', color: 'white', fontSize: '0.7rem', padding: '2px 8px', borderRadius: 4, cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  Test Push
+                </button>
+              )}
               {unread.length > 0 && (
                 <button 
                   onClick={() => setUnread([])}
