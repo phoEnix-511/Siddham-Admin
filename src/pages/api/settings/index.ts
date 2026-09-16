@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const map: Record<string, string> = {};
         const PUBLIC_KEYS = [
           'store_name', 'store_email', 'store_phone', 'social_instagram', 'social_facebook', 
-          'announcement_bar_text', 'announcement_bar_enabled', 'catalog_mode', 
+          'announcement_bar_text', 'announcement_bar_enabled', 'announcement_bar_active', 'catalog_mode', 
           'hero_title', 'hero_subtitle', 'hero_badge', 'currency', 
           'shipping_free_above', 'shipping_standard_rate', 'about_us_content', 
           'loyalty_points_rate', 'loyalty_min_redeem', 'free_shipping_threshold',
