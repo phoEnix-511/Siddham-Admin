@@ -121,23 +121,25 @@ export default async function handler(
             });
         }
 
-        const validNextStates: Record<string, string[]> = {
-          PENDING: ["CONFIRMED", "CANCELLED"],
-          CONFIRMED: ["PROCESSING", "CANCELLED"],
-          PROCESSING: ["SHIPPED", "CANCELLED"],
-          SHIPPED: ["OUT_FOR_DELIVERY", "DELIVERED"],
-          OUT_FOR_DELIVERY: ["DELIVERED"],
-        };
+        if (current !== status) {
+          const validNextStates: Record<string, string[]> = {
+            PENDING: ["CONFIRMED", "PROCESSING", "SHIPPED", "CANCELLED"],
+            CONFIRMED: ["PROCESSING", "SHIPPED", "CANCELLED"],
+            PROCESSING: ["SHIPPED", "CANCELLED"],
+            SHIPPED: ["PROCESSING", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"],
+            OUT_FOR_DELIVERY: ["SHIPPED", "DELIVERED"],
+          };
 
-        if (
-          validNextStates[current] &&
-          !validNextStates[current].includes(status)
-        ) {
-          return res
-            .status(400)
-            .json({
-              error: `Invalid status transition from ${current} to ${status}. Expected one of: ${validNextStates[current].join(", ")}`,
-            });
+          if (
+            validNextStates[current] &&
+            !validNextStates[current].includes(status)
+          ) {
+            return res
+              .status(400)
+              .json({
+                error: `Invalid status transition from ${current} to ${status}. Expected one of: ${validNextStates[current].join(", ")}`,
+              });
+          }
         }
       }
 
