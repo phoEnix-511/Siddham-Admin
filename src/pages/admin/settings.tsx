@@ -41,6 +41,7 @@ interface Settings {
   // WhatsApp Notifications
   whatsapp_phone_number_id: string;
   whatsapp_access_token: string;
+  require_phone_verification: string;
   // Promotional
   show_featured_in: string;
   featured_in_brands: string;
@@ -76,6 +77,7 @@ const defaultSettings: Settings = {
   rewards_welcome_bonus: '500',
   whatsapp_phone_number_id: '',
   whatsapp_access_token: '',
+  require_phone_verification: 'true',
   show_featured_in: 'true',
   featured_in_brands: 'The Times, VOGUE, GQ, Wellness Daily',
   trust_bar_rating: '4.8',
@@ -573,6 +575,16 @@ export default function AdminSettingsPage() {
                     {testingWhatsApp ? 'Testing...' : 'Test Connection'}
                   </button>
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Require Phone Verification at Checkout</label>
+                <select className="form-input" name="require_phone_verification" value={settings.require_phone_verification} onChange={handleChange}>
+                  <option value="true">Yes — Send OTP via WhatsApp before checkout</option>
+                  <option value="false">No — Allow checkout without phone verification</option>
+                </select>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                  ⚠️ Disable this only if WhatsApp is not configured. Phone number will still be collected but not verified.
+                </span>
               </div>
             </SettingSection>
 
