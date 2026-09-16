@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { getFlag, setFlag } from "@/lib/cache";
+import { sendAdminPushNotification } from "@/lib/push";
 
 /**
  * WhatsApp Cloud API Webhook
@@ -107,16 +109,18 @@ export default async function handler(
               });
 
               // Send Admin Push Notification
-              import("@/lib/push").then(({ sendAdminPushNotification }) => {
-                sendAdminPushNotification(
+              try {
+                await sendAdminPushNotification(
                   `New WhatsApp message from ${senderName}`,
                   msg.text?.body || "Sent an attachment",
                   "/admin/whatsapp"
                 );
-              }).catch(console.error);
+              } catch (err) {
+                console.error("[push] failed:", err);
+              }
 
               // Auto-reply logic
-              import("@/lib/cache").then(async ({ getFlag, setFlag }) => {
+              try {
                 const autoReplyKey = `autoreply:${msg.from}`;
                 const hasAutoReplied = await getFlag(autoReplyKey);
                 if (!hasAutoReplied) {
@@ -144,7 +148,9 @@ export default async function handler(
                     await setFlag(autoReplyKey, 86400);
                   }
                 }
-              }).catch(console.error);
+              } catch (err) {
+                console.error("[auto-reply] failed:", err);
+              }
 
             } catch (err) {
               console.error("[whatsapp-webhook] Failed to save inbound message:", err);
