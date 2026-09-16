@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { requireAdminRole } from '@/lib/auth';
+import { requireSuperAdmin } from '@/lib/auth';
 import { getRazorpayInstance } from '@/lib/razorpay';
 import { delPattern } from '@/lib/cache';
 
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    requireAdminRole(req);
+    requireSuperAdmin(req);
   } catch (err: any) {
     return res.status(err.message?.includes('Forbidden') ? 403 : 401).json({ error: err.message });
   }

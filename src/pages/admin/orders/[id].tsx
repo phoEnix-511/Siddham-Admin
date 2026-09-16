@@ -429,7 +429,7 @@ export default function AdminOrderDetailPage() {
                   {order.razorpayOrderId && <div><strong>Razorpay Order ID:</strong> <code style={{ fontSize: '0.8rem' }}>{order.razorpayOrderId}</code></div>}
                   {order.razorpayPaymentId && <div><strong>Payment ID:</strong> <code style={{ fontSize: '0.8rem' }}>{order.razorpayPaymentId}</code></div>}
                   
-                  {order.razorpayPaymentId && order.paymentStatus !== 'REFUNDED' && adminRole !== 'viewer' && (
+                  {order.razorpayPaymentId && order.paymentStatus !== 'REFUNDED' && adminRole === 'super_admin' && (
                     <div style={{ marginTop: 'var(--space-2)', borderTop: '1px solid var(--color-gray-200)', paddingTop: 'var(--space-3)' }}>
                       {!showRefundForm ? (
                         <button
