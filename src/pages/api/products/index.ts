@@ -149,7 +149,8 @@ export default async function handler(
           ? [data.videoUrl]
           : [];
 
-      const { images: rawImages, ...restData } = data;
+      // Strip variants and images out — handled separately below
+      const { images: rawImages, variants: rawVariants, ...restData } = data;
 
       const productData = {
         ...restData,
@@ -173,6 +174,22 @@ export default async function handler(
           }
         }
       });
+
+      // Create variants separately now that we have the productId
+      if (Array.isArray(rawVariants) && rawVariants.length > 0) {
+        await prisma.productVariant.createMany({
+          data: rawVariants
+            .filter((v: any) => v.name)
+            .map((v: any) => ({
+              productId: product.id,
+              name: v.name,
+              price: parseFloat(v.price) || 0,
+              comparePrice: v.comparePrice ? parseFloat(v.comparePrice) : null,
+              stock: parseInt(v.stock) || 0,
+              sku: v.sku || null,
+            })),
+        });
+      }
 
       // Invalidate all product list caches so new product shows up
       await delPattern("products:list:");

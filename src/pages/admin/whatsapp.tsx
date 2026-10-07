@@ -129,8 +129,51 @@ export default function WhatsAppInbox() {
                         padding: '8px 12px', borderRadius: 8,
                         boxShadow: '0 1px 1px rgba(0,0,0,0.1)'
                       }}>
+                        {/* Media display */}
+                        {msg.mediaUrl && (
+                          <div style={{ marginBottom: 8 }}>
+                            {msg.type === 'image' && (
+                              <a href={`/api/admin/whatsapp/media?mediaId=${msg.mediaUrl}`} target="_blank" rel="noopener noreferrer">
+                                <img 
+                                  src={`/api/admin/whatsapp/media?mediaId=${msg.mediaUrl}`} 
+                                  alt="WhatsApp media"
+                                  style={{ maxWidth: '100%', maxHeight: 250, borderRadius: 6, display: 'block' }}
+                                />
+                              </a>
+                            )}
+                            {msg.type === 'video' && (
+                              <video 
+                                controls 
+                                src={`/api/admin/whatsapp/media?mediaId=${msg.mediaUrl}`} 
+                                style={{ maxWidth: '100%', maxHeight: 250, borderRadius: 6 }} 
+                              />
+                            )}
+                            {msg.type === 'audio' && (
+                              <audio 
+                                controls 
+                                src={`/api/admin/whatsapp/media?mediaId=${msg.mediaUrl}`} 
+                                style={{ width: '100%' }} 
+                              />
+                            )}
+                            {(msg.type === 'document' || (!['image', 'video', 'audio'].includes(msg.type))) && (
+                              <a 
+                                href={`/api/admin/whatsapp/media?mediaId=${msg.mediaUrl}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                                  background: 'rgba(0,0,0,0.05)', padding: '6px 12px',
+                                  borderRadius: 6, textDecoration: 'none', color: '#128c7e',
+                                  fontWeight: 600, fontSize: '0.85rem'
+                                }}
+                              >
+                                📄 View Document / File
+                              </a>
+                            )}
+                          </div>
+                        )}
                         <div style={{ wordBreak: 'break-word' }}>
-                          {msg.type !== 'text' && <strong>[{msg.type}]</strong> }
+                          {msg.type !== 'text' && !msg.mediaUrl && <strong>[{msg.type}] </strong>}
                           {msg.body}
                         </div>
                         <div style={{ fontSize: '0.65rem', color: 'var(--color-gray-500)', textAlign: 'right', marginTop: 4 }}>

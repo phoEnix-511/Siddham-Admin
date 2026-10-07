@@ -93,6 +93,14 @@ export default async function handler(
             console.log(`[whatsapp-webhook] Inbound from ${msg.from} (${senderName}): ${msg.type} — ${msg.text?.body || "(media)"}`);
             // Persist inbound message for admin inbox
             try {
+              // Capture media ID for any media type (image, video, audio, document, sticker)
+              const mediaId =
+                msg.image?.id || msg.video?.id || msg.audio?.id ||
+                msg.document?.id || msg.sticker?.id || null;
+              const mediaCaption =
+                msg.image?.caption || msg.video?.caption || msg.document?.caption || null;
+              const mediaFilename = msg.document?.filename || null;
+
               await (prisma as any).whatsAppMessage?.create({
                 data: {
                   messageId: msg.id,
@@ -100,8 +108,8 @@ export default async function handler(
                   senderName,
                   to: value.metadata?.phone_number_id || "",
                   type: msg.type,
-                  body: msg.text?.body || null,
-                  mediaUrl: msg.type === "image" ? msg.image?.id : null,
+                  body: msg.text?.body || mediaCaption || mediaFilename || null,
+                  mediaUrl: mediaId,
                   direction: "INBOUND",
                   status: "received",
                   timestamp: new Date(parseInt(msg.timestamp) * 1000),
@@ -110,9 +118,14 @@ export default async function handler(
 
               // Send Admin Push Notification
               try {
+                const notifBody = msg.text?.body ||
+                  (msg.type === 'image' ? '📷 Image' :
+                   msg.type === 'video' ? '🎥 Video' :
+                   msg.type === 'document' ? `📄 ${mediaFilename || 'Document'}` :
+                   msg.type === 'audio' ? '🎵 Audio' : 'Sent an attachment');
                 await sendAdminPushNotification(
                   `New WhatsApp message from ${senderName}`,
-                  msg.text?.body || "Sent an attachment",
+                  notifBody,
                   "/admin/whatsapp"
                 );
               } catch (err) {
@@ -131,7 +144,7 @@ export default async function handler(
                     id: msg.id,
                     senderName,
                     senderPhone: msg.from,
-                    body: msg.text?.body || "Sent an attachment",
+                    body: msg.text?.body || `[${msg.type}]`,
                     timestamp: Date.now()
                   }));
                   await redis.ltrim("notifications:whatsapp", 0, 99);
@@ -140,7 +153,7 @@ export default async function handler(
                 console.error("[whatsapp-webhook] Failed to push to Redis notifications:", redisErr);
               }
 
-              // Auto-reply logic
+              // Auto-reply logic: send once per 12-hour window
               try {
                 const autoReplyKey = `autoreply:${msg.from}`;
                 const hasAutoReplied = await getFlag(autoReplyKey);
@@ -165,8 +178,8 @@ export default async function handler(
                         text: { body: replyText },
                       }),
                     });
-                    // Set 24 hour cooldown (86400 seconds)
-                    await setFlag(autoReplyKey, 86400);
+                    // Set 12 hour cooldown (43200 seconds) - won't reply again within 12h
+                    await setFlag(autoReplyKey, 43200);
                   }
                 }
               } catch (err) {

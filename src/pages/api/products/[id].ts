@@ -177,10 +177,10 @@ export default async function handler(
         const newImagesBase64: string[] = [];
 
         images.forEach((img: string) => {
-          if (img.startsWith("/api/products/images/")) {
+          if (typeof img === 'string' && img.startsWith("/api/products/images/")) {
             const id = img.split("/").pop();
             if (id) keptImageIds.push(id);
-          } else if (img.startsWith("data:")) {
+          } else if (typeof img === 'string' && img.startsWith("data:")) {
             newImagesBase64.push(img);
           }
         });
@@ -202,6 +202,17 @@ export default async function handler(
             })),
           });
         }
+
+        // 3. Update createdAt order for all existing images so position changes are saved
+        const now = Date.now();
+        await Promise.all(
+          keptImageIds.map((imgId, idx) =>
+            prisma.productImage.update({
+              where: { id: imgId },
+              data: { createdAt: new Date(now + idx * 1000) },
+            }).catch(() => {})
+          )
+        );
       }
 
       const product = await prisma.product.update({
@@ -221,6 +232,19 @@ export default async function handler(
         del(productCacheKey(productId)),
         delPattern("products:list:"),
       ]);
+
+      // Bust the storefront's Redis cache for this product so changes are immediate
+      const storefrontUrl = process.env.STOREFRONT_URL;
+      if (storefrontUrl) {
+        fetch(`${storefrontUrl}/api/admin/cache-bust`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+          },
+          body: JSON.stringify({ productId }),
+        }).catch(() => {}); // fire-and-forget
+      }
 
       // Warm up search cache in the background
       warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after product update/delete:", err));
