@@ -165,6 +165,7 @@ export default async function handler(
       const productData = {
         ...restData,
         slug: uniqueSlug,
+        sku: restData.sku && String(restData.sku).trim() !== "" ? String(restData.sku).trim() : null,
         videoUrl: videoUrls[0] || null,
         videoUrls,
         images: {
