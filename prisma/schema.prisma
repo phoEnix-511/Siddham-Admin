@@ -283,6 +283,16 @@ model WhatsAppMessage {
   @@index([from, timestamp])
 }
 
+model WhatsAppContact {
+  id          String   @id @default(uuid())
+  phone       String   @unique
+  name        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([phone])
+}
+
 model CartSnapshot {
   id         String   @id @default(uuid())
   sessionId  String   @unique

@@ -16,6 +16,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "contactId is required" });
     }
     try {
+      // Find latest message/contact details to preserve contact info before deleting messages
+      const lastMsg = await prisma.whatsAppMessage.findFirst({
+        where: {
+          OR: [{ from: contactId }, { to: contactId }]
+        },
+        orderBy: { timestamp: "desc" }
+      });
+
+      const contactName = lastMsg?.direction === "INBOUND" ? lastMsg.senderName : null;
+
+      // Upsert contact in WhatsAppContact table so it is permanently preserved
+      await prisma.whatsAppContact.upsert({
+        where: { phone: contactId },
+        update: {
+          ...(contactName ? { name: contactName } : {}),
+        },
+        create: {
+          phone: contactId,
+          name: contactName || null,
+        },
+      });
+
+      // Delete message records for this contact
       await prisma.whatsAppMessage.deleteMany({
         where: {
           OR: [
@@ -40,21 +63,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // EXPORT: Return all unique customer contact numbers & details for marketing export
   if (exportContacts === "true") {
     try {
-      const messages = await prisma.whatsAppMessage.findMany({
-        select: {
-          from: true,
-          to: true,
-          senderName: true,
-          direction: true,
-          timestamp: true,
-        },
-        orderBy: { timestamp: "desc" },
-      });
+      const [messages, savedContacts] = await Promise.all([
+        prisma.whatsAppMessage.findMany({
+          select: {
+            from: true,
+            to: true,
+            senderName: true,
+            direction: true,
+            timestamp: true,
+          },
+          orderBy: { timestamp: "desc" },
+        }),
+        prisma.whatsAppContact.findMany({
+          orderBy: { updatedAt: "desc" }
+        })
+      ]);
 
       const contactMap = new Map<string, { phone: string; name: string; lastActivity: Date; messageCount: number }>();
 
+      // First add saved contacts
+      for (const sc of savedContacts) {
+        contactMap.set(sc.phone, {
+          phone: sc.phone,
+          name: sc.name || sc.phone,
+          lastActivity: sc.updatedAt,
+          messageCount: 0,
+        });
+      }
+
+      // Then merge active messages
       for (const m of messages) {
-        // Contact is 'from' if inbound, or 'to' if outbound
         const rawPhone = m.direction === "INBOUND" ? m.from : m.to;
         if (!rawPhone || rawPhone === "admin") continue;
 
@@ -70,6 +108,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           item.messageCount += 1;
           if (m.direction === "INBOUND" && m.senderName && item.name === rawPhone) {
             item.name = m.senderName;
+          }
+          if (new Date(m.timestamp) > new Date(item.lastActivity)) {
+            item.lastActivity = m.timestamp;
           }
         }
       }
@@ -99,13 +140,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       return res.status(200).json({ messages });
     } else {
-      // Get all unique conversations (latest message per contact)
-      const rawMessages = await prisma.whatsAppMessage.findMany({
-        orderBy: { timestamp: "desc" },
-        take: 1000
-      });
+      // Get all unique conversations & merge preserved contacts
+      const [rawMessages, savedContacts] = await Promise.all([
+        prisma.whatsAppMessage.findMany({
+          orderBy: { timestamp: "desc" },
+          take: 1000
+        }),
+        prisma.whatsAppContact.findMany({
+          orderBy: { updatedAt: "desc" }
+        })
+      ]);
 
       const convos = new Map();
+
+      // Seed with preserved contacts (e.g. from deleted chats or saved list)
+      for (const sc of savedContacts) {
+        convos.set(sc.phone, {
+          contactId: sc.phone,
+          contactName: sc.name || sc.phone,
+          lastMessage: "(Chat cleared)",
+          lastMessageTime: sc.updatedAt,
+          direction: "OUTBOUND",
+          unread: 0,
+        });
+      }
+
+      // Layer on recent messages
       for (const msg of rawMessages) {
         const contactId = msg.direction === 'INBOUND' ? msg.from : msg.to;
         if (!contactId || contactId === 'admin') continue;
@@ -119,6 +179,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             direction: msg.direction,
             unread: 0
           });
+        } else {
+          // If already seeded from saved contacts, update with latest active message
+          const existing = convos.get(contactId);
+          if (new Date(msg.timestamp) >= new Date(existing.lastMessageTime) || existing.lastMessage === "(Chat cleared)") {
+            existing.lastMessage = msg.body || `[${msg.type}]`;
+            existing.lastMessageTime = msg.timestamp;
+            existing.direction = msg.direction;
+            if (msg.direction === 'INBOUND' && msg.senderName) {
+              existing.contactName = msg.senderName;
+            }
+          }
         }
         if (msg.direction === 'INBOUND' && msg.status === 'received') {
            const c = convos.get(contactId);
@@ -126,7 +197,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      return res.status(200).json({ conversations: Array.from(convos.values()) });
+      const sortedConvos = Array.from(convos.values()).sort(
+        (a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
+      );
+
+      return res.status(200).json({ conversations: sortedConvos });
     }
   } catch (error) {
     console.error("[whatsapp/index] API error", error);
