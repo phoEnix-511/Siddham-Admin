@@ -29,6 +29,9 @@ export default function WhatsAppInbox() {
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newChatPhone, setNewChatPhone] = useState('');
+  const [newChatName, setNewChatName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = async () => {
@@ -149,6 +152,41 @@ export default function WhatsAppInbox() {
     }
   };
 
+  const handleStartNewChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanDigits = newChatPhone.replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length < 10) {
+      addToast('Please enter a valid phone number (at least 10 digits)', 'error');
+      return;
+    }
+    const formattedPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
+    const contactName = newChatName.trim() || formattedPhone;
+
+    // Check if conversation already exists
+    const existing = conversations.find(c => c.contactId === formattedPhone);
+    const targetContact = existing || {
+      contactId: formattedPhone,
+      contactName,
+      lastMessage: '',
+      lastMessageTime: new Date().toISOString(),
+      direction: 'OUTBOUND',
+      unread: 0,
+    };
+
+    setActiveContact(targetContact);
+    loadMessages(formattedPhone);
+
+    // If it's a new contact not yet in conversations list, prepend it
+    if (!existing) {
+      setConversations(prev => [targetContact, ...prev]);
+    }
+
+    setShowNewChatModal(false);
+    setNewChatPhone('');
+    setNewChatName('');
+    addToast(`Conversation opened for ${contactName}`, 'success');
+  };
+
   return (
     <>
       <Head><title>WhatsApp Inbox – Siddham Wellness Admin</title></Head>
@@ -190,12 +228,109 @@ export default function WhatsAppInbox() {
           </div>
         )}
 
+        {/* New Chat Modal */}
+        {showNewChatModal && (
+          <div 
+            onClick={() => setShowNewChatModal(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9998,
+              background: 'rgba(0,0,0,0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 16
+            }}
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()} 
+              style={{
+                background: 'white', borderRadius: 12, padding: 24,
+                width: '100%', maxWidth: 420, boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+                display: 'flex', flexDirection: 'column', gap: 16
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, fontFamily: 'var(--font-serif)', color: 'var(--color-forest-dark)' }}>
+                  Start New Conversation
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowNewChatModal(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--color-gray-500)' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-gray-600)' }}>
+                Enter the customer's phone number to open a chat thread and send messages.
+              </p>
+
+              <form onSubmit={handleStartNewChat} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-gray-700)', marginBottom: 4 }}>
+                    Customer Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 9876543210 or 919876543210"
+                    value={newChatPhone}
+                    onChange={(e) => setNewChatPhone(e.target.value)}
+                    className="form-input"
+                    style={{ width: '100%', margin: 0 }}
+                    autoFocus
+                  />
+                  <small style={{ color: 'var(--color-gray-400)', fontSize: '0.75rem' }}>
+                    10-digit Indian numbers will automatically be prefixed with 91.
+                  </small>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-gray-700)', marginBottom: 4 }}>
+                    Customer Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Rahul Sharma"
+                    value={newChatName}
+                    onChange={(e) => setNewChatName(e.target.value)}
+                    className="form-input"
+                    style={{ width: '100%', margin: 0 }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewChatModal(false)}
+                    className="btn btn-outline btn-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                  >
+                    Start Chat 💬
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         <div className="card" style={{ display: 'flex', height: 'calc(100vh - 200px)', minHeight: 600, padding: 0, overflow: 'hidden' }}>
           
           {/* Sidebar */}
           <div style={{ width: 320, borderRight: '1px solid var(--color-gray-200)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--color-gray-200)', background: 'var(--color-gray-50)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong>Conversations ({conversations.length})</strong>
+            <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--color-gray-200)', background: 'var(--color-gray-50)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+              <button
+                onClick={() => setShowNewChatModal(true)}
+                className="btn btn-sm btn-primary"
+                style={{ fontSize: '0.75rem', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                title="Start a new WhatsApp conversation"
+              >
+                ➕ New Chat
+              </button>
               <button
                 onClick={handleExportContacts}
                 disabled={exporting}
@@ -203,7 +338,7 @@ export default function WhatsAppInbox() {
                 style={{ fontSize: '0.75rem', padding: '4px 8px', background: 'var(--color-forest-dark)', color: 'white' }}
                 title="Export all customer numbers for marketing"
               >
-                {exporting ? 'Exporting...' : '📥 Export List'}
+                {exporting ? '...' : '📥 Export List'}
               </button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto' }}>
