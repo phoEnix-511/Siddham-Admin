@@ -152,9 +152,18 @@ export default async function handler(
       // Strip variants and images out — handled separately below
       const { images: rawImages, variants: rawVariants, ...restData } = data;
 
+      // Generate a guaranteed-unique slug
+      let baseSlug = (restData.slug || generateSlug(restData.name)).trim() || "product";
+      let uniqueSlug = baseSlug;
+      let counter = 1;
+      while (await prisma.product.findUnique({ where: { slug: uniqueSlug } })) {
+        uniqueSlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+
       const productData = {
         ...restData,
-        slug: restData.slug || generateSlug(restData.name),
+        slug: uniqueSlug,
         videoUrl: videoUrls[0] || null,
         videoUrls,
         images: {
@@ -199,9 +208,10 @@ export default async function handler(
       warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after create:", err));
 
       return res.status(201).json({ product });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Failed to create product" });
+    } catch (error: any) {
+      console.error("[api/products] Error creating product:", error);
+      const message = error?.message || "Failed to create product";
+      return res.status(500).json({ error: message });
     }
   }
 
