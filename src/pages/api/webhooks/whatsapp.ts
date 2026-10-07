@@ -153,11 +153,35 @@ export default async function handler(
                 console.error("[whatsapp-webhook] Failed to push to Redis notifications:", redisErr);
               }
 
-              // Auto-reply logic: send once per 12-hour window
+              // Auto-reply logic: strictly max 1 response per 12-hour window
               try {
                 const autoReplyKey = `autoreply:${msg.from}`;
-                const hasAutoReplied = await getFlag(autoReplyKey);
+                let hasAutoReplied = await getFlag(autoReplyKey);
+
+                // Fallback check: check database if an outbound message was sent in last 12 hours to this recipient
                 if (!hasAutoReplied) {
+                  try {
+                    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+                    const recentOutbound = await (prisma as any).whatsAppMessage?.findFirst({
+                      where: {
+                        to: msg.from,
+                        direction: "OUTBOUND",
+                        timestamp: { gte: twelveHoursAgo },
+                      },
+                    });
+                    if (recentOutbound) {
+                      hasAutoReplied = true;
+                      await setFlag(autoReplyKey, 43200); // re-sync Redis flag
+                    }
+                  } catch {
+                    // ignore db check error, fallback to flag
+                  }
+                }
+
+                if (!hasAutoReplied) {
+                  // Acquire lock immediately so concurrent webhook events cannot race
+                  await setFlag(autoReplyKey, 43200);
+
                   const settingsRes = await (prisma as any).setting.findFirst({ where: { key: 'whatsapp_access_token' } });
                   const token = settingsRes?.value;
                   const phoneRes = await (prisma as any).setting.findFirst({ where: { key: 'whatsapp_phone_number_id' } });
@@ -165,7 +189,7 @@ export default async function handler(
 
                   if (token && phoneId) {
                     const replyText = "Thank you for reaching out to Siddham Wellness! We have received your message and our team will get in touch with you within 24 hours. 🌿";
-                    await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+                    const fbRes = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
                       method: "POST",
                       headers: {
                         "Authorization": `Bearer ${token}`,
@@ -178,8 +202,24 @@ export default async function handler(
                         text: { body: replyText },
                       }),
                     });
-                    // Set 12 hour cooldown (43200 seconds) - won't reply again within 12h
-                    await setFlag(autoReplyKey, 43200);
+
+                    // Log outbound message to database so conversation thread and 12h window are tracked
+                    try {
+                      const fbData = await fbRes.json();
+                      const sentMsgId = fbData?.messages?.[0]?.id || `auto_${Date.now()}`;
+                      await (prisma as any).whatsAppMessage?.create({
+                        data: {
+                          messageId: sentMsgId,
+                          from: phoneId,
+                          to: msg.from,
+                          type: "text",
+                          body: replyText,
+                          direction: "OUTBOUND",
+                          status: "sent",
+                          timestamp: new Date(),
+                        },
+                      });
+                    } catch {}
                   }
                 }
               } catch (err) {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/lib/cache.ts
  * Centralised Redis cache utility (Upstash REST).
  * Reuses the same env vars as rate-limit.ts - no extra credentials needed.
@@ -81,5 +81,6 @@ export async function setFlag(key: string, ttl: number): Promise<void> {
 export async function getFlag(key: string): Promise<boolean> {
   const redis = getRedis();
   if (!redis) return false;
-  return await redis.get(key) === '1';
+  const val = await redis.get(key);
+  return val !== null && val !== undefined && val !== false && val !== 0 && val !== '0';
 }
