@@ -166,6 +166,26 @@ export async function sendWhatsAppTemplate({
     }
 
     console.log(`[whatsapp] Template message "${templateName}" sent successfully to ${recipient}`);
+
+    // Persist outbound template message so it appears in Admin WhatsApp inbox
+    try {
+      const msgId = data?.messages?.[0]?.id || `tpl_${Date.now()}`;
+      await (prisma as any).whatsAppMessage?.create({
+        data: {
+          messageId: msgId,
+          from: cleanPhoneId,
+          to: recipient,
+          type: 'template',
+          body: `[Template: ${templateName}] ${bodyParameters.join(' • ')}`,
+          direction: 'OUTBOUND',
+          status: 'sent',
+          timestamp: new Date(),
+        },
+      });
+    } catch (saveErr) {
+      console.error('[whatsapp] Failed to save outbound template to DB:', saveErr);
+    }
+
     return { success: true, message: 'WhatsApp message sent', data };
   } catch (err: any) {
     console.error('[whatsapp] Unexpected fetch error:', err);
