@@ -108,6 +108,7 @@ export default function AdminSettingsPage() {
   const [downloadingBackup, setDownloadingBackup] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState(false);
   const [purgingCache, setPurgingCache] = useState(false);
+  const [purgingOrders, setPurgingOrders] = useState(false);
   const [testingWhatsApp, setTestingWhatsApp] = useState(false);
   const [testingRazorpay, setTestingRazorpay] = useState(false);
 
@@ -181,6 +182,28 @@ export default function AdminSettingsPage() {
       addToast(err.message || 'Failed to clear cache', 'error');
     } finally {
       setPurgingCache(false);
+    }
+  };
+
+  const handlePurgeOrders = async () => {
+    const confirmation = window.prompt(
+      '⚠️ DANGER: This will permanently DELETE ALL orders and order items. Products, categories, and customer accounts will remain intact.\n\nType "PURGE ORDERS" to confirm:'
+    );
+    if (confirmation !== 'PURGE ORDERS') {
+      if (confirmation !== null) addToast('Purge cancelled (confirmation text mismatch)', 'info');
+      return;
+    }
+
+    setPurgingOrders(true);
+    try {
+      const res = await fetch('/api/admin/purge-orders', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to purge orders');
+      addToast(data.message || 'Orders purged successfully! Starting fresh.', 'success');
+    } catch (err: any) {
+      addToast(err.message || 'Failed to purge orders', 'error');
+    } finally {
+      setPurgingOrders(false);
     }
   };
 
@@ -769,7 +792,7 @@ export default function AdminSettingsPage() {
               <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-600)', marginBottom: 'var(--space-2)' }}>
                 Download a complete copy of your database including categories, products, customer records, settings, and orders as a secure JSON file. You can store this backup file locally for safety.
               </div>
-              <div style={{ marginTop: 'var(--space-2)' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', marginTop: 'var(--space-2)' }}>
                 <button
                   type="button"
                   className="btn btn-outline"
@@ -777,6 +800,16 @@ export default function AdminSettingsPage() {
                   disabled={downloadingBackup}
                 >
                   {downloadingBackup ? '⏳ Exporting...' : '📥 Download Database Backup (JSON)'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={handlePurgeOrders}
+                  disabled={purgingOrders}
+                  style={{ borderColor: '#ef4444', color: '#dc2626', fontWeight: 600 }}
+                  title="Permanently remove all orders to start fresh. Products remain untouched."
+                >
+                  {purgingOrders ? '⏳ Purging Orders...' : '🗑️ Purge Order Data (Fresh Start)'}
                 </button>
               </div>
             </SettingSection>
