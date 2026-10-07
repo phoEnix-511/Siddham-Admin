@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sendAdminPushNotification } from '@/lib/push';
+import { requireAdmin } from '@/lib/auth';
 
 /**
  * Internal endpoint called by the Storefront app to trigger push notifications.
@@ -9,8 +10,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).end();
 
   const secret = process.env.INTERNAL_API_SECRET;
-  if (secret && req.headers['x-internal-secret'] !== secret) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const providedSecret = req.headers['x-internal-secret'];
+  const hasValidSecret = secret && providedSecret && providedSecret === secret;
+
+  if (!hasValidSecret) {
+    try {
+      requireAdmin(req);
+    } catch {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   const { title, body, url } = req.body;
