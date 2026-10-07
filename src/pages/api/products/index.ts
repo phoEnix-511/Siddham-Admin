@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireEditorRole } from "@/lib/auth";
 import { generateSlug } from "@/lib/utils";
 import { getOrSet, delPattern } from "@/lib/cache";
+import { warmUpSearchCache } from "@/lib/cacheWarmup";
 
 const LIST_CACHE_TTL = 60 * 5; // 5 minutes
 
@@ -204,7 +205,6 @@ export default async function handler(
       await delPattern("products:list:");
 
       // Warm up search cache in the background
-      const { warmUpSearchCache } = require("@/lib/cacheWarmup");
       warmUpSearchCache().catch((err: any) => console.error("[cache-warmup] Error warming up after create:", err));
 
       return res.status(201).json({ product });
