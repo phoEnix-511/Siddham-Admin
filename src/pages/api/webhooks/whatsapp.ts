@@ -72,10 +72,13 @@ export default async function handler(
           const value = change?.value;
           if (!value) continue;
 
-          // Message status updates (sent → delivered → read)
+          // Message status updates (sent → delivered → read → failed)
           const statuses = value.statuses || [];
           for (const status of statuses) {
             console.log(`[whatsapp-webhook] Message ${status.id} to ${status.recipient_id}: ${status.status}`);
+            if (status.status === "failed" && status.errors) {
+              console.error(`[whatsapp-webhook] Delivery Failure Details for ${status.recipient_id}:`, JSON.stringify(status.errors, null, 2));
+            }
             try {
               await (prisma as any).whatsAppMessage?.updateMany({
                 where: { messageId: status.id },
