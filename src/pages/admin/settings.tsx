@@ -41,6 +41,12 @@ interface Settings {
   // WhatsApp Notifications
   whatsapp_phone_number_id: string;
   whatsapp_access_token: string;
+  whatsapp_otp_template: string;
+  whatsapp_template_language: string;
+  whatsapp_order_confirmation_template: string;
+  whatsapp_order_shipped_template: string;
+  whatsapp_order_delivered_template: string;
+  whatsapp_order_cancelled_template: string;
   require_phone_verification: string;
   // Promotional
   show_featured_in: string;
@@ -77,6 +83,12 @@ const defaultSettings: Settings = {
   rewards_welcome_bonus: '500',
   whatsapp_phone_number_id: '',
   whatsapp_access_token: '',
+  whatsapp_otp_template: 'siddham_otp',
+  whatsapp_template_language: 'en_US',
+  whatsapp_order_confirmation_template: 'jaspers_market_order_confirmation_v1',
+  whatsapp_order_shipped_template: 'order_shipped',
+  whatsapp_order_delivered_template: 'order_delivered',
+  whatsapp_order_cancelled_template: 'order_cancelled',
   require_phone_verification: 'true',
   show_featured_in: 'true',
   featured_in_brands: 'The Times, VOGUE, GQ, Wellness Daily',
@@ -617,6 +629,34 @@ export default function AdminSettingsPage() {
                     {testingWhatsApp ? 'Testing...' : 'Test Connection'}
                   </button>
                 </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">WhatsApp OTP Template Name</label>
+                <input
+                  type="text"
+                  placeholder="siddham_otp"
+                  className="form-input"
+                  name="whatsapp_otp_template"
+                  value={settings.whatsapp_otp_template}
+                  onChange={handleChange}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                  The name of your approved Meta Authentication or Utility template (default: <code>siddham_otp</code>).
+                </span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">WhatsApp Template Language Code</label>
+                <input
+                  type="text"
+                  placeholder="en_US"
+                  className="form-input"
+                  name="whatsapp_template_language"
+                  value={settings.whatsapp_template_language}
+                  onChange={handleChange}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                  Language code of your template in Meta WhatsApp Manager (e.g. <code>en_US</code> or <code>en</code>).
+                </span>
               </div>
               <div className="form-group">
                 <label className="form-label">Require Phone Verification at Checkout</label>
