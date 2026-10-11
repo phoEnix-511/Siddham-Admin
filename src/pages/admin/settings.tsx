@@ -658,6 +658,75 @@ export default function AdminSettingsPage() {
                   Language code of your template in Meta WhatsApp Manager (e.g. <code>en_US</code> or <code>en</code>).
                 </span>
               </div>
+
+              {/* Order notification templates */}
+              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest-dark)', marginBottom: 'var(--space-3)' }}>
+                  📦 Order Notification Templates
+                </p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginBottom: 'var(--space-4)' }}>
+                  These are sent automatically when order status changes. Create them as <strong>Utility</strong> category templates in Meta WhatsApp Manager.
+                </p>
+                <div className="form-group-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                  <div className="form-group">
+                    <label className="form-label">Order Confirmed Template</label>
+                    <input
+                      type="text"
+                      placeholder="siddham_order_confirmed"
+                      className="form-input"
+                      name="whatsapp_order_confirmation_template"
+                      value={settings.whatsapp_order_confirmation_template}
+                      onChange={handleChange}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                      Vars: {'{{1}}'} name · {'{{2}}'} order# · {'{{3}}'} total · {'{{4}}'} date
+                    </span>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Order Shipped Template</label>
+                    <input
+                      type="text"
+                      placeholder="siddham_order_shipped"
+                      className="form-input"
+                      name="whatsapp_order_shipped_template"
+                      value={settings.whatsapp_order_shipped_template}
+                      onChange={handleChange}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                      Vars: {'{{1}}'} name · {'{{2}}'} order# · {'{{3}}'} carrier · {'{{4}}'} tracking#
+                    </span>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Order Delivered Template</label>
+                    <input
+                      type="text"
+                      placeholder="siddham_order_delivered"
+                      className="form-input"
+                      name="whatsapp_order_delivered_template"
+                      value={settings.whatsapp_order_delivered_template}
+                      onChange={handleChange}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                      Vars: {'{{1}}'} name · {'{{2}}'} order#
+                    </span>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Order Cancelled Template</label>
+                    <input
+                      type="text"
+                      placeholder="siddham_order_cancelled"
+                      className="form-input"
+                      name="whatsapp_order_cancelled_template"
+                      value={settings.whatsapp_order_cancelled_template}
+                      onChange={handleChange}
+                    />
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
+                      Vars: {'{{1}}'} name · {'{{2}}'} order# · {'{{3}}'} reason
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Require Phone Verification at Checkout</label>
                 <select className="form-input" name="require_phone_verification" value={settings.require_phone_verification} onChange={handleChange}>
