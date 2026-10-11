@@ -84,7 +84,7 @@ const defaultSettings: Settings = {
   whatsapp_phone_number_id: '',
   whatsapp_access_token: '',
   whatsapp_otp_template: 'siddham_otp',
-  whatsapp_template_language: 'en_US',
+  whatsapp_template_language: 'en',
   whatsapp_order_confirmation_template: 'jaspers_market_order_confirmation_v1',
   whatsapp_order_shipped_template: 'order_shipped',
   whatsapp_order_delivered_template: 'order_delivered',
@@ -648,14 +648,14 @@ export default function AdminSettingsPage() {
                 <label className="form-label">WhatsApp Template Language Code</label>
                 <input
                   type="text"
-                  placeholder="en_US"
+                  placeholder="en"
                   className="form-input"
                   name="whatsapp_template_language"
                   value={settings.whatsapp_template_language}
                   onChange={handleChange}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px', display: 'block' }}>
-                  Language code of your template in Meta WhatsApp Manager (e.g. <code>en_US</code> or <code>en</code>).
+                  Language code of your template in Meta WhatsApp Manager (e.g. <code>en</code>).
                 </span>
               </div>
 
